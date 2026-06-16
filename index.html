@@ -771,6 +771,9 @@ ${[['PER MILE =',d.escorted_miles,d.escorted_rate],['MILES ONLY =',d.fuel_sc_mil
 <script>window.addEventListener('load',function(){setTimeout(function(){window.print();},600);});<\/script>
 </body></html>`;
   const win=window.open('','_blank','width=900,height=1100');if(!win){alert('Allow pop-ups to download.');return;}win.document.write(html);win.document.close();
+  const fname=(d.driver_name||'Driver').replace(/\s+/g,'');
+  const fdate=(d.date||new Date().toISOString().slice(0,10));
+  win.document.title='MoosePilot_'+fname+'_'+fdate+'_INV'+invNum;
 }
 
 function clearAllFields(){
