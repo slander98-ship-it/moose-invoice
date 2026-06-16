@@ -798,14 +798,16 @@ async function shareInvoice(){
 <div style="text-align:center;margin-top:9px;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;">Thank You for Your Business!!!</div>
 </body></html>`;
 
-  // Open PDF in new tab with share/print buttons
+  // Open PDF in new tab with share/print buttons at BOTTOM so logo is visible
+  const sub=encodeURIComponent('Invoice '+d.invNum+' — Moose\'s Pilot Car Service');
+  const bod=encodeURIComponent('Driver: '+d.driver_name+'\nTrucking Co: '+d.trucking_co+'\nRoute: '+(d.pickup_city||'')+'→'+(d.dropoff_city||'')+'\nTotal: $'+d.total.toFixed(2));
   const shareHTML=invoiceHTML.replace('</body>',`
-<div class="share-bar" style="position:fixed;top:0;left:0;right:0;background:#111;padding:10px 16px;display:flex;gap:10px;justify-content:center;z-index:9999;">
-  <button onclick="window.print()" style="background:#FFE500;color:#000;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;">🖨 SAVE AS PDF</button>
-  <button onclick="(()=>{const sub=encodeURIComponent('Invoice '+d.invNum+' — Moose\'s Pilot Car Service');const bod=encodeURIComponent('Driver: '+d.driver_name+'\nTrucking Co: '+d.trucking_co+'\nRoute: '+(d.pickup_city||'')+'→'+(d.dropoff_city||'')+'\nTotal: $'+d.total.toFixed(2)+'\n\nPlease see the invoice PDF in this browser tab.');window.open('mailto:?subject='+sub+'&body='+bod,'_self');})()" style="background:#1a73e8;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;">✉️ EMAIL</button>
+<div class="share-bar" style="position:fixed;bottom:0;left:0;right:0;background:#111;padding:12px 16px;display:flex;gap:10px;justify-content:center;z-index:9999;box-shadow:0 -2px 8px rgba(0,0,0,0.4);">
+  <button onclick="window.print()" style="background:#FFE500;color:#000;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:12px 24px;cursor:pointer;">🖨 SAVE AS PDF</button>
+  <a href="mailto:?subject=${sub}&body=${bod}" style="background:#1a73e8;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:12px 24px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;">✉️ EMAIL</a>
 </div>
-<style>@media print{.share-bar{display:none!important;}@page{margin:.45in .5in;}}</style>
-</body>`);
+<style>@media print{.share-bar{display:none!important;}@page{margin:.45in .5in;}body{padding-bottom:0;}}</style>
+</body>\`);
   const win=window.open('','_blank','width=900,height=1100');
   if(!win){alert('Please allow pop-ups to share the invoice.');return;}
   win.document.write(shareHTML);
