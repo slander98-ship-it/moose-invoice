@@ -718,7 +718,7 @@ function downloadPDF(){
   const pos=d.position||'';const chk=(p)=>pos===p?'[X]':'[ ]';const fq=(v)=>v>0?v:'';const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
   const C='border:1px solid #000;padding:2px 4px;font-size:9.5px;';const CH=C+'background:#f0f0f0;font-weight:700;';
-  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;" alt=""/>`:'';
+  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;filter:brightness(0);" alt=""/>`:'';
   const invNum=d.invNum.replace('INV-','');
   const puAddr=[d.pickup_location,d.pickup_city&&d.pickup_state?d.pickup_city+', '+d.pickup_state:''].filter(Boolean).join(' — ');
   const doAddr=[d.dropoff_location,d.dropoff_city&&d.dropoff_state?d.dropoff_city+', '+d.dropoff_state:''].filter(Boolean).join(' — ');
@@ -774,7 +774,7 @@ async function shareInvoice(){
     const mi=(i===d.trips.length-1&&d.tripMi)?d.tripMi.toFixed(1):'';
     return`<tr style="height:21px;"><td style="${C}">${t.date||''}</td><td style="${C}">${t.startCity||''}</td><td style="${C}text-align:center;">${t.startTime||''}</td><td style="${C}text-align:center;">${so}</td><td style="${C}">${t.endCity||''}</td><td style="${C}text-align:center;">${t.endTime||''}</td><td style="${C}text-align:center;">${eo}</td><td style="${C}text-align:center;">${mi}</td><td style="${C}text-align:center;">${t.motel||''}</td></tr>`;
   }).join('');
-  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;display:inline-block;vertical-align:bottom;" alt=""/>`:'';
+  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;display:inline-block;vertical-align:bottom;filter:brightness(0);" alt=""/>`:'';
   const invNum=d.invNum.replace('INV-','');
   const puAddr=[d.pickup_location,d.pickup_city&&d.pickup_state?d.pickup_city+', '+d.pickup_state:d.pickup_city||d.pickup_state].filter(Boolean).join(' — ');
   const doAddr=[d.dropoff_location,d.dropoff_city&&d.dropoff_state?d.dropoff_city+', '+d.dropoff_state:d.dropoff_city||d.dropoff_state].filter(Boolean).join(' — ');
@@ -802,7 +802,7 @@ async function shareInvoice(){
   const shareHTML=invoiceHTML.replace('</body>',`
 <div class="share-bar" style="position:fixed;top:0;left:0;right:0;background:#111;padding:10px 16px;display:flex;gap:10px;justify-content:center;z-index:9999;">
   <button onclick="window.print()" style="background:#FFE500;color:#000;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;">🖨 SAVE AS PDF</button>
-  <a href="mailto:?subject=Invoice+${encodeURIComponent(d.invNum)}&body=See+attached+invoice+from+Moose%27s+Pilot+Car+Service." style="background:#1a73e8;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;">✉️ EMAIL</a>
+  <button onclick="(()=>{const sub=encodeURIComponent('Invoice '+d.invNum+' — Moose\'s Pilot Car Service');const bod=encodeURIComponent('Driver: '+d.driver_name+'\nTrucking Co: '+d.trucking_co+'\nRoute: '+(d.pickup_city||'')+'→'+(d.dropoff_city||'')+'\nTotal: $'+d.total.toFixed(2)+'\n\nPlease see the invoice PDF in this browser tab.');window.open('mailto:?subject='+sub+'&body='+bod,'_self');})()" style="background:#1a73e8;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;">✉️ EMAIL</button>
 </div>
 <style>@media print{.share-bar{display:none!important;}@page{margin:.45in .5in;}}</style>
 </body>`);
