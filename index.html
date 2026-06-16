@@ -468,13 +468,9 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       DOWNLOAD MY COPY
     </button>
-    <button class="success-btn-ghost" onclick="shareEmail()" style="margin-top:.5rem;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-      EMAIL MY COPY
-    </button>
-    <button class="success-btn-ghost" onclick="shareText()" style="margin-top:.5rem;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      TEXT MY COPY
+    <button class="success-btn-ghost" onclick="shareInvoice()" style="margin-top:.5rem;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      SHARE / EMAIL / TEXT
     </button>
   </div>
 </div>
@@ -761,29 +757,74 @@ function clearAllFields(){
   if($('trips-container'))renderTrips();
   sv('driver_name',driverObj?driverObj.name:'');sv('driver_phone',driverObj?driverObj.phone:'');
 }
-function shareEmail(){
+async function shareInvoice(){
   const d=lastInvoice;if(!d)return;
-  const sub=encodeURIComponent('Invoice #'+d.invNum+' — Moose\'s Pilot Car Service');
-  const body=encodeURIComponent(
-    'Invoice #'+d.invNum+'\n'+
-    'Date: '+(d.date||'')+'\n'+
-    'Driver: '+(d.driver_name||'')+'\n'+
-    'Trucking Co: '+(d.trucking_co||'')+'\n'+
-    'Route: '+(d.pickup_city||'')+' → '+(d.dropoff_city||'')+'\n'+
-    'Total: $'+d.total.toFixed(2)
-  );
-  window.location.href='mailto:?subject='+sub+'&body='+body;
-}
-function shareText(){
-  const d=lastInvoice;if(!d)return;
-  const msg=encodeURIComponent(
-    'Invoice #'+d.invNum+' — Moose\'s Pilot Car Service\n'+
-    'Driver: '+(d.driver_name||'')+'\n'+
-    'Co: '+(d.trucking_co||'')+'\n'+
-    'Route: '+(d.pickup_city||'')+' → '+(d.dropoff_city||'')+'\n'+
-    'Total: $'+d.total.toFixed(2)
-  );
-  window.location.href='sms:?&body='+msg;
+  // Build the same PDF HTML as downloadPDF
+  const pos=d.position||'';
+  const chk=(p)=>pos===p?'[X]':'[ ]';
+  const fq=(v)=>v>0?v:'';
+  const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
+  const ul=(val,minW)=>`<span style="display:inline-block;border-bottom:1px solid #000;min-width:${minW||70}px;padding:0 3px;vertical-align:bottom;">&nbsp;${val||''}&nbsp;</span>`;
+  const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
+  const C='border:1px solid #000;padding:2px 4px;font-size:9.5px;';
+  const CH=C+'background:#f0f0f0;font-weight:700;';
+  const tripRows=tdata.map((t,i)=>{
+    const so=(i===0&&d.start_odometer)?d.start_odometer.toFixed(1):'';
+    const eo=(i===d.trips.length-1&&d.end_odometer)?d.end_odometer.toFixed(1):'';
+    const mi=(i===d.trips.length-1&&d.tripMi)?d.tripMi.toFixed(1):'';
+    return`<tr style="height:21px;"><td style="${C}">${t.date||''}</td><td style="${C}">${t.startCity||''}</td><td style="${C}text-align:center;">${t.startTime||''}</td><td style="${C}text-align:center;">${so}</td><td style="${C}">${t.endCity||''}</td><td style="${C}text-align:center;">${t.endTime||''}</td><td style="${C}text-align:center;">${eo}</td><td style="${C}text-align:center;">${mi}</td><td style="${C}text-align:center;">${t.motel||''}</td></tr>`;
+  }).join('');
+  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;display:inline-block;vertical-align:bottom;" alt=""/>`:'';
+  const invNum=d.invNum.replace('INV-','');
+  const puAddr=[d.pickup_location,d.pickup_city&&d.pickup_state?d.pickup_city+', '+d.pickup_state:d.pickup_city||d.pickup_state].filter(Boolean).join(' — ');
+  const doAddr=[d.dropoff_location,d.dropoff_city&&d.dropoff_state?d.dropoff_city+', '+d.dropoff_state:d.dropoff_city||d.dropoff_state].filter(Boolean).join(' — ');
+  const loadLen=[d.load_height&&`${d.load_height}'`,d.load_width&&`${d.load_width}"`].filter(Boolean).join(' ');
+  const invoiceHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#000;background:#fff;padding:12px;}</style></head><body>
+<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr>
+<td style="text-align:center;vertical-align:middle;padding:0 10px;"><div style="font-family:Georgia,serif;font-size:26px;font-weight:700;line-height:1.15;">Moose's</div><div style="font-family:Georgia,serif;font-size:22px;font-weight:700;line-height:1.15;">Pilot Car Service, LLC</div><div style="font-size:11px;margin-top:6px;">525 N Peniel — Oklahoma City, OK 73127</div></td>
+<td style="vertical-align:top;text-align:right;width:170px;padding-top:8px;"><div style="font-size:12px;font-weight:700;">Invoice #&nbsp;&nbsp;<span style="font-size:30px;font-weight:900;">${invNum}</span></div></td>
+</tr></table>
+<div style="font-size:10px;margin-bottom:4px;"><b>Pilot Position:</b>&nbsp;&nbsp;${chk('Lead')} Front&nbsp;&nbsp;${chk('Chase')} Rear&nbsp;&nbsp;${chk('High Pole')} High Pole&nbsp;&nbsp;${chk('Steer Man')} Steer mon&nbsp;&nbsp;&nbsp;&nbsp;<b>DATE:</b>${ul(d.date,100)}</div>
+<table style="width:100%;border-collapse:collapse;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">TRUCKING CO:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.trucking_co||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:16px;width:1%;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:160px;padding:1px 3px;">&nbsp;${d.trucking_co_phone||''}</td></tr><tr><td colspan="4" style="height:3px;"></td></tr><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">BILLING ADDRESS:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.billing_address||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:16px;padding-right:4px;">CONTACT:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.contact_name||''}</td></tr></table>
+<table style="width:100%;border-collapse:collapse;margin-top:6px;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">DRIVER:</td><td style="border-bottom:1px solid #000;font-size:10px;width:190px;padding:1px 3px;">&nbsp;${d.driver_name||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;width:1%;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:130px;padding:1px 3px;">&nbsp;${d.driver_phone||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;width:1%;padding-right:4px;">TRUCK#:</td><td style="border-bottom:1px solid #000;font-size:10px;width:70px;padding:1px 3px;">&nbsp;${d.driver_truck||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;width:1%;padding-right:4px;">TRAILER#:</td><td style="border-bottom:1px solid #000;font-size:10px;width:70px;padding:1px 3px;">&nbsp;${d.driver_trailer||''}</td></tr></table>
+<table style="width:100%;border-collapse:collapse;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">LOAD:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.load_type||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;width:1%;padding-right:4px;">H/W/L:</td><td style="border-bottom:1px solid #000;font-size:10px;width:80px;padding:1px 3px;">&nbsp;${loadLen}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;width:1%;padding-right:4px;">WEIGHT:</td><td style="border-bottom:1px solid #000;font-size:10px;width:90px;padding:1px 3px;">&nbsp;${d.load_weight||''}</td></tr></table>
+<table style="width:100%;border-collapse:collapse;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">PICK UP:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${puAddr}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;width:1%;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:100px;padding:1px 3px;">&nbsp;${d.pickup_date||''}</td></tr><tr><td colspan="4" style="height:3px;"></td></tr><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">DROP OFF:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${doAddr}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.dropoff_date||''}</td></tr></table>
+<table style="width:100%;border-collapse:collapse;margin-top:6px;"><thead><tr><th style="${CH}width:9%;">DATE</th><th style="${CH}width:18%;">START-CITY,ST</th><th style="${CH}width:9%;">START TIME</th><th style="${CH}width:11%;">START ODO</th><th style="${CH}width:18%;">END-CITY,ST</th><th style="${CH}width:9%;">END TIME</th><th style="${CH}width:11%;">END ODO</th><th style="${CH}width:8%;">MILES</th><th style="${CH}width:7%;">MOTEL</th></tr></thead><tbody>${tripRows}</tbody></table>
+<table style="width:100%;border-collapse:collapse;margin-top:8px;"><tr><td style="width:55%;vertical-align:top;padding-right:10px;"><table style="width:100%;border-collapse:collapse;">${[['TOTAL ESCORTED MILES',d.escorted_miles,d.escorted_rate],['FUEL S/C – MILES',d.fuel_sc_miles,d.fuel_sc_rate],['DEADHEAD MILES',d.deadhead_miles,d.deadhead_rate],['FLAT DAY RATE',d.flat_day_qty,d.flat_day_rate],['½ DAY RATE',d.half_day_qty,d.half_day_rate],['MOTELS',d.motel_qty,d.motel_rate],['DOWN TIME',d.downtime_hours,d.downtime_rate],["NO-GO'S",d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;text-align:right;">${fq(q)}</td><td style="font-size:10px;padding:0 5px;">@</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;text-align:right;">${r>0?r.toFixed(2):''}</td></tr>`).join('')}</table></td>
+<td style="vertical-align:top;"><table style="width:100%;border-collapse:collapse;">${[['PER MILE =',d.escorted_miles,d.escorted_rate],['MILES ONLY =',d.fuel_sc_miles,d.fuel_sc_rate],['PER MILE =',d.deadhead_miles,d.deadhead_rate],['PER DAY =',d.flat_day_qty,d.flat_day_rate],['½ DAY =',d.half_day_qty,d.half_day_rate],['PER DAY =',d.motel_qty,d.motel_rate],['PER HOUR =',d.downtime_hours,d.downtime_rate],['PER DAY =',d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;white-space:nowrap;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:95px;text-align:right;">${fa(q,r)}</td></tr>`).join('')}<tr><td colspan="2" style="padding-top:5px;border-top:2.5px solid #000;text-align:right;"><span style="font-size:12px;font-weight:900;">TOTAL CHARGES = $</span><span style="font-size:14px;font-weight:900;border-bottom:2.5px solid #000;padding:0 10px;">${d.total.toFixed(2)}</span></td></tr></table></td></tr></table>
+<table style="width:100%;border-collapse:collapse;margin-top:12px;"><tr><td style="width:65%;vertical-align:bottom;font-size:10px;font-weight:700;">DRIVER'S SIGNATURE:<span style="display:inline-block;border-bottom:1.5px solid #000;min-width:230px;padding:0 4px;vertical-align:bottom;">${sigHtml}</span></td><td style="vertical-align:bottom;font-size:10px;font-weight:700;">DATE:${ul(d.date,110)}</td></tr></table>
+<div style="text-align:center;margin-top:9px;"><div style="font-size:10px;font-weight:700;">TERMS: DUE UPON RECEIPT</div><div style="font-size:8.5px;margin-top:2px;">After 45 days at 9% per month interest will be added to your BILL.</div></div>
+<table style="width:100%;border-collapse:collapse;margin-top:7px;"><tr><td style="font-size:10px;width:60%;"><b>Escort Subcontracting for Moose's Pilot Service:</b><span style="display:inline-block;border-bottom:1px solid #000;min-width:155px;padding:0 3px;vertical-align:bottom;">&nbsp;${d.escort_sub||''}&nbsp;</span></td><td style="font-size:10px;"><b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:110px;">&nbsp;</span></td></tr></table>
+<div style="text-align:center;margin-top:9px;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;">Thank You for Your Business!!!</div>
+</body></html>`;
+
+  try{
+    // Use html2canvas + jsPDF to generate real PDF blob
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:900px;height:1100px;border:none;';
+    document.body.appendChild(iframe);
+    iframe.contentDocument.write(invoiceHTML);
+    iframe.contentDocument.close();
+    await new Promise(r=>setTimeout(r,800));
+    const canvas=await html2canvas(iframe.contentDocument.body,{scale:1.5,useCORS:true,backgroundColor:'#fff'});
+    document.body.removeChild(iframe);
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'letter'});
+    const imgData=canvas.toDataURL('image/jpeg',0.92);
+    pdf.addImage(imgData,'JPEG',0,0,612,792);
+    const pdfBlob=pdf.output('blob');
+    const file=new File([pdfBlob],'Invoice-'+invNum+'.pdf',{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({title:'Invoice #'+invNum+' — Moose\'s Pilot Car Service',files:[file]});
+    } else {
+      // Fallback: download it
+      const url=URL.createObjectURL(pdfBlob);
+      const a=document.createElement('a');a.href=url;a.download='Invoice-'+invNum+'.pdf';a.click();
+      URL.revokeObjectURL(url);
+    }
+  }catch(e){
+    alert('Could not share. Use DOWNLOAD MY COPY instead.');
+  }
 }
 function resetAll(){
   pin='';pinBusy=false;driverObj=null;sigInited=false;sigData='';sigMode='draw';updateDots();$('pin-error').textContent='';clearAllFields();
