@@ -473,6 +473,16 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       RIG MOVE
     </button>
+    <div style="display:flex;align-items:center;gap:.5rem;margin-top:1.2rem;">
+      <div style="flex:1;height:1px;background:#222;"></div>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#444;">OR SEND BY EMAIL</span>
+      <div style="flex:1;height:1px;background:#222;"></div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.75rem;">
+      <input id="send-email" type="email" placeholder="Enter email address" style="flex:1;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:6px;color:#fff;font-family:'Barlow',sans-serif;font-size:.85rem;padding:.6rem .75rem;outline:none;min-width:0;"/>
+      <button onclick="sendEmailCopy()" id="send-btn" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:.95rem;padding:.6rem 1rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">SEND</button>
+    </div>
+    <div id="send-status" style="font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.08em;margin-top:.5rem;min-height:1.1rem;text-align:center;"></div>
   </div>
 </div>
 
@@ -854,6 +864,62 @@ function downloadRigMove(d){
 }
 
 function downloadPilotCar(d){
+function sendEmailCopy(){
+  const d=lastInvoice;if(!d){return;}
+  const email=$('send-email').value.trim();
+  if(!email||!email.includes('@')){$('send-status').style.color='#e53935';$('send-status').textContent='Please enter a valid email.';return;}
+  const btn=$('send-btn');btn.textContent='SENDING...';btn.disabled=true;
+  $('send-status').style.color='#555';$('send-status').textContent='';
+  const invNum=String(d.invNum||'').replace('INV-','');
+  const pos=d.position||'';
+  const rows=[
+    ['Invoice #',invNum],['Date',d.date||''],['Position',pos],
+    ['Driver',d.driver_name||''],['Phone',d.driver_phone||''],
+    ['Trucking Co',d.trucking_co||''],['Load',d.load_type||''],
+    ['Pickup',[(d.pickup_location||''),(d.pickup_city||''),(d.pickup_state||'')].filter(Boolean).join(', ')],
+    ['Dropoff',[(d.dropoff_location||''),(d.dropoff_city||''),(d.dropoff_state||'')].filter(Boolean).join(', ')],
+    ['Trip Miles',d.tripMi?d.tripMi.toFixed(1)+' mi':''],
+    ['Escorted Miles',d.escorted_miles>0?d.escorted_miles+' @ $'+d.escorted_rate.toFixed(2)+'/mi':''],
+    ['Flat Day Rate',d.flat_day_qty>0?d.flat_day_qty+' day @ $'+d.flat_day_rate.toFixed(2):''],
+    ['Motels',d.motel_qty>0?d.motel_qty+' @ $'+d.motel_rate.toFixed(2):''],
+    ['Deadhead',d.deadhead_miles>0?d.deadhead_miles+' mi @ $'+d.deadhead_rate.toFixed(2)+'/mi':''],
+    ['Down Time',d.downtime_hours>0?d.downtime_hours+' hrs @ $'+d.downtime_rate.toFixed(2)+'/hr':''],
+  ].filter(r=>r[1]);
+  const tableRows=rows.map(([k,v])=>'<tr><td style="padding:7px 12px;background:#1a1a1a;color:#FFE500;font-weight:bold;white-space:nowrap;">'+k+'</td><td style="padding:7px 12px;background:#141414;color:#fff;">'+v+'</td></tr>').join('');
+  const body='<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;border-radius:12px;overflow:hidden;">'
+    +'<div style="background:#FFE500;padding:18px 24px;text-align:center;"><div style="font-size:20px;font-weight:900;color:#000;">🚛 MOOSE'S PILOT CAR SERVICE</div><div style="font-size:12px;color:#333;margin-top:3px;">Your Invoice Copy</div></div>'
+    +'<div style="padding:24px;"><table style="width:100%;border-collapse:collapse;margin-bottom:20px;">'+tableRows+'</table>'
+    +'<div style="background:#1a1a1a;border:2px solid #FFE500;border-radius:8px;padding:16px;text-align:center;">'
+    +'<div style="font-size:13px;color:#888;margin-bottom:4px;">TOTAL CHARGES</div>'
+    +'<div style="font-size:32px;font-weight:900;color:#FFE500;">$'+d.total.toFixed(2)+'</div>'
+    +'</div>'
+    +'<p style="color:#555;font-size:11px;text-align:center;margin-top:16px;">Moose's Pilot Car Service LLC · 525 N Peniel · Oklahoma City, OK 73127 · (405) 255-5484</p>'
+    +'</div></div>';
+  fetch('https://api.resend.com/emails',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({
+      from:'Moose Pilot <invoices@moosepilotokc.com>',
+      to:[email],
+      subject:'Your Invoice Copy #'+invNum+' — Moose's Pilot Car Service — $'+d.total.toFixed(2),
+      html:body
+    })
+  }).then(r=>{
+    if(r.ok){
+      $('send-status').style.color='#4caf50';
+      $('send-status').textContent='✓ Sent to '+email;
+      btn.textContent='SENT ✓';
+      setTimeout(()=>{btn.textContent='SEND';btn.disabled=false;},3000);
+    }else{
+      throw new Error('Failed');
+    }
+  }).catch(()=>{
+    $('send-status').style.color='#e53935';
+    $('send-status').textContent='Send failed — check email and try again.';
+    btn.textContent='SEND';btn.disabled=false;
+  });
+}
+
 function clearAllFields(){
   FF.forEach(n=>sv(n,''));BF.forEach(n=>{const e=$('b-'+n);if(e){e.value='';e.classList.remove('hi','dim');}});
   radios.pilot_position='';document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
