@@ -889,7 +889,10 @@ function downloadRigMove(d){
     +'</tr></table>'
     +'<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},600);});<\/script>'
     +'</body></html>';
-  const win=window.open('','_blank','width=900,height=1100');if(!win){alert('Allow pop-ups to download.');return;}win.document.write(html);win.document.close();
+  const frame=document.getElementById('print-frame');
+  const fdoc=frame.contentDocument||frame.contentWindow.document;
+  fdoc.open();fdoc.write(html);fdoc.close();
+  setTimeout(function(){frame.contentWindow.focus();frame.contentWindow.print();},800);
 }
 
 function downloadPilotCar(d){
@@ -991,5 +994,6 @@ function resetAll(){
   $('app').style.display='none';$('success-screen').classList.remove('show');$('pin-screen').style.display='flex';
 }
 </script>
+<iframe id="print-frame" style="display:none;width:0;height:0;border:none;" name="print-frame"></iframe>
 </body>
 </html>
