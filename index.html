@@ -936,8 +936,13 @@ async function scanPermit(input){
     });
 
     const data=await resp.json();
-    const text=data.content[0].text.trim();
-    const extracted=JSON.parse(text);
+    if(!resp.ok){throw new Error('API error: '+(data.error?.message||resp.status));}
+    let text=data.content[0].text.trim();
+    // Strip markdown fences if present
+    text=text.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+    let extracted;
+    try{extracted=JSON.parse(text);}
+    catch(pe){throw new Error('Parse error: '+text.substring(0,100));}
 
     // Fill in the form fields
     const fields={
@@ -968,8 +973,9 @@ async function scanPermit(input){
     status.style.color='#4caf50';
     setTimeout(()=>{status.style.display='none';status.style.color='var(--y)';},4000);
   }catch(e){
-    status.textContent='❌ Could not read permit. Fill in manually.';
-    setTimeout(()=>{status.style.display='none';},3000);
+    status.textContent='❌ '+e.message;
+    status.style.color='var(--red)';
+    setTimeout(()=>{status.style.display='none';status.style.color='var(--y)';},5000);
   }
   input.value='';
 }
