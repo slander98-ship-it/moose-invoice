@@ -693,7 +693,17 @@ async function submitInvoice(){
   if(!fv('driver_name')||!fv('trucking_co_name')){alert('Please fill in Driver Name and Trucking Company.');return;}
   const btn=$('submit-btn');btn.disabled=true;btn.textContent='SUBMITTING...';
   try{
-    const total=calcTotal(),tripMi=calcTripMiles(),invNum='INV-'+Date.now().toString().slice(-6);
+    const total=calcTotal(),tripMi=calcTripMiles();
+  // Get next sequential invoice number starting at 6000
+  let invNum='INV-6000';
+  try{
+    const {data:lastInv}=await db.from('invoices').select('invoice_number').like('invoice_number','INV-%').order('created_at',{ascending:false}).limit(1).maybeSingle();
+    if(lastInv&&lastInv.invoice_number){
+      const lastNum=parseInt(lastInv.invoice_number.replace('INV-',''))||5999;
+      const nextNum=Math.max(lastNum+1,6000);
+      invNum='INV-'+nextNum;
+    }
+  }catch(e){invNum='INV-'+Math.max(6000,Date.now().toString().slice(-4)*1+6000);}
     const firstTrip=trips[0]||{};
     const{data,error}=await db.from('invoices').insert({
       invoice_number:invNum,pilot_position:radios.pilot_position,load_job_number:fv('load_job_number'),job_date:fv('job_date')||null,
