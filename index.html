@@ -798,10 +798,17 @@ async function shareInvoice(){
 <div style="text-align:center;margin-top:9px;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;">Thank You for Your Business!!!</div>
 </body></html>`;
 
-  // Open PDF in new tab — driver uses Android's built-in share button from there
+  // Open PDF in new tab with share/print buttons
+  const shareHTML=invoiceHTML.replace('</body>',`
+<div class="share-bar" style="position:fixed;top:0;left:0;right:0;background:#111;padding:10px 16px;display:flex;gap:10px;justify-content:center;z-index:9999;">
+  <button onclick="window.print()" style="background:#FFE500;color:#000;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;">🖨 SAVE AS PDF</button>
+  <a href="mailto:?subject=Invoice+${encodeURIComponent(d.invNum)}&body=See+attached+invoice+from+Moose%27s+Pilot+Car+Service." style="background:#1a73e8;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;">✉️ EMAIL</a>
+</div>
+<style>@media print{.share-bar{display:none!important;}@page{margin:.45in .5in;}}</style>
+</body>`);
   const win=window.open('','_blank','width=900,height=1100');
   if(!win){alert('Please allow pop-ups to share the invoice.');return;}
-  win.document.write(invoiceHTML);
+  win.document.write(shareHTML);
   win.document.close();
 }
 function resetAll(){
