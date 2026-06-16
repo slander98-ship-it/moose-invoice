@@ -456,37 +456,62 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 <div id="err-toast"></div>
 
 <div id="success-screen">
-  <div class="success-card">
-    <div class="success-icon">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <div class="success-card" style="padding:0;overflow:hidden;max-width:400px;">
+
+    <!-- Yellow header bar -->
+    <div style="background:var(--y);padding:1rem 1.5rem;text-align:center;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#000;letter-spacing:.22em;">MOOSE'S PILOT CAR SERVICE</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;color:#333;letter-spacing:.15em;text-transform:uppercase;margin-top:2px;">LLC · OKC, OK</div>
     </div>
-    <div class="success-title">SUBMITTED</div>
-    <div class="success-num" id="success-num">#—</div>
-    <p class="success-msg">Approval request sent to<br>Moose's Pilot Car Service.</p>
-    <button class="success-btn" onclick="resetAll()">NEW INVOICE</button>
-    <div style="margin-top:.75rem;font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:#555;margin-bottom:.4rem;">DOWNLOAD INVOICE AS:</div>
-    <button class="success-btn-ghost" onclick="downloadPDF('pilot')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      PILOT CAR
-    </button>
-    <button class="success-btn-ghost" onclick="downloadPDF('rig')" style="margin-top:.5rem;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      RIG MOVE
-    </button>
-    <div style="display:flex;align-items:center;gap:.5rem;margin-top:1.2rem;">
-      <div style="flex:1;height:1px;background:#222;"></div>
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#444;">OR SEND BY EMAIL</span>
-      <div style="flex:1;height:1px;background:#222;"></div>
+
+    <div style="padding:1.5rem;">
+
+      <!-- Status -->
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;">
+        <div style="width:56px;height:56px;flex-shrink:0;background:#0a1f0a;border:2.5px solid var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div style="text-align:left;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--y);line-height:1;letter-spacing:.04em;">SUBMITTED</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:#555;margin-top:2px;">Approval sent to Moose</div>
+        </div>
+      </div>
+
+      <!-- Invoice number pill -->
+      <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:8px;padding:.6rem 1rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:1.3rem;">
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:#444;">INVOICE #</span>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.06em;" id="success-num">—</span>
+      </div>
+
+      <!-- New invoice -->
+      <button class="success-btn" onclick="resetAll()" style="width:100%;margin-bottom:1.1rem;">+ NEW INVOICE</button>
+
+      <!-- Download section -->
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#333;text-align:center;margin-bottom:.5rem;">DOWNLOAD INVOICE</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.2rem;">
+        <button onclick="downloadPDF('pilot')" style="background:#0d1100;border:2px solid var(--y);border-radius:8px;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:1.05rem;padding:.8rem .4rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:.35rem;letter-spacing:.05em;-webkit-tap-highlight-color:transparent;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          PILOT CAR
+        </button>
+        <button onclick="downloadPDF('rig')" style="background:#0d1100;border:2px solid var(--y);border-radius:8px;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:1.05rem;padding:.8rem .4rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:.35rem;letter-spacing:.05em;-webkit-tap-highlight-color:transparent;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          RIG MOVE
+        </button>
+      </div>
+
+      <!-- Send section -->
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#333;text-align:center;margin-bottom:.5rem;">SEND A COPY</div>
+      <div style="display:flex;gap:.4rem;margin-bottom:.3rem;">
+        <input id="send-email" type="email" placeholder="Email address" style="flex:1;background:#141414;border:1px solid #2a2a2a;border-radius:6px;color:#fff;font-family:'Barlow',sans-serif;font-size:.85rem;padding:.6rem .75rem;outline:none;min-width:0;color-scheme:dark;"/>
+        <button onclick="sendEmailCopy()" id="send-btn" style="background:var(--y);border:none;border-radius:6px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:.95rem;padding:.6rem 1rem;cursor:pointer;white-space:nowrap;flex-shrink:0;letter-spacing:.05em;">SEND</button>
+      </div>
+      <div id="send-status" style="font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:.08em;min-height:.9rem;padding-left:2px;margin-bottom:.4rem;"></div>
+      <button onclick="shareInvoice()" style="width:100%;background:#141414;border:1px solid #222;border-radius:6px;color:#555;font-family:'Bebas Neue',sans-serif;font-size:.95rem;padding:.65rem 1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem;letter-spacing:.06em;-webkit-tap-highlight-color:transparent;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        SHARE / TEXT
+      </button>
+
     </div>
-    <div style="display:flex;gap:.5rem;margin-top:.75rem;">
-      <input id="send-email" type="email" placeholder="Enter email address" style="flex:1;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:6px;color:#fff;font-family:'Barlow',sans-serif;font-size:.85rem;padding:.6rem .75rem;outline:none;min-width:0;"/>
-      <button onclick="sendEmailCopy()" id="send-btn" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:.95rem;padding:.6rem 1rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">SEND</button>
-    </div>
-    <div id="send-status" style="font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.08em;margin-top:.5rem;min-height:1.1rem;text-align:center;"></div>
-    <button onclick="shareInvoice()" style="width:100%;margin-top:.5rem;background:transparent;border:1.5px solid #333;border-radius:6px;color:#888;font-family:'Bebas Neue',sans-serif;font-size:.95rem;padding:.6rem 1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      SHARE / TEXT
-    </button>
   </div>
 </div>
 
