@@ -468,6 +468,14 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       DOWNLOAD MY COPY
     </button>
+    <button class="success-btn-ghost" onclick="shareEmail()" style="margin-top:.5rem;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      EMAIL MY COPY
+    </button>
+    <button class="success-btn-ghost" onclick="shareText()" style="margin-top:.5rem;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      TEXT MY COPY
+    </button>
   </div>
 </div>
 
@@ -752,6 +760,30 @@ function clearAllFields(){
   $('rate-chip').classList.remove('show');$('miles-calc').textContent='—';$('bill-total').textContent='$0.00';$('rate-compare').classList.remove('show');
   if($('trips-container'))renderTrips();
   sv('driver_name',driverObj?driverObj.name:'');sv('driver_phone',driverObj?driverObj.phone:'');
+}
+function shareEmail(){
+  const d=lastInvoice;if(!d)return;
+  const sub=encodeURIComponent('Invoice #'+d.invNum+' — Moose\'s Pilot Car Service');
+  const body=encodeURIComponent(
+    'Invoice #'+d.invNum+'\n'+
+    'Date: '+(d.date||'')+'\n'+
+    'Driver: '+(d.driver_name||'')+'\n'+
+    'Trucking Co: '+(d.trucking_co||'')+'\n'+
+    'Route: '+(d.pickup_city||'')+' → '+(d.dropoff_city||'')+'\n'+
+    'Total: $'+d.total.toFixed(2)
+  );
+  window.location.href='mailto:?subject='+sub+'&body='+body;
+}
+function shareText(){
+  const d=lastInvoice;if(!d)return;
+  const msg=encodeURIComponent(
+    'Invoice #'+d.invNum+' — Moose\'s Pilot Car Service\n'+
+    'Driver: '+(d.driver_name||'')+'\n'+
+    'Co: '+(d.trucking_co||'')+'\n'+
+    'Route: '+(d.pickup_city||'')+' → '+(d.dropoff_city||'')+'\n'+
+    'Total: $'+d.total.toFixed(2)
+  );
+  window.location.href='sms:?&body='+msg;
 }
 function resetAll(){
   pin='';pinBusy=false;driverObj=null;sigInited=false;sigData='';sigMode='draw';updateDots();$('pin-error').textContent='';clearAllFields();
