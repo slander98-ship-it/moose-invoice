@@ -860,13 +860,14 @@ async function sendInvoiceEmail(){
       body:JSON.stringify({from:'invoices@moosepilotokc.com',to:[to],
         subject:'Invoice #'+invNum+' — Moose\'s Pilot Car Service',html:emailHTML})
     });
+    const result=await resp.json();
     if(resp.ok){
       btn.textContent='✅ SENT!';
       setTimeout(()=>{btn.disabled=false;btn.textContent='SEND INVOICE';
         document.getElementById('email-panel').style.display='none';
         document.getElementById('email-to').value='';},2500);
-    }else{throw new Error('failed');}
-  }catch(e){btn.disabled=false;btn.textContent='SEND INVOICE';alert('Could not send. Try again.');}
+    }else{throw new Error(JSON.stringify(result));}
+  }catch(e){btn.disabled=false;btn.textContent='SEND INVOICE';alert('Error: '+e.message);}
 }
 function resetAll(){
   pin='';pinBusy=false;driverObj=null;sigInited=false;sigData='';sigMode='draw';updateDots();$('pin-error').textContent='';clearAllFields();
