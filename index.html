@@ -45,7 +45,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .step-sub{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:#444;margin-bottom:1.3rem;}
 .fg{display:flex;flex-direction:column;gap:.28rem;margin-bottom:.88rem;}
 .fg label{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--y);}
-.fg input,.fg select,.fg textarea{width:100%;background:var(--bk3);border:1px solid var(--border);border-radius:6px;color:var(--wh);font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;-webkit-appearance:none;color-scheme:dark;}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--bk3);border:1.5px solid var(--y);border-radius:6px;color:var(--wh);font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;-webkit-appearance:none;color-scheme:dark;}
 .fg input:focus,.fg select:focus{border-color:#3a3a3a;}
 .fg input::placeholder{color:#444;}
 .fg textarea{resize:vertical;height:100px;}
@@ -111,8 +111,8 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .bill-total-label{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:#777;margin-bottom:.2rem;}
 .bill-total-amount{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;color:var(--y);}
 .sig-tabs{display:flex;gap:.5rem;margin-bottom:.8rem;}
-.sig-tab{flex:1;padding:.5rem;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;text-align:center;}
-.sig-tab.active{border-color:var(--y);color:var(--y);background:#0d1100;}
+.sig-tab{flex:1;padding:.5rem;border-radius:6px;border:1.5px solid var(--y);background:transparent;color:var(--y);font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;text-align:center;opacity:.5;}
+.sig-tab.active{border-color:var(--y);color:var(--y);background:#0d1100;opacity:1;}
 .sig-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#0d0d0d;}
 #sig-canvas{width:100%;cursor:crosshair;display:block;touch-action:none;}
 .sig-name-wrap{display:none;}
