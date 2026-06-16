@@ -483,6 +483,10 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <button onclick="sendEmailCopy()" id="send-btn" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:.95rem;padding:.6rem 1rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">SEND</button>
     </div>
     <div id="send-status" style="font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.08em;margin-top:.5rem;min-height:1.1rem;text-align:center;"></div>
+    <button onclick="shareInvoice()" style="width:100%;margin-top:.5rem;background:transparent;border:1.5px solid #333;border-radius:6px;color:#888;font-family:'Bebas Neue',sans-serif;font-size:.95rem;padding:.6rem 1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      SHARE / TEXT
+    </button>
   </div>
 </div>
 
@@ -918,6 +922,33 @@ function sendEmailCopy(){
     $('send-status').textContent='Send failed — check email and try again.';
     btn.textContent='SEND';btn.disabled=false;
   });
+}
+
+function shareInvoice(){
+  const d=lastInvoice;if(!d)return;
+  const invNum=String(d.invNum||'').replace('INV-','');
+  const text='Invoice #'+invNum+' — Moose's Pilot Car Service\n'
+    +'Driver: '+(d.driver_name||'')+'\n'
+    +'Trucking Co: '+(d.trucking_co||'')+'\n'
+    +'Load: '+(d.load_type||'')+'\n'
+    +'Route: '+[(d.pickup_city||''),(d.dropoff_city||'')].filter(Boolean).join(' → ')+'\n'
+    +'Total: $'+d.total.toFixed(2)+'\n'
+    +'Date: '+(d.date||'')+'\n\n'
+    +'Moose's Pilot Car Service LLC\n(405) 255-5484 · moosepilotokc.com';
+  if(navigator.share){
+    navigator.share({title:'Invoice #'+invNum+' — Moose's Pilot Car Service',text:text})
+      .catch(()=>{});
+  }else{
+    // Fallback — copy to clipboard
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn=event.currentTarget;
+      const orig=btn.innerHTML;
+      btn.textContent='COPIED!';
+      setTimeout(()=>{btn.innerHTML=orig;},2000);
+    }).catch(()=>{
+      prompt('Copy this to share:',text);
+    });
+  }
 }
 
 function clearAllFields(){
