@@ -705,16 +705,16 @@ async function submitInvoice(){
   // Get next sequential invoice number starting at 6000
   let invNum='INV-6000';
   try{
-    const {data:allInvs}=await db.from('invoices').select('invoice_num').gte('invoice_num','INV-6000').order('invoice_num',{ascending:false}).limit(1).maybeSingle();
-    if(allInvs&&allInvs.invoice_num){
-      const lastNum=parseInt((allInvs.invoice_num||'').replace('INV-',''))||5999;
+    const {data:allInvs}=await db.from('invoices').select('invoice_number').gte('invoice_number','INV-6000').order('invoice_number',{ascending:false}).limit(1).maybeSingle();
+    if(allInvs&&allInvs.invoice_number){
+      const lastNum=parseInt((allInvs.invoice_number||'').replace('INV-',''))||5999;
       const nextNum=Math.max(lastNum+1,6000);
       invNum='INV-'+nextNum;
     }
   }catch(e){invNum='INV-'+Math.max(6000,Date.now().toString().slice(-4)*1+6000);}
     const firstTrip=trips[0]||{};
     const{data,error}=await db.from('invoices').insert({
-      invoice_num:invNum,pilot_position:radios.pilot_position,load_job_number:fv('load_job_number'),job_date:fv('job_date')||null,
+      invoice_number:invNum,pilot_position:radios.pilot_position,load_job_number:fv('load_job_number'),job_date:fv('job_date')||null,
       trucking_co_name:fv('trucking_co_name'),company_name:fv('trucking_co_name'),trucking_co_phone:fv('trucking_co_phone'),billing_address:fv('billing_address'),contact_name:fv('contact_name'),
       driver_name:fv('driver_name'),driver_phone:fv('driver_phone'),driver_truck_number:fv('driver_truck_number'),driver_trailer_number:fv('driver_trailer_number'),
       load_type:fv('load_type'),load_height:fv('load_height'),load_width:fv('load_width'),load_length:fv('load_length'),load_weight:fv('load_weight'),
