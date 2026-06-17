@@ -759,7 +759,7 @@ async function shareInvoice(){
     const mi=(i===d.trips.length-1&&d.tripMi)?d.tripMi.toFixed(1):'';
     return`<tr style="height:21px;"><td style="${C}">${t.date||''}</td><td style="${C}">${t.startCity||''}</td><td style="${C}text-align:center;">${t.startTime||''}</td><td style="${C}text-align:center;">${so}</td><td style="${C}">${t.endCity||''}</td><td style="${C}text-align:center;">${t.endTime||''}</td><td style="${C}text-align:center;">${eo}</td><td style="${C}text-align:center;">${mi}</td><td style="${C}text-align:center;">${t.motel||''}</td></tr>`;
   }).join('');
-  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;display:inline-block;vertical-align:bottom;filter:brightness(0);" alt=""/>`:'';
+  const sigHtml=d.sigData?`<img src="${d.sigData}" style="height:28px;max-width:200px;display:inline-block;vertical-align:bottom;filter:brightness(0);" alt=""/>`:'';
   const invNum=d.invNum.replace('INV-','');
   const puAddr=[d.pickup_location,d.pickup_city&&d.pickup_state?d.pickup_city+', '+d.pickup_state:d.pickup_city||d.pickup_state].filter(Boolean).join(' — ');
   const doAddr=[d.dropoff_location,d.dropoff_city&&d.dropoff_state?d.dropoff_city+', '+d.dropoff_state:d.dropoff_city||d.dropoff_state].filter(Boolean).join(' — ');
