@@ -1122,41 +1122,10 @@ async function scanPermit(input){
 
   try{
     status.textContent='🤖 Extracting info with AI...';
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1000,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
-          {type:'text',text:`Extract info from this oversize load permit or trucking document. Return ONLY valid JSON, no markdown:
-{
-  "trucking_co": "company name",
-  "trucking_co_phone": "phone number or empty string",
-  "billing_address": "full address or empty string",
-  "contact_name": "contact person or empty string",
-  "load_type": "load description",
-  "load_height": "height like 13'6\" or empty",
-  "load_width": "width like 14'8\" or empty",
-  "load_length": "length like 75'0\" or empty",
-  "load_weight": "weight or empty",
-  "pickup_location": "pickup street address or empty",
-  "pickup_city": "pickup city or empty",
-  "pickup_state": "pickup state 2 letters or empty",
-  "pickup_date": "YYYY-MM-DD or empty",
-  "dropoff_location": "dropoff street or empty",
-  "dropoff_city": "dropoff city or empty",
-  "dropoff_state": "dropoff state 2 letters or empty",
-  "job_number": "permit number or job number or empty"
-}`
-        }]}]
-      })
-    });
-
+    const resp=await fetch('/api/scan-permit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageData:b64,mimeType:file.type})});
     const data=await resp.json();
-    if(!resp.ok){throw new Error('API error: '+(data.error?.message||resp.status));}
-    let text=data.content[0].text.trim();
+    if(!resp.ok){throw new Error(data.error||'Scan error');}
+    let text=data.text||'{}';
     // Strip markdown fences if present
     text=text.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
     let extracted;
