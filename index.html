@@ -267,7 +267,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="step-title">DRIVER &amp; LOAD</div>
     <div class="step-sub">STEP 3 OF 9</div>
     <div class="g2">
-      <div class="fg"><label>DRIVER NAME *</label><input id="f-driver_name" type="text" oninput="saveDraft()"/></div>
+      <div class="fg"><label>TRUCK DRIVER'S NAME *</label><input id="f-driver_name" type="text" placeholder="Name of truck driver (not pilot car driver)" oninput="saveDraft()"/></div>
       <div class="fg"><label>DRIVER PHONE</label><input id="f-driver_phone" type="tel" oninput="saveDraft()"/></div>
     </div>
     <div class="g2">
@@ -943,7 +943,7 @@ function downloadPDF(fmt){
   const invNum=(d.invNum||'').replace('INV-','');
   const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
   const C='border:1px solid #000;padding:2px 4px;font-size:9.5px;';const CH=C+'background:#f0f0f0;font-weight:700;';
-  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;filter:brightness(0);" alt=""/>`:'';
+  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:50px;max-width:220px;filter:brightness(0) !important;" alt=""/>`:'';
   const tripRows=tdata.map((t,i)=>{
     const so=(i===0&&d.start_odometer)?d.start_odometer.toFixed(1):'';
     const eo=(i===d.trips.length-1&&d.end_odometer)?d.end_odometer.toFixed(1):'';
