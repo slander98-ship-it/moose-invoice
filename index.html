@@ -42,6 +42,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 #draft-banner button{background:transparent;border:1px solid var(--green);color:var(--green);font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:.22rem .65rem;border-radius:4px;cursor:pointer;}
 .panel{display:none;padding:1.3rem 1.1rem;max-width:700px;margin:0 auto;padding-bottom:5rem;}
 .panel.active{display:block;}
+.permit-scan-btn{width:100%;background:#0d1100;border:2px dashed var(--y);border-radius:10px;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.08em;padding:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem;margin-bottom:1.2rem;}
 .step-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--y);margin-bottom:.1rem;}
 .step-sub{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:#444;margin-bottom:1.3rem;}
 .fg{display:flex;flex-direction:column;gap:.28rem;margin-bottom:.88rem;}
@@ -218,6 +219,11 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
   <div class="step-bar" id="step-bar"></div>
 
   <div class="panel active" id="panel-1">
+    <input type="file" id="permit-upload" accept="image/*" style="display:none;" onchange="scanPermit(this)"/>
+    <button class="permit-scan-btn" onclick="document.getElementById('permit-upload').click()">
+      📋 SCAN PERMIT TO AUTO-FILL
+    </button>
+    <div id="permit-status" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--y);text-align:center;margin-bottom:.8rem;"></div>
     <div class="step-title">START ODOMETER</div>
     <div class="step-sub">STEP 1 OF 9 — RECORD BEFORE YOU LEAVE</div>
     <div class="odo-card start">
@@ -465,10 +471,12 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="success-num" id="success-num">#—</div>
     <p class="success-msg">Approval request sent to<br>Moose's Pilot Car Service.</p>
     <button class="success-btn" onclick="resetAll()">NEW INVOICE</button>
-    <button class="success-btn-ghost" onclick="downloadPDF()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      DOWNLOAD MY COPY
-    </button>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.2em;color:#555;text-align:center;margin-bottom:.4rem;">— SELECT INVOICE TYPE —</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
+      <button id="btn-pilot" class="success-btn-ghost" onclick="selectFormat('pilot')" style="padding:.7rem .3rem;font-size:.95rem;">PILOT CAR</button>
+      <button id="btn-rig" class="success-btn-ghost" onclick="selectFormat('rig')" style="padding:.7rem .3rem;font-size:.95rem;opacity:.5;">RIG MOVE</button>
+    </div>
+    <button class="success-btn-ghost" onclick="downloadPDF(selectedFormat)" style="width:100%;margin-bottom:.4rem;">⬇ DOWNLOAD</button>
     <div id="email-panel" style="display:none;margin-top:.5rem;">
       <input id="email-to" type="email" placeholder="Enter email address..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
       <button class="success-btn" onclick="sendInvoiceEmail()" style="width:100%;" id="send-email-btn">SEND INVOICE</button>
