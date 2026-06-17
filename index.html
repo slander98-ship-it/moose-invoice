@@ -709,11 +709,12 @@ async function submitInvoice(){
   // Get next sequential invoice number starting at 6000
   let invNum='INV-6000';
   try{
-    const {data:allInvs}=await db.from('invoices').select('invoice_number').gte('invoice_number','INV-6000').order('invoice_number',{ascending:false}).limit(1).maybeSingle();
-    if(allInvs&&allInvs.invoice_number){
-      const lastNum=parseInt((allInvs.invoice_number||'').replace('INV-',''))||5999;
-      const nextNum=Math.max(lastNum+1,6000);
-      invNum='INV-'+nextNum;
+    // Get all recent invoices and find the highest number >= 6000
+    const {data:recentInvs}=await db.from('invoices').select('invoice_number').order('created_at',{ascending:false}).limit(50);
+    if(recentInvs&&recentInvs.length>0){
+      const nums=recentInvs.map(r=>parseInt((r.invoice_number||'').replace('INV-',''))||0).filter(n=>n>=6000);
+      const lastNum=nums.length>0?Math.max(...nums):5999;
+      invNum='INV-'+(lastNum+1);
     }
   }catch(e){invNum='INV-'+Math.max(6000,Date.now().toString().slice(-4)*1+6000);}
     const firstTrip=trips[0]||{};
