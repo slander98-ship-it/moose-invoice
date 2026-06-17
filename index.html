@@ -532,7 +532,7 @@ document.addEventListener('keydown',e=>{
 function enterApp(){
   $('pin-screen').style.display='none';
   $('tb-sub').textContent=driverObj.name+' — INVOICE';
-  sv('driver_name',driverObj.name);sv('driver_phone',driverObj.phone);
+  sv('driver_phone',driverObj.phone);// driver_name left blank — truck driver fills it in
   if(!fv('job_date'))sv('job_date',new Date().toISOString().slice(0,10));
   restoreDraft();buildStepBar();showWelcome();
 }
@@ -1091,7 +1091,7 @@ ${[...Array(Math.max(0,5-tdata.length))].map(()=>'<tr><td class="box" style="hei
 </tr>
 </table>
 
-<div style="margin-bottom:4px;">${sigHtml}<br/><b>DRIVER'S SIGNATURE:</b> <span style="display:inline-block;border-bottom:1px solid #000;width:220px;">&nbsp;</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>DATE:</b> ${d.date||''}</div>
+<div style="margin-bottom:4px;"><b>DRIVER'S SIGNATURE:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:220px;vertical-align:bottom;">${sigHtml}</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>DATE:</b> ${d.date||''}</div>
 <div style="text-align:center;font-size:7.5px;margin-bottom:3px;"><b>TERMS: DUE UPON RECEIPT</b><br/>After 45 days at 9% per month interest will be added to your BILL. All Collection cost/Attorney fees incurred to collect Debit is the Responsibility of the Trucking Company.</div>
 <div style="font-size:9px;"><b>Escort Subcontracting for Moose's Pilot Service:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:160px;">&nbsp;${d.escort_sub||''}&nbsp;</span> &nbsp;&nbsp; <b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:100px;">&nbsp;</span></div>
 <div style="text-align:center;font-style:italic;font-weight:700;font-size:10px;margin-top:6px;">Thank You for Your Business!!!</div>
