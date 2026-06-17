@@ -471,7 +471,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="success-num" id="success-num">#—</div>
     <p class="success-msg">Approval request sent to<br>Moose's Pilot Car Service.</p>
     <button class="success-btn" onclick="resetAll()">NEW INVOICE</button>
-    <button class="success-btn-ghost" onclick="downloadPDF('pilot')" style="width:100%;margin-bottom:.4rem;">
+    <button class="success-btn-ghost" onclick="downloadPilotCar('pilot')" style="width:100%;margin-bottom:.4rem;">
       ⬇ DOWNLOAD PILOT CAR PDF
     </button>
     <div id="email-panel" style="display:none;margin-top:.5rem;">
@@ -935,7 +935,7 @@ async function scanPermit(input){
   input.value='';
 }
 
-function downloadPDF(fmt){
+function downloadPilotCar(fmt){
   const d=lastInvoice;if(!d){alert('No invoice data.');return;}
   // rig move disabled
   const pos=d.position||'';const chk=(p)=>pos===p?'[X]':'[ ]';
