@@ -803,88 +803,7 @@ async function sendInvoiceEmail(){
   const btn=document.getElementById('send-email-btn');
   btn.disabled=true;btn.textContent='SENDING...';
   const invNum=(d.invNum||'').replace('INV-','');
-  const pos=d.position||'';
-  const chk=(p)=>pos===p?'[X]':'[ ]';
-  const fq=(v)=>v>0?v:'';
-  const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
-  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:40px;filter:brightness(0);" alt=""/>`:'';
-  const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
-  const C='border:1px solid #ccc;padding:2px 4px;font-size:9px;';
-  const tripRows=tdata.map((t,i)=>{
-    const so=(i===0&&d.start_odometer)?d.start_odometer.toFixed(1):'';
-    const eo=(i===d.trips.length-1&&d.end_odometer)?d.end_odometer.toFixed(1):'';
-    const mi=(i===d.trips.length-1&&d.tripMi)?d.tripMi.toFixed(1):'';
-    return`<tr><td style="${C}">${t.date||''}</td><td style="${C}">${t.startCity||''}</td><td style="${C}">${t.startTime||''}</td><td style="${C}">${so}</td><td style="${C}">${t.endCity||''}</td><td style="${C}">${t.endTime||''}</td><td style="${C}">${eo}</td><td style="${C}">${mi}</td><td style="${C}">${t.motel||''}</td></tr>`;
-  }).join('');
-  const emailHTML=`<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;font-size:10px;color:#000;padding:16px;">
-<div style="text-align:center;margin-bottom:10px;"><div style="font-size:20px;font-weight:700;">Moose's Pilot Car Service, LLC</div><div style="font-size:9px;">525 N Peniel — Oklahoma City, OK 73127 — 405-255-5484</div><div style="font-size:18px;font-weight:900;margin-top:4px;">Invoice #${invNum}</div></div>
-<p><b>Date:</b> ${d.date||''} &nbsp; <b>Pilot Position:</b> ${chk('Lead')} Lead ${chk('Chase')} Chase ${chk('High Pole')} High Pole ${chk('Steer Man')} Steer Man</p>
-<p><b>Trucking Co:</b> ${d.trucking_co||''} &nbsp; <b>Phone:</b> ${d.trucking_co_phone||''}</p>
-<p><b>Driver:</b> ${d.driver_name||''} &nbsp; <b>Truck#:</b> ${d.driver_truck||''}</p>
-<p><b>Load:</b> ${d.load_type||''}</p>
-<p><b>Pick Up:</b> ${d.pickup_location||''} ${d.pickup_city||''}, ${d.pickup_state||''} &nbsp; <b>Date:</b> ${d.pickup_date||''}</p>
-<p><b>Drop Off:</b> ${d.dropoff_location||''} ${d.dropoff_city||''}, ${d.dropoff_state||''} &nbsp; <b>Date:</b> ${d.dropoff_date||''}</p>
-<table style="width:100%;border-collapse:collapse;margin:8px 0;"><thead><tr style="background:#f0f0f0;"><th style="${C}">Date</th><th style="${C}">Start City</th><th style="${C}">Start</th><th style="${C}">Start Odo</th><th style="${C}">End City</th><th style="${C}">End</th><th style="${C}">End Odo</th><th style="${C}">Miles</th><th style="${C}">Motel</th></tr></thead><tbody>${tripRows}</tbody></table>
-<table style="width:100%;margin:8px 0;"><tr>
-<td style="vertical-align:top;font-size:9px;padding-right:10px;">${[['ESCORTED MILES',d.escorted_miles,d.escorted_rate],['DEADHEAD',d.deadhead_miles,d.deadhead_rate],['FLAT DAY RATE',d.flat_day_qty,d.flat_day_rate],['MOTELS',d.motel_qty,d.motel_rate],["NO-GO'S",d.nogo_qty,d.nogo_rate]].map(([l,q,r])=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:2px 0;"><b>${l}</b><span>${fq(q)} ${r>0?'@ $'+r.toFixed(2):''}</span></div>`).join('')}</td>
-<td style="vertical-align:top;font-size:9px;">${[['PER MILE',d.escorted_miles,d.escorted_rate],['PER MILE',d.deadhead_miles,d.deadhead_rate],['PER DAY',d.flat_day_qty,d.flat_day_rate],['PER DAY',d.motel_qty,d.motel_rate],['PER DAY',d.nogo_qty,d.nogo_rate]].map(([l,q,r])=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:2px 0;"><span>${l} =</span><b>${fa(q,r)||''}</b></div>`).join('')}
-<div style="border-top:2px solid #000;margin-top:6px;padding-top:4px;text-align:right;font-size:12px;font-weight:700;">TOTAL = $${d.total.toFixed(2)}</div></td>
-</tr></table>
-<p style="margin-top:8px;font-size:9px;"><b>Driver Signature:</b> ${sigHtml}</p>
-<p style="font-size:8px;text-align:center;margin-top:8px;">TERMS: DUE UPON RECEIPT — After 45 days at 9% per month interest will be added to your BILL.</p>
-<p style="text-align:center;font-style:italic;font-weight:700;margin-top:6px;">Thank You for Your Business!!!</p>
-</body></html>`;
   try{
-    // Build PDF with jsPDF for attachment
-    let pdfB64=cachedPdfB64;
-    if(!pdfB64&&window.jspdf){
-      try{
-        const {jsPDF}=window.jspdf;
-        const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'letter'});
-        const pw=612,ml=36,mr=36,mt=36;let y=mt;
-        const fnt=(sz,bold)=>{pdf.setFontSize(sz);pdf.setFont('helvetica',bold?'bold':'normal');};
-        const txt=(t,x,yy,opts)=>pdf.text(String(t||''),x,yy,opts||{});
-        const ln=(x1,y1,x2,y2)=>pdf.line(x1,y1,x2,y2);
-        if(LOGO_BW){try{pdf.addImage(LOGO_BW,'PNG',ml,y,80,80);}catch(e){}}
-        fnt(18,true);txt("Moose's Pilot Car Service, LLC",pw/2,y+24,{align:'center'});
-        fnt(9,false);txt("525 N Peniel — OKC, OK 73127 — 405-255-5484",pw/2,y+38,{align:'center'});
-        fnt(10,true);txt("Invoice #",pw-mr-70,y+16);fnt(20,true);txt(invNum.replace('INV-',''),pw-mr,y+38,{align:'right'});
-        y+=92;ln(ml,y,pw-mr,y);y+=8;
-        const pos2=d.position||'';
-        fnt(8,true);txt("Pilot Position:",ml,y);fnt(8,false);
-        txt(`${pos2==='Lead'?'[X]':'[ ]'} Lead  ${pos2==='Chase'?'[X]':'[ ]'} Chase  ${pos2==='High Pole'?'[X]':'[ ]'} High Pole  ${pos2==='Steer Man'?'[X]':'[ ]'} Steer Man`,ml+60,y);
-        fnt(8,true);txt("DATE:",pw-mr-70,y);fnt(8,false);txt(d.date||'',pw-mr-42,y);y+=13;
-        fnt(8,true);txt("TRUCKING CO:",ml,y);fnt(8,false);txt(d.trucking_co||'',ml+60,y);txt("PHONE:",pw/2+10,y);txt(d.trucking_co_phone||'',pw/2+42,y);y+=12;
-        txt("DRIVER:",ml,y);fnt(8,false);txt(d.driver_name||'',ml+34,y);fnt(8,true);txt("TRUCK#:",ml+200,y);fnt(8,false);txt(d.driver_truck||'',ml+235,y);y+=12;
-        fnt(8,true);txt("LOAD:",ml,y);fnt(8,false);txt(d.load_type||'',ml+28,y);y+=12;
-        fnt(8,true);txt("PICK UP:",ml,y);fnt(8,false);txt(`${d.pickup_city||''}, ${d.pickup_state||''}`,ml+40,y);fnt(8,true);txt("DATE:",pw-mr-70,y);fnt(8,false);txt(d.pickup_date||'',pw-mr-42,y);y+=12;
-        fnt(8,true);txt("DROP OFF:",ml,y);fnt(8,false);txt(`${d.dropoff_city||''}, ${d.dropoff_state||''}`,ml+46,y);fnt(8,true);txt("DATE:",pw-mr-70,y);fnt(8,false);txt(d.dropoff_date||'',pw-mr-42,y);y+=14;
-        pdf.setFillColor(240,240,240);pdf.rect(ml,y-9,pw-ml-mr,13,'F');
-        const tcw=[42,96,44,68,96,44,68,42,42];const tch=['DATE','START CITY,ST','START','START ODO','END CITY,ST','END','END ODO','MILES','MOTEL'];
-        let tx=ml;fnt(7,true);tch.forEach((h,i)=>{pdf.rect(tx,y-9,tcw[i],13);txt(h,tx+tcw[i]/2,y,{align:'center'});tx+=tcw[i];});y+=5;
-        const tdata2=[...d.trips];while(tdata2.length<5)tdata2.push({});
-        fnt(7,false);tdata2.forEach((t,i)=>{
-          const so=(i===0&&d.start_odometer)?String(d.start_odometer.toFixed(1)):'';
-          const eo=(i===d.trips.length-1&&d.end_odometer)?String(d.end_odometer.toFixed(1)):'';
-          const mi=(i===d.trips.length-1&&d.tripMi)?String(d.tripMi.toFixed(1)):'';
-          tx=ml;[t.date||'',t.startCity||'',t.startTime||'',so,t.endCity||'',t.endTime||'',eo,mi,t.motel||''].forEach((v,j)=>{pdf.rect(tx,y-8,tcw[j],12);txt(v,tx+2,y);tx+=tcw[j];});y+=12;
-        });y+=5;
-        const fq2=(v)=>v>0?String(v):'';const fa2=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
-        const charges=[['TOTAL ESCORTED MILES',d.escorted_miles,d.escorted_rate,'PER MILE ='],['FLAT DAY RATE',d.flat_day_qty,d.flat_day_rate,'PER DAY ='],['MOTELS',d.motel_qty,d.motel_rate,'PER DAY ='],["NO-GO'S",d.nogo_qty,d.nogo_rate,'PER DAY =']];
-        fnt(8,false);charges.forEach(([lbl,q,r,rlbl])=>{
-          txt(lbl,ml,y);ln(ml+130,y+1,ml+168,y+1);txt(fq2(q),ml+166,y,{align:'right'});
-          txt('@',ml+173,y);ln(ml+180,y+1,ml+218,y+1);txt(r>0?r.toFixed(2):'',ml+216,y,{align:'right'});
-          txt(rlbl,pw/2+8,y);ln(pw/2+60,y+1,pw-mr,y+1);txt(fa2(q,r),pw-mr,y,{align:'right'});y+=13;
-        });
-        y+=4;ln(pw/2+8,y,pw-mr,y);y+=2;fnt(10,true);txt('TOTAL CHARGES = $'+d.total.toFixed(2),pw-mr,y+12,{align:'right'});y+=22;
-        if(d.sigData){try{pdf.addImage(d.sigData,'PNG',ml,y-20,100,26);}catch(e){}}
-        ln(ml,y+8,ml+160,y+8);fnt(8,true);txt("DRIVER'S SIGNATURE:",ml,y+18);txt('DATE:',pw-mr-80,y+18);fnt(8,false);txt(d.date||'',pw-mr-52,y+18);y+=28;
-        fnt(7,false);txt('TERMS: DUE UPON RECEIPT',pw/2,y,{align:'center'});y+=12;
-        fnt(9,true);txt('Thank You for Your Business!!!',pw/2,y,{align:'center'});
-        pdfB64=pdf.output('datauristring').split(',')[1];
-        cachedPdfB64=pdfB64;
-      }catch(pe){console.warn('PDF gen failed:',pe);}
-    }
     const resp=await fetch('/api/send-email',{method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -915,7 +834,7 @@ async function sendInvoiceEmail(){
       setTimeout(()=>{btn.disabled=false;btn.textContent='SEND INVOICE';
         document.getElementById('email-panel').style.display='none';
         document.getElementById('email-to').value='';},2500);
-    }else{throw new Error('failed');}
+    }else{throw new Error('Server error');}
   }catch(e){btn.disabled=false;btn.textContent='SEND INVOICE';alert('Could not send. Try again.');}
 }
 function selectFormat(fmt){
