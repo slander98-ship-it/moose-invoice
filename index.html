@@ -887,9 +887,28 @@ async function sendInvoiceEmail(){
     }
     const resp=await fetch('/api/send-email',{method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({to,subject:'Invoice #'+invNum+' — Moose\'s Pilot Car Service',
-        pdfBase64:pdfB64||null,filename:pdfB64?'Invoice-'+invNum+'.pdf':null,
-        html:'<p>Invoice #'+invNum+' from Moose\'s Pilot Car Service. Driver: '+d.driver_name+'. Total: $'+d.total.toFixed(2)+'</p>'})
+      body:JSON.stringify({
+        to,
+        subject:'Invoice #'+invNum+' — Moose\'s Pilot Car Service',
+        invoiceData:{
+          invNum:d.invNum,position:d.position,date:d.date,
+          trucking_co:d.trucking_co,trucking_co_phone:d.trucking_co_phone,
+          billing_address:d.billing_address,contact_name:d.contact_name,
+          driver_name:d.driver_name,driver_phone:d.driver_phone,driver_truck:d.driver_truck,
+          load_type:d.load_type,load_height:d.load_height,load_width:d.load_width,load_length:d.load_length,load_weight:d.load_weight,
+          pickup_location:d.pickup_location,pickup_city:d.pickup_city,pickup_state:d.pickup_state,pickup_date:d.pickup_date,
+          dropoff_location:d.dropoff_location,dropoff_city:d.dropoff_city,dropoff_state:d.dropoff_state,dropoff_date:d.dropoff_date,
+          trips:d.trips,start_odometer:d.start_odometer,end_odometer:d.end_odometer,tripMi:d.tripMi,
+          escorted_miles:d.escorted_miles,escorted_rate:d.escorted_rate,
+          fuel_sc_miles:d.fuel_sc_miles,fuel_sc_rate:d.fuel_sc_rate,
+          deadhead_miles:d.deadhead_miles,deadhead_rate:d.deadhead_rate,
+          flat_day_qty:d.flat_day_qty,flat_day_rate:d.flat_day_rate,
+          motel_qty:d.motel_qty,motel_rate:d.motel_rate,
+          downtime_hours:d.downtime_hours,downtime_rate:d.downtime_rate,
+          nogo_qty:d.nogo_qty,nogo_rate:d.nogo_rate,
+          total:d.total,escort_sub:d.escort_sub
+        }
+      })
     });
     if(resp.ok){
       btn.textContent='✅ SENT!';
