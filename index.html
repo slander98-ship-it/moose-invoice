@@ -943,7 +943,7 @@ function downloadPDF(fmt){
   const invNum=(d.invNum||'').replace('INV-','');
   const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
   const C='border:1px solid #000;padding:2px 4px;font-size:9.5px;';const CH=C+'background:#f0f0f0;font-weight:700;';
-  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:50px;max-width:220px;filter:brightness(0) !important;" alt=""/>`:'';
+  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;filter:brightness(0);" alt=""/>`:'';
   const tripRows=tdata.map((t,i)=>{
     const so=(i===0&&d.start_odometer)?d.start_odometer.toFixed(1):'';
     const eo=(i===d.trips.length-1&&d.end_odometer)?d.end_odometer.toFixed(1):'';
@@ -1091,7 +1091,7 @@ ${[...Array(Math.max(0,5-tdata.length))].map(()=>'<tr><td class="box" style="hei
 </tr>
 </table>
 
-<div style="margin-bottom:4px;"><b>DRIVER'S SIGNATURE:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:220px;vertical-align:bottom;">${sigHtml}</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>DATE:</b> ${d.date||''}</div>
+<div style="margin-bottom:4px;">${sigHtml}<br/><b>DRIVER'S SIGNATURE:</b> <span style="display:inline-block;border-bottom:1px solid #000;width:220px;">&nbsp;</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>DATE:</b> ${d.date||''}</div>
 <div style="text-align:center;font-size:7.5px;margin-bottom:3px;"><b>TERMS: DUE UPON RECEIPT</b><br/>After 45 days at 9% per month interest will be added to your BILL. All Collection cost/Attorney fees incurred to collect Debit is the Responsibility of the Trucking Company.</div>
 <div style="font-size:9px;"><b>Escort Subcontracting for Moose's Pilot Service:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:160px;">&nbsp;${d.escort_sub||''}&nbsp;</span> &nbsp;&nbsp; <b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:100px;">&nbsp;</span></div>
 <div style="text-align:center;font-style:italic;font-weight:700;font-size:10px;margin-top:6px;">Thank You for Your Business!!!</div>
