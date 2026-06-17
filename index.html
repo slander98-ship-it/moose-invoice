@@ -435,12 +435,12 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <button class="sig-clear" onclick="clearSig()">CLEAR</button>
     </div>
     <div class="sig-name-wrap" id="sig-type-mode">
-      <input class="sig-name-input" id="sig-typed-name" type="text" placeholder="Type your full name..." oninput="renderTypedSig()"/>
+      <input class="sig-name-input" id="sig-typed-name" type="text" autocomplete="off" placeholder="Type your full name..." oninput="renderTypedSig()"/>
       <div class="sig-preview"><span id="sig-preview-text"></span></div>
     </div>
     <div class="fg" style="margin-top:1rem;">
       <label>ESCORT SUBCONTRACTING FOR MOOSE'S PILOT SERVICE</label>
-      <input id="f-escort_subcontractor" type="text" placeholder="Your name / DBA" oninput="saveDraft()"/>
+      <input id="f-escort_subcontractor" type="text" placeholder="Your name / DBA (optional)" autocomplete="off" oninput="saveDraft()"/>
     </div>
     <div class="info-card" style="margin-top:1.2rem;">
       <div class="info-card-title">INVOICE SUMMARY</div>
@@ -594,7 +594,7 @@ function restoreDraft(){
     Object.entries(d.f||{}).forEach(([k,v])=>sv(k,v));Object.entries(d.b||{}).forEach(([k,v])=>sbv(k,v));
     Object.entries(d.r||{}).forEach(([k,v])=>{radios[k]=v;document.querySelectorAll(`input[name="${k}"]`).forEach(r=>r.checked=r.value===v);});
     if(d.trips&&d.trips.length)trips=d.trips;
-    if(d.typed&&$('sig-typed-name')){$('sig-typed-name').value=d.typed;renderTypedSig();}
+    // sig not restored from draft
     if(radios.pilot_position)showRateChip(radios.pilot_position);
     onOdoInput();onBillInput();renderTrips();
     $('draft-banner').classList.add('show');
@@ -698,7 +698,7 @@ function clearSig(){const c=$('sig-canvas');c.getContext('2d').clearRect(0,0,c.w
 function renderTypedSig(){
   const name=($('sig-typed-name').value||'').trim();$('sig-preview-text').textContent=name;if(!name){sigData='';return;}
   const c=$('sig-canvas'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
-  const fs=Math.min(80,Math.max(28,c.width/(name.length*0.55)));ctx.font=fs+"px 'Dancing Script',cursive";ctx.fillStyle='#FFE500';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(name,c.width/2,c.height/2);sigData=c.toDataURL();saveDraft();
+  const fs=Math.min(80,Math.max(28,c.width/(name.length*0.55)));ctx.font=fs+"px 'Dancing Script',cursive";ctx.fillStyle='#000000';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(name,c.width/2,c.height/2);sigData=c.toDataURL();saveDraft();
 }
 
 async function submitInvoice(){
@@ -731,7 +731,7 @@ async function submitInvoice(){
     fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:'Moose Pilot <invoices@moosepilotokc.com>',to:['Mooseou@yahoo.com'],subject:'🚛 New Invoice #'+invNum+' — '+fv('trucking_co_name')+' — $'+total.toFixed(2)+' — TAP TO APPROVE',html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;border-radius:12px;overflow:hidden;"><div style="background:#FFE500;padding:20px 24px;text-align:center;"><div style="font-size:22px;font-weight:900;color:#000;">🚛 MOOSES PILOT SERVICES</div></div><div style="padding:24px;"><table style="width:100%;border-collapse:collapse;margin-bottom:20px;"><tr><td style="padding:8px 12px;background:#1a1a1a;color:#FFE500;font-weight:bold;">Invoice #</td><td style="padding:8px 12px;background:#141414;">'+invNum+'</td></tr><tr><td style="padding:8px 12px;background:#1a1a1a;color:#FFE500;font-weight:bold;">Driver</td><td style="padding:8px 12px;background:#141414;">'+fv('driver_name')+'</td></tr><tr><td style="padding:8px 12px;background:#1a1a1a;color:#FFE500;font-weight:bold;">Trucking Co</td><td style="padding:8px 12px;background:#141414;">'+fv('trucking_co_name')+'</td></tr><tr><td style="padding:8px 12px;background:#1a1a1a;color:#FFE500;font-weight:bold;">Total</td><td style="padding:8px 12px;background:#141414;font-size:18px;font-weight:900;color:#FFE500;">$'+total.toFixed(2)+'</td></tr></table><a href="https://moosepilotokc.com/?token='+data.approval_token+'#approve" style="display:block;background:#FFE500;color:#000;text-align:center;padding:18px;border-radius:8px;font-size:18px;font-weight:900;text-decoration:none;">TAP TO APPROVE</a></div></div>'})});
     localStorage.removeItem('moose_draft_v4');
     lastInvoice={invNum,total,sigData,position:radios.pilot_position,date:fv('job_date'),driver_name:fv('driver_name'),driver_phone:fv('driver_phone'),driver_truck:fv('driver_truck_number'),driver_trailer:fv('driver_trailer_number'),trucking_co:fv('trucking_co_name'),trucking_co_phone:fv('trucking_co_phone'),billing_address:fv('billing_address'),contact_name:fv('contact_name'),load_type:fv('load_type'),load_height:fv('load_height'),load_width:fv('load_width'),load_length:fv('load_length'),load_weight:fv('load_weight'),pickup_location:fv('pickup_location'),pickup_city:fv('pickup_city'),pickup_state:fv('pickup_state'),pickup_date:fv('pickup_date'),dropoff_location:fv('dropoff_location'),dropoff_city:fv('dropoff_city'),dropoff_state:fv('dropoff_state'),dropoff_date:fv('dropoff_date'),job_number:fv('load_job_number'),notes:fv('notes'),escort_sub:fv('escort_subcontractor'),tripMi,start_odometer:parseFloat($('f-start_odometer').value)||null,end_odometer:parseFloat($('f-end_odometer').value)||null,downtime_date:fv('downtime_date'),downtime_start:fv('downtime_start'),downtime_end:fv('downtime_end'),downtime_reason:fv('downtime_reason'),trips:[...trips],escorted_miles:bv('escorted_miles'),escorted_rate:bv('escorted_rate'),fuel_sc_miles:bv('fuel_sc_miles'),fuel_sc_rate:bv('fuel_sc_rate'),deadhead_miles:bv('deadhead_miles'),deadhead_rate:bv('deadhead_rate'),flat_day_qty:bv('flat_day_qty'),flat_day_rate:bv('flat_day_rate'),half_day_qty:bv('half_day_qty'),half_day_rate:bv('half_day_rate'),motel_qty:bv('motel_qty'),motel_rate:bv('motel_rate'),downtime_hours:bv('downtime_hours'),downtime_rate:bv('downtime_rate'),nogo_qty:bv('nogo_qty'),nogo_rate:bv('nogo_rate')};
-    $('app').style.display='none';$('success-num').textContent='#'+invNum;$('success-screen').classList.add('show');
+    $('app').style.display='none';$('success-num').textContent='#'+invNum;$('success-screen').classList.add('show');selectFormat('pilot');
   }catch(err){alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent='SUBMIT INVOICE';}
 }
 
