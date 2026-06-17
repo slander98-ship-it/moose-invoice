@@ -743,6 +743,77 @@ async function submitInvoice(){
     localStorage.removeItem('moose_draft_v4');
     lastInvoice={invNum,total,sigData,position:radios.pilot_position,date:fv('job_date'),driver_name:fv('driver_name'),driver_phone:fv('driver_phone'),driver_truck:fv('driver_truck_number'),driver_trailer:fv('driver_trailer_number'),trucking_co:fv('trucking_co_name'),trucking_co_phone:fv('trucking_co_phone'),billing_address:fv('billing_address'),contact_name:fv('contact_name'),load_type:fv('load_type'),load_height:fv('load_height'),load_width:fv('load_width'),load_length:fv('load_length'),load_weight:fv('load_weight'),pickup_location:fv('pickup_location'),pickup_city:fv('pickup_city'),pickup_state:fv('pickup_state'),pickup_date:fv('pickup_date'),dropoff_location:fv('dropoff_location'),dropoff_city:fv('dropoff_city'),dropoff_state:fv('dropoff_state'),dropoff_date:fv('dropoff_date'),job_number:fv('load_job_number'),notes:fv('notes'),escort_sub:fv('escort_subcontractor'),tripMi,start_odometer:parseFloat($('f-start_odometer').value)||null,end_odometer:parseFloat($('f-end_odometer').value)||null,downtime_date:fv('downtime_date'),downtime_start:fv('downtime_start'),downtime_end:fv('downtime_end'),downtime_reason:fv('downtime_reason'),trips:[...trips],escorted_miles:bv('escorted_miles'),escorted_rate:bv('escorted_rate'),fuel_sc_miles:bv('fuel_sc_miles'),fuel_sc_rate:bv('fuel_sc_rate'),deadhead_miles:bv('deadhead_miles'),deadhead_rate:bv('deadhead_rate'),flat_day_qty:bv('flat_day_qty'),flat_day_rate:bv('flat_day_rate'),half_day_qty:bv('half_day_qty'),half_day_rate:bv('half_day_rate'),motel_qty:bv('motel_qty'),motel_rate:bv('motel_rate'),downtime_hours:bv('downtime_hours'),downtime_rate:bv('downtime_rate'),nogo_qty:bv('nogo_qty'),nogo_rate:bv('nogo_rate')};
     $('app').style.display='none';$('success-num').textContent='#'+invNum;$('success-screen').classList.add('show');
+  // Pre-generate PDF in background so email is instant
+  cachedPdfB64=null;
+  setTimeout(async function(){
+    try{
+      const {jsPDF}=window.jspdf;if(!jsPDF)return;
+      const d=lastInvoice;if(!d)return;
+      const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'letter'});
+      const pw=612,ml=36,mr=36,mt=36;let y=mt;
+      const fnt=(sz,bold)=>{pdf.setFontSize(sz);pdf.setFont('helvetica',bold?'bold':'normal');};
+      const txt=(t,x,yy,opts)=>pdf.text(String(t||''),x,yy,opts||{});
+      const ln=(x1,y1,x2,y2)=>pdf.line(x1,y1,x2,y2);
+      if(LOGO_BW){try{pdf.addImage(LOGO_BW,'PNG',ml,y,80,80);}catch(e){}}
+      fnt(18,true);txt("Moose's Pilot Car Service, LLC",pw/2,y+24,{align:'center'});
+      fnt(9,false);txt("525 N Peniel — Oklahoma City, OK 73127 — 405-255-5484",pw/2,y+38,{align:'center'});
+      fnt(10,true);txt("Invoice #",pw-mr-70,y+16);fnt(20,true);txt((d.invNum||'').replace('INV-',''),pw-mr,y+38,{align:'right'});
+      y+=90;ln(ml,y,pw-mr,y);y+=8;
+      const pos2=d.position||'';
+      fnt(8,true);txt("Pilot Position:",ml,y);fnt(8,false);
+      txt(`${pos2==='Lead'?'[X]':'[ ]'} Lead  ${pos2==='Chase'?'[X]':'[ ]'} Chase  ${pos2==='High Pole'?'[X]':'[ ]'} High Pole  ${pos2==='Steer Man'?'[X]':'[ ]'} Steer Man`,ml+60,y);
+      fnt(8,true);txt("DATE:",pw-mr-70,y);fnt(8,false);txt(d.date||'',pw-mr-42,y);y+=14;
+      fnt(8,true);txt("TRUCKING CO:",ml,y);fnt(8,false);txt(d.trucking_co||'',ml+60,y);
+      txt("PHONE:",pw/2+10,y);txt(d.trucking_co_phone||'',pw/2+42,y);y+=12;
+      txt("BILLING ADDRESS:",ml,y);fnt(8,false);txt(d.billing_address||'',ml+78,y);
+      fnt(8,true);txt("CONTACT:",pw/2+10,y);fnt(8,false);txt(d.contact_name||'',pw/2+48,y);y+=12;
+      fnt(8,true);txt("DRIVER:",ml,y);fnt(8,false);txt(d.driver_name||'',ml+34,y);
+      fnt(8,true);txt("PHONE:",ml+150,y);fnt(8,false);txt(d.driver_phone||'',ml+183,y);
+      fnt(8,true);txt("TRUCK#:",ml+290,y);fnt(8,false);txt(d.driver_truck||'',ml+326,y);y+=12;
+      fnt(8,true);txt("LOAD:",ml,y);fnt(8,false);txt(d.load_type||'',ml+28,y);
+      fnt(8,true);txt("H/W/L:",ml+200,y);fnt(8,false);txt(`${d.load_height||''}/${d.load_width||''}/${d.load_length||''}`,ml+232,y);y+=12;
+      fnt(8,true);txt("PICK UP:",ml,y);fnt(8,false);txt(`${d.pickup_location||''} ${d.pickup_city||''}, ${d.pickup_state||''}`,ml+40,y);
+      fnt(8,true);txt("DATE:",pw-mr-70,y);fnt(8,false);txt(d.pickup_date||'',pw-mr-42,y);y+=12;
+      fnt(8,true);txt("DROP OFF:",ml,y);fnt(8,false);txt(`${d.dropoff_location||''} ${d.dropoff_city||''}, ${d.dropoff_state||''}`,ml+46,y);
+      fnt(8,true);txt("DATE:",pw-mr-70,y);fnt(8,false);txt(d.dropoff_date||'',pw-mr-42,y);y+=14;
+      // Trip log header
+      pdf.setFillColor(240,240,240);pdf.rect(ml,y-9,pw-ml-mr,13,'F');
+      const tcw=[42,98,46,70,98,46,70,42,42];
+      const tch=['DATE','START CITY,ST','START','START ODO','END CITY,ST','END','END ODO','MILES','MOTEL'];
+      let tx=ml;fnt(7,true);
+      tch.forEach((h,i)=>{pdf.rect(tx,y-9,tcw[i],13);txt(h,tx+tcw[i]/2,y,{align:'center'});tx+=tcw[i];});y+=6;
+      const tdata2=[...d.trips];while(tdata2.length<5)tdata2.push({});
+      fnt(7,false);
+      tdata2.forEach((t,i)=>{
+        const so=(i===0&&d.start_odometer)?String(d.start_odometer.toFixed(1)):'';
+        const eo=(i===d.trips.length-1&&d.end_odometer)?String(d.end_odometer.toFixed(1)):'';
+        const mi=(i===d.trips.length-1&&d.tripMi)?String(d.tripMi.toFixed(1)):'';
+        tx=ml;
+        [t.date||'',t.startCity||'',t.startTime||'',so,t.endCity||'',t.endTime||'',eo,mi,t.motel||''].forEach((v,j)=>{
+          pdf.rect(tx,y-8,tcw[j],12);txt(v,tx+2,y);tx+=tcw[j];
+        });y+=12;
+      });y+=6;
+      const fq2=(v)=>v>0?String(v):'';const fa2=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
+      const charges=[['TOTAL ESCORTED MILES',d.escorted_miles,d.escorted_rate,'PER MILE ='],['FUEL S/C',d.fuel_sc_miles,d.fuel_sc_rate,'MILES ONLY ='],['DEADHEAD MILES',d.deadhead_miles,d.deadhead_rate,'PER MILE ='],['FLAT DAY RATE',d.flat_day_qty,d.flat_day_rate,'PER DAY ='],['MOTELS',d.motel_qty,d.motel_rate,'PER DAY ='],["NO-GO'S",d.nogo_qty,d.nogo_rate,'PER DAY =']];
+      fnt(8,false);
+      charges.forEach(([lbl,q,r,rlbl])=>{
+        txt(lbl,ml,y);ln(ml+130,y+1,ml+168,y+1);txt(fq2(q),ml+166,y,{align:'right'});
+        txt('@',ml+173,y);ln(ml+180,y+1,ml+218,y+1);txt(r>0?r.toFixed(2):'',ml+216,y,{align:'right'});
+        txt(rlbl,pw/2+8,y);ln(pw/2+60,y+1,pw-mr,y+1);txt(fa2(q,r),pw-mr,y,{align:'right'});
+        y+=13;
+      });
+      y+=4;ln(pw/2+8,y,pw-mr,y);y+=2;
+      fnt(10,true);txt('TOTAL CHARGES = $'+d.total.toFixed(2),pw-mr,y+12,{align:'right'});y+=22;
+      if(d.sigData){try{pdf.addImage(d.sigData,'PNG',ml,y-20,110,28);}catch(e){}}
+      ln(ml,y+8,ml+170,y+8);fnt(8,true);txt("DRIVER'S SIGNATURE:",ml,y+18);
+      txt('DATE:',pw-mr-80,y+18);fnt(8,false);txt(d.date||'',pw-mr-52,y+18);y+=28;
+      fnt(7,false);txt('TERMS: DUE UPON RECEIPT',pw/2,y,{align:'center'});y+=10;
+      txt('After 45 days at 9%/month interest added. All collection costs responsibility of Trucking Company.',pw/2,y,{align:'center'});y+=12;
+      txt('Escort Subcontracting for Mooses Pilot Service: '+(d.escort_sub||''),ml,y);y+=12;
+      fnt(9,true);txt('Thank You for Your Business!!!',pw/2,y,{align:'center'});
+      cachedPdfB64=pdf.output('datauristring').split(',')[1];
+    }catch(e){console.warn('PDF pre-gen failed:',e);}
+  },500);
   }catch(err){alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent='SUBMIT INVOICE';}
 }
 
@@ -979,11 +1050,17 @@ async function sendInvoiceEmail(){
   const tripRows=tdata.map((t,i)=>{const so=(i===0&&d.start_odometer)?d.start_odometer.toFixed(1):'';const eo=(i===d.trips.length-1&&d.end_odometer)?d.end_odometer.toFixed(1):'';const mi=(i===d.trips.length-1&&d.tripMi)?d.tripMi.toFixed(1):'';return`<tr style="height:21px;"><td style="${C}">${t.date||''}</td><td style="${C}">${t.startCity||''}</td><td style="${C}text-align:center;">${t.startTime||''}</td><td style="${C}text-align:center;">${so}</td><td style="${C}">${t.endCity||''}</td><td style="${C}text-align:center;">${t.endTime||''}</td><td style="${C}text-align:center;">${eo}</td><td style="${C}text-align:center;">${mi}</td><td style="${C}text-align:center;">${t.motel||''}</td></tr>`;}).join('');
   const emailHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10px;color:#000 !important;padding:12px;background:#ffffff !important;}</style></head><body><table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr><td style="width:160px;vertical-align:middle;"><img src="${LOGO_BW}" style="width:150px;display:block;" alt=""/></td><td style="text-align:center;vertical-align:middle;padding:0 10px;"><div style="font-family:Georgia,serif;font-size:26px;font-weight:700;">Moose's</div><div style="font-family:Georgia,serif;font-size:22px;font-weight:700;">Pilot Car Service, LLC</div><div style="font-size:11px;margin-top:6px;">525 N Peniel — Oklahoma City, OK 73127 — 405-255-5484</div></td><td style="vertical-align:top;text-align:right;width:170px;padding-top:8px;"><div style="font-size:12px;font-weight:700;">Invoice #&nbsp;<span style="font-size:30px;font-weight:900;">${invNum}</span></div></td></tr></table><div style="font-size:10px;margin-bottom:4px;"><b>Pilot Position:</b>&nbsp;${chk('Lead')} Lead&nbsp;&nbsp;${chk('Chase')} Chase&nbsp;&nbsp;${chk('High Pole')} High Pole&nbsp;&nbsp;${chk('Steer Man')} Steer Man</div><div style="font-size:10px;margin-bottom:7px;"><b>LOAD/JOB#</b> ${d.job_number||''}&nbsp;&nbsp;&nbsp;<b>DATE:</b> ${d.date||''}</div><table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">TRUCKING CO:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.trucking_co||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.trucking_co_phone||''}</td></tr><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">BILLING ADDRESS:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.billing_address||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;padding-right:4px;">CONTACT:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.contact_name||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-bottom:4px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">DRIVER:</td><td style="border-bottom:1px solid #000;font-size:10px;width:180px;padding:1px 3px;">${d.driver_name||''}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:120px;padding:1px 3px;">${d.driver_phone||''}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">TRUCK#:</td><td style="border-bottom:1px solid #000;font-size:10px;width:65px;padding:1px 3px;">${d.driver_truck||''}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">TRAILER#:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.driver_trailer||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-bottom:4px;"><tr><td style="font-size:10px;font-weight:700;padding-right:4px;">LOAD:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.load_type||''}</td><td style="font-size:10px;font-weight:700;padding-left:10px;padding-right:4px;">H/W/L:</td><td style="border-bottom:1px solid #000;font-size:10px;width:120px;padding:1px 3px;">${[d.load_height,d.load_width,d.load_length].filter(Boolean).join(' / ')}</td><td style="font-size:10px;font-weight:700;padding-left:10px;padding-right:4px;">WEIGHT:</td><td style="border-bottom:1px solid #000;font-size:10px;width:80px;padding:1px 3px;">${d.load_weight||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-bottom:4px;"><tr><td style="font-size:10px;font-weight:700;padding-right:4px;">PICK UP:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${puAddr}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:100px;padding:1px 3px;">${d.pickup_date||''}</td></tr><tr><td colspan="4" style="height:3px;"></td></tr><tr><td style="font-size:10px;font-weight:700;padding-right:4px;">DROP OFF:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${doAddr}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.dropoff_date||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-top:6px;"><thead><tr><th style="${CH}width:9%;">DATE</th><th style="${CH}width:18%;">START CITY,ST</th><th style="${CH}width:9%;">START</th><th style="${CH}width:11%;">START ODO</th><th style="${CH}width:18%;">END CITY,ST</th><th style="${CH}width:9%;">END</th><th style="${CH}width:11%;">END ODO</th><th style="${CH}width:8%;">MILES</th><th style="${CH}width:7%;">MOTEL</th></tr></thead><tbody>${tripRows}</tbody></table><table style="width:100%;border-collapse:collapse;margin-top:8px;"><tr><td style="width:55%;vertical-align:top;padding-right:10px;"><table style="width:100%;border-collapse:collapse;">${[['TOTAL ESCORTED MILES',d.escorted_miles,d.escorted_rate],['FUEL S/C — MILES',d.fuel_sc_miles,d.fuel_sc_rate],['DEADHEAD MILES',d.deadhead_miles,d.deadhead_rate],['FLAT DAY RATE',d.flat_day_qty,d.flat_day_rate],['½ DAY RATE',d.half_day_qty,d.half_day_rate],['MOTELS',d.motel_qty,d.motel_rate],['DOWN TIME',d.downtime_hours,d.downtime_rate],["NO-GO'S",d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;padding:1px 0;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;padding:1px 4px;text-align:right;">${fq(q)}</td><td style="font-size:10px;padding:1px 5px;">@</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;padding:1px 4px;text-align:right;">${r>0?r.toFixed(2):''}</td></tr>`).join('')}</table></td><td style="vertical-align:top;"><table style="width:100%;border-collapse:collapse;">${[['PER MILE =',d.escorted_miles,d.escorted_rate],['MILES ONLY =',d.fuel_sc_miles,d.fuel_sc_rate],['PER MILE =',d.deadhead_miles,d.deadhead_rate],['PER DAY =',d.flat_day_qty,d.flat_day_rate],['½ DAY =',d.half_day_qty,d.half_day_rate],['PER DAY =',d.motel_qty,d.motel_rate],['PER HOUR =',d.downtime_hours,d.downtime_rate],['PER DAY =',d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;padding:1px 0;white-space:nowrap;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:95px;padding:1px 4px;text-align:right;">${fa(q,r)}</td></tr>`).join('')}<tr><td colspan="2" style="padding-top:5px;border-top:2.5px solid #000;text-align:right;"><span style="font-size:12px;font-weight:900;">TOTAL CHARGES = $</span><span style="font-size:14px;font-weight:900;border-bottom:2.5px solid #000;padding:0 10px;">${d.total.toFixed(2)}</span></td></tr></table></td></tr></table><table style="width:100%;border-collapse:collapse;margin-top:12px;"><tr><td style="width:65%;vertical-align:bottom;font-size:10px;font-weight:700;">DRIVER'S SIGNATURE: <span style="display:inline-block;border-bottom:1.5px solid #000;min-width:200px;vertical-align:bottom;">${sigHtml}</span></td><td style="vertical-align:bottom;font-size:10px;font-weight:700;">DATE: <span style="display:inline-block;border-bottom:1px solid #000;min-width:100px;">&nbsp;${d.date||''}&nbsp;</span></td></tr></table><div style="text-align:center;margin-top:9px;"><div style="font-size:10px;font-weight:700;">TERMS: DUE UPON RECEIPT</div><div style="font-size:8.5px;margin-top:2px;">After 45 days at 9% per month interest will be added to your BILL. All Collection cost/Attorney fees incurred to collect Debit is the Responsibility of the Trucking Company.</div></div><table style="width:100%;border-collapse:collapse;margin-top:7px;"><tr><td style="font-size:10px;"><b>Escort Subcontracting for Moose's Pilot Service:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:155px;">&nbsp;${d.escort_sub||''}&nbsp;</span></td><td style="font-size:10px;"><b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:110px;">&nbsp;</span></td></tr></table><div style="text-align:center;margin-top:9px;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;">Thank You for Your Business!!!</div></body></html>`;
   try{
-    // Generate PDF directly with jsPDF (no html2canvas - more reliable on mobile)
+    // Use pre-generated PDF if available
     status2.style.display='block';
-    status2.textContent='Building PDF...';
-    await new Promise(r=>setTimeout(r,50));
-    const {jsPDF}=window.jspdf;
+    status2.textContent='Preparing PDF...';
+    let pdfB64=cachedPdfB64;
+    if(!pdfB64){
+      // Wait up to 5s for background generation
+      for(let i=0;i<10;i++){await new Promise(r=>setTimeout(r,500));if(cachedPdfB64){pdfB64=cachedPdfB64;break;}}
+    }
+    if(!pdfB64){throw new Error('PDF generation failed. Try downloading first.');}
+    // Skip to send
+    if(false){const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'letter'});
     const pw=612,ph=792,ml=36,mr=36,mt=36;
     let y=mt;
@@ -1085,7 +1162,7 @@ async function sendInvoiceEmail(){
     txt('Escort Subcontracting for Mooses Pilot Service: '+(d.escort_sub||''),ml,y);
     y+=14;fnt(9,true);txt('Thank You for Your Business!!!',pw/2,y,{align:'center'});
 
-    const pdfB64=pdf.output('datauristring').split(',')[1];
+    } // end if(false)
     status2.textContent='Sending...';
     const resp=await fetch('/api/send-email',{
       method:'POST',
@@ -1168,7 +1245,7 @@ async function scanPermit(input){
   }
   input.value='';
 }
-let selectedFormat='pilot';
+let selectedFormat='pilot';let cachedPdfB64=null;
 function selectFormat(fmt){
   selectedFormat=fmt;
   document.getElementById('btn-pilot').style.opacity=fmt==='pilot'?'1':'0.5';
