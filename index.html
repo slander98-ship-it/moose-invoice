@@ -706,8 +706,8 @@ async function submitInvoice(){
   let invNum='INV-6000';
   try{
     const {data:allInvs}=await db.from('invoices').select('invoice_number').gte('invoice_number','INV-6000').order('invoice_number',{ascending:false}).limit(1).maybeSingle();
-    if(allInvs&&allInvs.invoice_numberber){
-      const lastNum=parseInt((allInvs.invoice_numberber||'').replace('INV-',''))||5999;
+    if(allInvs&&allInvs.invoice_number){
+      const lastNum=parseInt((allInvs.invoice_number||'').replace('INV-',''))||5999;
       const nextNum=Math.max(lastNum+1,6000);
       invNum='INV-'+nextNum;
     }
