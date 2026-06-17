@@ -861,14 +861,14 @@ async function sendInvoiceEmail(){
   try{
     status2.style.display='block';
     status2.textContent='Sending...';
-    const resp=await fetch('https://api.resend.com/emails',{
+    const resp=await fetch('/api/send-email',{
       method:'POST',
-      headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        from:'invoices@moosepilotokc.com',
-        to:[to],
+        to:to,
         subject:'Invoice #'+invNum+' — Moose\'s Pilot Car Service',
-        html:emailHTML
+        pdfBase64:pdfB64,
+        filename:'Invoice-'+invNum+'.pdf'
       })
     });
     const result=await resp.json();
