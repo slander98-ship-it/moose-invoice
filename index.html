@@ -937,7 +937,7 @@ async function scanPermit(input){
 
 function downloadPDF(fmt){
   const d=lastInvoice;if(!d){alert('No invoice data.');return;}
-  if(fmt==='rig'){downloadRigMove(d);return;}
+  // rig move disabled
   const pos=d.position||'';const chk=(p)=>pos===p?'[X]':'[ ]';
   const fq=(v)=>v>0?v:'';const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const invNum=(d.invNum||'').replace('INV-','');
