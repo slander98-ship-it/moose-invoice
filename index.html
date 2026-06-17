@@ -12,6 +12,7 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--y:#FFE500;--bk:#0a0a0a;--bk2:#141414;--bk3:#1e1e1e;--wh:#fff;--red:#e53935;--green:#4caf50;--border:#2a2a2a;}
 html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;}
+#admin-screen{display:none;}
 #pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
 .pin-logo{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;color:var(--y);letter-spacing:.04em;line-height:1;}
 .pin-logo-sub{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;letter-spacing:.08em;margin-bottom:.15rem;}
@@ -849,6 +850,27 @@ ${[['PER MILE =',d.escorted_miles,d.escorted_rate],['MILES ONLY =',d.fuel_sc_mil
 <table style="width:100%;border-collapse:collapse;margin-top:7px;"><tr><td style="font-size:10px;"><b>Escort Subcontracting for Moose's Pilot Service:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:155px;">&nbsp;${d.escort_sub||''}&nbsp;</span></td><td style="font-size:10px;"><b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:110px;">&nbsp;</span></td></tr></table>
 <div style="text-align:center;margin-top:9px;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;">Thank You for Your Business!!!</div>
 <script>window.addEventListener('load',function(){setTimeout(function(){window.print();},600);});<\/script>
+
+<!-- DRIVER ADMIN SCREEN -->
+<div id="admin-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bk);z-index:9000;flex-direction:column;overflow-y:auto;">
+  <div style="background:var(--bk2);padding:1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--y);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--y);">DRIVER MANAGEMENT</div>
+    <button onclick="closeAdmin()" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.4rem .8rem;cursor:pointer;">CLOSE</button>
+  </div>
+  <div style="padding:1rem;">
+    <!-- Add driver form -->
+    <div style="background:var(--bk3);border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid var(--border);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.8rem;">ADD NEW DRIVER</div>
+      <input id="admin-name" type="text" placeholder="Full name..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <input id="admin-phone" type="tel" placeholder="Phone number (PIN = last 4)..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <button onclick="addDriver()" style="width:100%;background:var(--y);border:none;border-radius:8px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.06em;padding:.75rem;cursor:pointer;">+ ADD DRIVER</button>
+      <div id="admin-msg" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:.5rem;display:none;"></div>
+    </div>
+    <!-- Driver list -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.5rem;">CURRENT DRIVERS</div>
+    <div id="admin-driver-list"></div>
+  </div>
+</div>
 </body></html>`;
   const win=window.open('','_blank','width=900,height=1100');if(!win){alert('Allow pop-ups to download.');return;}win.document.write(html);win.document.close();
   const fname=(d.driver_name||'Driver').replace(/\s+/g,'');
@@ -970,6 +992,27 @@ function downloadRigMove(d,invNum){
 <div style="font-size:10px;margin-top:6px;"><b>Escort Subcontracting for Moose's Pilot Service:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:140px;">&nbsp;${d.escort_sub||''}&nbsp;</span><b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:90px;">&nbsp;</span></div>
 <div style="text-align:center;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:12px;margin-top:8px;">Thank You for Your Business!!!</div>
 <script>window.addEventListener('load',function(){setTimeout(function(){window.print();},600);});<\/script>
+
+<!-- DRIVER ADMIN SCREEN -->
+<div id="admin-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bk);z-index:9000;flex-direction:column;overflow-y:auto;">
+  <div style="background:var(--bk2);padding:1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--y);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--y);">DRIVER MANAGEMENT</div>
+    <button onclick="closeAdmin()" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.4rem .8rem;cursor:pointer;">CLOSE</button>
+  </div>
+  <div style="padding:1rem;">
+    <!-- Add driver form -->
+    <div style="background:var(--bk3);border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid var(--border);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.8rem;">ADD NEW DRIVER</div>
+      <input id="admin-name" type="text" placeholder="Full name..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <input id="admin-phone" type="tel" placeholder="Phone number (PIN = last 4)..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <button onclick="addDriver()" style="width:100%;background:var(--y);border:none;border-radius:8px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.06em;padding:.75rem;cursor:pointer;">+ ADD DRIVER</button>
+      <div id="admin-msg" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:.5rem;display:none;"></div>
+    </div>
+    <!-- Driver list -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.5rem;">CURRENT DRIVERS</div>
+    <div id="admin-driver-list"></div>
+  </div>
+</div>
 </body></html>`;
   const win=window.open('','_blank','width=900,height=1100');
   if(!win){alert('Allow pop-ups to download the invoice.');return;}
@@ -1016,15 +1059,78 @@ async function shareInvoice(){
 <div style="text-align:center;margin-top:9px;"><div style="font-size:10px;font-weight:700;">TERMS: DUE UPON RECEIPT</div><div style="font-size:8.5px;margin-top:2px;">After 45 days at 9% per month interest will be added to your BILL.</div></div>
 <table style="width:100%;border-collapse:collapse;margin-top:7px;"><tr><td style="font-size:10px;width:60%;"><b>Escort Subcontracting for Moose's Pilot Service:</b><span style="display:inline-block;border-bottom:1px solid #000;min-width:155px;padding:0 3px;vertical-align:bottom;">&nbsp;${d.escort_sub||''}&nbsp;</span></td><td style="font-size:10px;"><b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:110px;">&nbsp;</span></td></tr></table>
 <div style="text-align:center;margin-top:9px;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;">Thank You for Your Business!!!</div>
+
+<!-- DRIVER ADMIN SCREEN -->
+<div id="admin-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bk);z-index:9000;flex-direction:column;overflow-y:auto;">
+  <div style="background:var(--bk2);padding:1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--y);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--y);">DRIVER MANAGEMENT</div>
+    <button onclick="closeAdmin()" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.4rem .8rem;cursor:pointer;">CLOSE</button>
+  </div>
+  <div style="padding:1rem;">
+    <!-- Add driver form -->
+    <div style="background:var(--bk3);border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid var(--border);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.8rem;">ADD NEW DRIVER</div>
+      <input id="admin-name" type="text" placeholder="Full name..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <input id="admin-phone" type="tel" placeholder="Phone number (PIN = last 4)..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <button onclick="addDriver()" style="width:100%;background:var(--y);border:none;border-radius:8px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.06em;padding:.75rem;cursor:pointer;">+ ADD DRIVER</button>
+      <div id="admin-msg" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:.5rem;display:none;"></div>
+    </div>
+    <!-- Driver list -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.5rem;">CURRENT DRIVERS</div>
+    <div id="admin-driver-list"></div>
+  </div>
+</div>
 </body></html>`;
 
   // Open PDF in new tab with share/print buttons
-  const shareHTML=invoiceHTML.replace('</body>',`
+  const shareHTML=invoiceHTML.replace('
+<!-- DRIVER ADMIN SCREEN -->
+<div id="admin-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bk);z-index:9000;flex-direction:column;overflow-y:auto;">
+  <div style="background:var(--bk2);padding:1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--y);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--y);">DRIVER MANAGEMENT</div>
+    <button onclick="closeAdmin()" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.4rem .8rem;cursor:pointer;">CLOSE</button>
+  </div>
+  <div style="padding:1rem;">
+    <!-- Add driver form -->
+    <div style="background:var(--bk3);border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid var(--border);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.8rem;">ADD NEW DRIVER</div>
+      <input id="admin-name" type="text" placeholder="Full name..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <input id="admin-phone" type="tel" placeholder="Phone number (PIN = last 4)..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <button onclick="addDriver()" style="width:100%;background:var(--y);border:none;border-radius:8px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.06em;padding:.75rem;cursor:pointer;">+ ADD DRIVER</button>
+      <div id="admin-msg" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:.5rem;display:none;"></div>
+    </div>
+    <!-- Driver list -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.5rem;">CURRENT DRIVERS</div>
+    <div id="admin-driver-list"></div>
+  </div>
+</div>
+</body>',`
 <div class="share-bar" style="position:fixed;top:0;left:0;right:0;background:#111;padding:10px 16px;display:flex;gap:10px;justify-content:center;z-index:9999;">
   <button onclick="window.print()" style="background:#FFE500;color:#000;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;">🖨 SAVE AS PDF</button>
   <button onclick="(()=>{const sub=encodeURIComponent('Invoice '+d.invNum+' — Moose\'s Pilot Car Service');const bod=encodeURIComponent('Driver: '+d.driver_name+'\nTrucking Co: '+d.trucking_co+'\nRoute: '+(d.pickup_city||'')+'→'+(d.dropoff_city||'')+'\nTotal: $'+d.total.toFixed(2)+'\n\nPlease see the invoice PDF in this browser tab.');window.open('mailto:?subject='+sub+'&body='+bod,'_self');})()" style="background:#1a73e8;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;">✉️ EMAIL</button>
 </div>
 <style>@media print{.share-bar{display:none!important;}@page{margin:.45in .5in;}}</style>
+
+<!-- DRIVER ADMIN SCREEN -->
+<div id="admin-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bk);z-index:9000;flex-direction:column;overflow-y:auto;">
+  <div style="background:var(--bk2);padding:1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--y);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--y);">DRIVER MANAGEMENT</div>
+    <button onclick="closeAdmin()" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.4rem .8rem;cursor:pointer;">CLOSE</button>
+  </div>
+  <div style="padding:1rem;">
+    <!-- Add driver form -->
+    <div style="background:var(--bk3);border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid var(--border);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.8rem;">ADD NEW DRIVER</div>
+      <input id="admin-name" type="text" placeholder="Full name..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <input id="admin-phone" type="tel" placeholder="Phone number (PIN = last 4)..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <button onclick="addDriver()" style="width:100%;background:var(--y);border:none;border-radius:8px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.06em;padding:.75rem;cursor:pointer;">+ ADD DRIVER</button>
+      <div id="admin-msg" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:.5rem;display:none;"></div>
+    </div>
+    <!-- Driver list -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.5rem;">CURRENT DRIVERS</div>
+    <div id="admin-driver-list"></div>
+  </div>
+</div>
 </body>`);
   const win=window.open('','_blank','width=900,height=1100');
   if(!win){alert('Please allow pop-ups to share the invoice.');return;}
@@ -1048,7 +1154,28 @@ async function sendInvoiceEmail(){
   const puAddr=[d.pickup_location,d.pickup_city&&d.pickup_state?d.pickup_city+', '+d.pickup_state:''].filter(Boolean).join(' — ');
   const doAddr=[d.dropoff_location,d.dropoff_city&&d.dropoff_state?d.dropoff_city+', '+d.dropoff_state:''].filter(Boolean).join(' — ');
   const tripRows=tdata.map((t,i)=>{const so=(i===0&&d.start_odometer)?d.start_odometer.toFixed(1):'';const eo=(i===d.trips.length-1&&d.end_odometer)?d.end_odometer.toFixed(1):'';const mi=(i===d.trips.length-1&&d.tripMi)?d.tripMi.toFixed(1):'';return`<tr style="height:21px;"><td style="${C}">${t.date||''}</td><td style="${C}">${t.startCity||''}</td><td style="${C}text-align:center;">${t.startTime||''}</td><td style="${C}text-align:center;">${so}</td><td style="${C}">${t.endCity||''}</td><td style="${C}text-align:center;">${t.endTime||''}</td><td style="${C}text-align:center;">${eo}</td><td style="${C}text-align:center;">${mi}</td><td style="${C}text-align:center;">${t.motel||''}</td></tr>`;}).join('');
-  const emailHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10px;color:#000 !important;padding:12px;background:#ffffff !important;}</style></head><body><table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr><td style="width:160px;vertical-align:middle;"><img src="${LOGO_BW}" style="width:150px;display:block;" alt=""/></td><td style="text-align:center;vertical-align:middle;padding:0 10px;"><div style="font-family:Georgia,serif;font-size:26px;font-weight:700;">Moose's</div><div style="font-family:Georgia,serif;font-size:22px;font-weight:700;">Pilot Car Service, LLC</div><div style="font-size:11px;margin-top:6px;">525 N Peniel — Oklahoma City, OK 73127 — 405-255-5484</div></td><td style="vertical-align:top;text-align:right;width:170px;padding-top:8px;"><div style="font-size:12px;font-weight:700;">Invoice #&nbsp;<span style="font-size:30px;font-weight:900;">${invNum}</span></div></td></tr></table><div style="font-size:10px;margin-bottom:4px;"><b>Pilot Position:</b>&nbsp;${chk('Lead')} Lead&nbsp;&nbsp;${chk('Chase')} Chase&nbsp;&nbsp;${chk('High Pole')} High Pole&nbsp;&nbsp;${chk('Steer Man')} Steer Man</div><div style="font-size:10px;margin-bottom:7px;"><b>LOAD/JOB#</b> ${d.job_number||''}&nbsp;&nbsp;&nbsp;<b>DATE:</b> ${d.date||''}</div><table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">TRUCKING CO:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.trucking_co||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.trucking_co_phone||''}</td></tr><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">BILLING ADDRESS:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.billing_address||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;padding-right:4px;">CONTACT:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.contact_name||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-bottom:4px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">DRIVER:</td><td style="border-bottom:1px solid #000;font-size:10px;width:180px;padding:1px 3px;">${d.driver_name||''}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:120px;padding:1px 3px;">${d.driver_phone||''}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">TRUCK#:</td><td style="border-bottom:1px solid #000;font-size:10px;width:65px;padding:1px 3px;">${d.driver_truck||''}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">TRAILER#:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.driver_trailer||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-bottom:4px;"><tr><td style="font-size:10px;font-weight:700;padding-right:4px;">LOAD:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.load_type||''}</td><td style="font-size:10px;font-weight:700;padding-left:10px;padding-right:4px;">H/W/L:</td><td style="border-bottom:1px solid #000;font-size:10px;width:120px;padding:1px 3px;">${[d.load_height,d.load_width,d.load_length].filter(Boolean).join(' / ')}</td><td style="font-size:10px;font-weight:700;padding-left:10px;padding-right:4px;">WEIGHT:</td><td style="border-bottom:1px solid #000;font-size:10px;width:80px;padding:1px 3px;">${d.load_weight||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-bottom:4px;"><tr><td style="font-size:10px;font-weight:700;padding-right:4px;">PICK UP:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${puAddr}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:100px;padding:1px 3px;">${d.pickup_date||''}</td></tr><tr><td colspan="4" style="height:3px;"></td></tr><tr><td style="font-size:10px;font-weight:700;padding-right:4px;">DROP OFF:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${doAddr}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.dropoff_date||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-top:6px;"><thead><tr><th style="${CH}width:9%;">DATE</th><th style="${CH}width:18%;">START CITY,ST</th><th style="${CH}width:9%;">START</th><th style="${CH}width:11%;">START ODO</th><th style="${CH}width:18%;">END CITY,ST</th><th style="${CH}width:9%;">END</th><th style="${CH}width:11%;">END ODO</th><th style="${CH}width:8%;">MILES</th><th style="${CH}width:7%;">MOTEL</th></tr></thead><tbody>${tripRows}</tbody></table><table style="width:100%;border-collapse:collapse;margin-top:8px;"><tr><td style="width:55%;vertical-align:top;padding-right:10px;"><table style="width:100%;border-collapse:collapse;">${[['TOTAL ESCORTED MILES',d.escorted_miles,d.escorted_rate],['FUEL S/C — MILES',d.fuel_sc_miles,d.fuel_sc_rate],['DEADHEAD MILES',d.deadhead_miles,d.deadhead_rate],['FLAT DAY RATE',d.flat_day_qty,d.flat_day_rate],['½ DAY RATE',d.half_day_qty,d.half_day_rate],['MOTELS',d.motel_qty,d.motel_rate],['DOWN TIME',d.downtime_hours,d.downtime_rate],["NO-GO'S",d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;padding:1px 0;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;padding:1px 4px;text-align:right;">${fq(q)}</td><td style="font-size:10px;padding:1px 5px;">@</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;padding:1px 4px;text-align:right;">${r>0?r.toFixed(2):''}</td></tr>`).join('')}</table></td><td style="vertical-align:top;"><table style="width:100%;border-collapse:collapse;">${[['PER MILE =',d.escorted_miles,d.escorted_rate],['MILES ONLY =',d.fuel_sc_miles,d.fuel_sc_rate],['PER MILE =',d.deadhead_miles,d.deadhead_rate],['PER DAY =',d.flat_day_qty,d.flat_day_rate],['½ DAY =',d.half_day_qty,d.half_day_rate],['PER DAY =',d.motel_qty,d.motel_rate],['PER HOUR =',d.downtime_hours,d.downtime_rate],['PER DAY =',d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;padding:1px 0;white-space:nowrap;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:95px;padding:1px 4px;text-align:right;">${fa(q,r)}</td></tr>`).join('')}<tr><td colspan="2" style="padding-top:5px;border-top:2.5px solid #000;text-align:right;"><span style="font-size:12px;font-weight:900;">TOTAL CHARGES = $</span><span style="font-size:14px;font-weight:900;border-bottom:2.5px solid #000;padding:0 10px;">${d.total.toFixed(2)}</span></td></tr></table></td></tr></table><table style="width:100%;border-collapse:collapse;margin-top:12px;"><tr><td style="width:65%;vertical-align:bottom;font-size:10px;font-weight:700;">DRIVER'S SIGNATURE: <span style="display:inline-block;border-bottom:1.5px solid #000;min-width:200px;vertical-align:bottom;">${sigHtml}</span></td><td style="vertical-align:bottom;font-size:10px;font-weight:700;">DATE: <span style="display:inline-block;border-bottom:1px solid #000;min-width:100px;">&nbsp;${d.date||''}&nbsp;</span></td></tr></table><div style="text-align:center;margin-top:9px;"><div style="font-size:10px;font-weight:700;">TERMS: DUE UPON RECEIPT</div><div style="font-size:8.5px;margin-top:2px;">After 45 days at 9% per month interest will be added to your BILL. All Collection cost/Attorney fees incurred to collect Debit is the Responsibility of the Trucking Company.</div></div><table style="width:100%;border-collapse:collapse;margin-top:7px;"><tr><td style="font-size:10px;"><b>Escort Subcontracting for Moose's Pilot Service:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:155px;">&nbsp;${d.escort_sub||''}&nbsp;</span></td><td style="font-size:10px;"><b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:110px;">&nbsp;</span></td></tr></table><div style="text-align:center;margin-top:9px;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;">Thank You for Your Business!!!</div></body></html>`;
+  const emailHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10px;color:#000 !important;padding:12px;background:#ffffff !important;}</style></head><body><table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr><td style="width:160px;vertical-align:middle;"><img src="${LOGO_BW}" style="width:150px;display:block;" alt=""/></td><td style="text-align:center;vertical-align:middle;padding:0 10px;"><div style="font-family:Georgia,serif;font-size:26px;font-weight:700;">Moose's</div><div style="font-family:Georgia,serif;font-size:22px;font-weight:700;">Pilot Car Service, LLC</div><div style="font-size:11px;margin-top:6px;">525 N Peniel — Oklahoma City, OK 73127 — 405-255-5484</div></td><td style="vertical-align:top;text-align:right;width:170px;padding-top:8px;"><div style="font-size:12px;font-weight:700;">Invoice #&nbsp;<span style="font-size:30px;font-weight:900;">${invNum}</span></div></td></tr></table><div style="font-size:10px;margin-bottom:4px;"><b>Pilot Position:</b>&nbsp;${chk('Lead')} Lead&nbsp;&nbsp;${chk('Chase')} Chase&nbsp;&nbsp;${chk('High Pole')} High Pole&nbsp;&nbsp;${chk('Steer Man')} Steer Man</div><div style="font-size:10px;margin-bottom:7px;"><b>LOAD/JOB#</b> ${d.job_number||''}&nbsp;&nbsp;&nbsp;<b>DATE:</b> ${d.date||''}</div><table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">TRUCKING CO:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.trucking_co||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.trucking_co_phone||''}</td></tr><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">BILLING ADDRESS:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.billing_address||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;padding-right:4px;">CONTACT:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.contact_name||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-bottom:4px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">DRIVER:</td><td style="border-bottom:1px solid #000;font-size:10px;width:180px;padding:1px 3px;">${d.driver_name||''}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:120px;padding:1px 3px;">${d.driver_phone||''}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">TRUCK#:</td><td style="border-bottom:1px solid #000;font-size:10px;width:65px;padding:1px 3px;">${d.driver_truck||''}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">TRAILER#:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.driver_trailer||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-bottom:4px;"><tr><td style="font-size:10px;font-weight:700;padding-right:4px;">LOAD:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.load_type||''}</td><td style="font-size:10px;font-weight:700;padding-left:10px;padding-right:4px;">H/W/L:</td><td style="border-bottom:1px solid #000;font-size:10px;width:120px;padding:1px 3px;">${[d.load_height,d.load_width,d.load_length].filter(Boolean).join(' / ')}</td><td style="font-size:10px;font-weight:700;padding-left:10px;padding-right:4px;">WEIGHT:</td><td style="border-bottom:1px solid #000;font-size:10px;width:80px;padding:1px 3px;">${d.load_weight||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-bottom:4px;"><tr><td style="font-size:10px;font-weight:700;padding-right:4px;">PICK UP:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${puAddr}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:100px;padding:1px 3px;">${d.pickup_date||''}</td></tr><tr><td colspan="4" style="height:3px;"></td></tr><tr><td style="font-size:10px;font-weight:700;padding-right:4px;">DROP OFF:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${doAddr}</td><td style="font-size:10px;font-weight:700;padding-left:8px;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">${d.dropoff_date||''}</td></tr></table><table style="width:100%;border-collapse:collapse;margin-top:6px;"><thead><tr><th style="${CH}width:9%;">DATE</th><th style="${CH}width:18%;">START CITY,ST</th><th style="${CH}width:9%;">START</th><th style="${CH}width:11%;">START ODO</th><th style="${CH}width:18%;">END CITY,ST</th><th style="${CH}width:9%;">END</th><th style="${CH}width:11%;">END ODO</th><th style="${CH}width:8%;">MILES</th><th style="${CH}width:7%;">MOTEL</th></tr></thead><tbody>${tripRows}</tbody></table><table style="width:100%;border-collapse:collapse;margin-top:8px;"><tr><td style="width:55%;vertical-align:top;padding-right:10px;"><table style="width:100%;border-collapse:collapse;">${[['TOTAL ESCORTED MILES',d.escorted_miles,d.escorted_rate],['FUEL S/C — MILES',d.fuel_sc_miles,d.fuel_sc_rate],['DEADHEAD MILES',d.deadhead_miles,d.deadhead_rate],['FLAT DAY RATE',d.flat_day_qty,d.flat_day_rate],['½ DAY RATE',d.half_day_qty,d.half_day_rate],['MOTELS',d.motel_qty,d.motel_rate],['DOWN TIME',d.downtime_hours,d.downtime_rate],["NO-GO'S",d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;padding:1px 0;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;padding:1px 4px;text-align:right;">${fq(q)}</td><td style="font-size:10px;padding:1px 5px;">@</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;padding:1px 4px;text-align:right;">${r>0?r.toFixed(2):''}</td></tr>`).join('')}</table></td><td style="vertical-align:top;"><table style="width:100%;border-collapse:collapse;">${[['PER MILE =',d.escorted_miles,d.escorted_rate],['MILES ONLY =',d.fuel_sc_miles,d.fuel_sc_rate],['PER MILE =',d.deadhead_miles,d.deadhead_rate],['PER DAY =',d.flat_day_qty,d.flat_day_rate],['½ DAY =',d.half_day_qty,d.half_day_rate],['PER DAY =',d.motel_qty,d.motel_rate],['PER HOUR =',d.downtime_hours,d.downtime_rate],['PER DAY =',d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;padding:1px 0;white-space:nowrap;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:95px;padding:1px 4px;text-align:right;">${fa(q,r)}</td></tr>`).join('')}<tr><td colspan="2" style="padding-top:5px;border-top:2.5px solid #000;text-align:right;"><span style="font-size:12px;font-weight:900;">TOTAL CHARGES = $</span><span style="font-size:14px;font-weight:900;border-bottom:2.5px solid #000;padding:0 10px;">${d.total.toFixed(2)}</span></td></tr></table></td></tr></table><table style="width:100%;border-collapse:collapse;margin-top:12px;"><tr><td style="width:65%;vertical-align:bottom;font-size:10px;font-weight:700;">DRIVER'S SIGNATURE: <span style="display:inline-block;border-bottom:1.5px solid #000;min-width:200px;vertical-align:bottom;">${sigHtml}</span></td><td style="vertical-align:bottom;font-size:10px;font-weight:700;">DATE: <span style="display:inline-block;border-bottom:1px solid #000;min-width:100px;">&nbsp;${d.date||''}&nbsp;</span></td></tr></table><div style="text-align:center;margin-top:9px;"><div style="font-size:10px;font-weight:700;">TERMS: DUE UPON RECEIPT</div><div style="font-size:8.5px;margin-top:2px;">After 45 days at 9% per month interest will be added to your BILL. All Collection cost/Attorney fees incurred to collect Debit is the Responsibility of the Trucking Company.</div></div><table style="width:100%;border-collapse:collapse;margin-top:7px;"><tr><td style="font-size:10px;"><b>Escort Subcontracting for Moose's Pilot Service:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:155px;">&nbsp;${d.escort_sub||''}&nbsp;</span></td><td style="font-size:10px;"><b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:110px;">&nbsp;</span></td></tr></table><div style="text-align:center;margin-top:9px;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;">Thank You for Your Business!!!</div>
+<!-- DRIVER ADMIN SCREEN -->
+<div id="admin-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bk);z-index:9000;flex-direction:column;overflow-y:auto;">
+  <div style="background:var(--bk2);padding:1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--y);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--y);">DRIVER MANAGEMENT</div>
+    <button onclick="closeAdmin()" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.4rem .8rem;cursor:pointer;">CLOSE</button>
+  </div>
+  <div style="padding:1rem;">
+    <!-- Add driver form -->
+    <div style="background:var(--bk3);border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid var(--border);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.8rem;">ADD NEW DRIVER</div>
+      <input id="admin-name" type="text" placeholder="Full name..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <input id="admin-phone" type="tel" placeholder="Phone number (PIN = last 4)..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <button onclick="addDriver()" style="width:100%;background:var(--y);border:none;border-radius:8px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.06em;padding:.75rem;cursor:pointer;">+ ADD DRIVER</button>
+      <div id="admin-msg" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:.5rem;display:none;"></div>
+    </div>
+    <!-- Driver list -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.5rem;">CURRENT DRIVERS</div>
+    <div id="admin-driver-list"></div>
+  </div>
+</div>
+</body></html>`;
   try{
     // Use pre-generated PDF if available
     status2.style.display='block';
@@ -1251,6 +1378,58 @@ function selectFormat(fmt){
   document.getElementById('btn-pilot').style.opacity=fmt==='pilot'?'1':'0.5';
   document.getElementById('btn-rig').style.opacity=fmt==='rig'?'1':'0.5';
 }
+let _adminTaps=0,_adminTimer=null;
+function checkAdminTap(){
+  _adminTaps++;
+  if(_adminTimer)clearTimeout(_adminTimer);
+  if(_adminTaps>=3){_adminTaps=0;openAdmin();return;}
+  _adminTimer=setTimeout(()=>{_adminTaps=0;},800);
+}
+async function openAdmin(){
+  dismissWelcome();
+  document.getElementById('admin-screen').style.display='flex';
+  await loadDriverList();
+}
+function closeAdmin(){
+  document.getElementById('admin-screen').style.display='none';
+}
+async function loadDriverList(){
+  const list=document.getElementById('admin-driver-list');
+  list.innerHTML='<div style="color:#555;font-family:Barlow Condensed,sans-serif;font-size:.8rem;text-align:center;padding:1rem;">Loading...</div>';
+  const {data,error}=await db.from('drivers').select('*').order('name');
+  if(error||!data){list.innerHTML='<div style="color:var(--red);font-family:Barlow Condensed,sans-serif;font-size:.8rem;text-align:center;padding:1rem;">Error loading drivers</div>';return;}
+  list.innerHTML=data.map(d=>`
+    <div style="background:var(--bk3);border-radius:8px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;border:1px solid ${d.active?'var(--border)':'var(--red)'};">
+      <div>
+        <div style="font-family:'Barlow',sans-serif;font-size:.9rem;color:${d.active?'#fff':'#555'};">${d.name}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:.7rem;color:#555;letter-spacing:.08em;">PIN: ${d.pin} &nbsp;|&nbsp; ${d.phone||'no phone'}</div>
+      </div>
+      <button onclick="${d.active?'deactivateDriver':'activateDriver'}('${d.id}')" style="background:transparent;border:1.5px solid ${d.active?'var(--red)':'var(--green)'};border-radius:6px;color:${d.active?'var(--red)':'var(--green)'};font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;padding:.35rem .7rem;cursor:pointer;">${d.active?'REMOVE':'RESTORE'}</button>
+    </div>`).join('');
+}
+async function addDriver(){
+  const name=document.getElementById('admin-name').value.trim();
+  const phone=document.getElementById('admin-phone').value.trim().replace(/\D/g,'');
+  const msg=document.getElementById('admin-msg');
+  if(!name){msg.style.display='block';msg.style.color='var(--red)';msg.textContent='Enter a name';return;}
+  if(phone.length<4){msg.style.display='block';msg.style.color='var(--red)';msg.textContent='Enter a valid phone number';return;}
+  const pin=phone.slice(-4);
+  const {error}=await db.from('drivers').insert({name,phone,pin,active:true});
+  if(error){msg.style.display='block';msg.style.color='var(--red)';msg.textContent='Error: '+error.message;return;}
+  msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ '+name+' added! PIN: '+pin;
+  document.getElementById('admin-name').value='';
+  document.getElementById('admin-phone').value='';
+  setTimeout(()=>{msg.style.display='none';},3000);
+  await loadDriverList();
+}
+async function deactivateDriver(id){
+  await db.from('drivers').update({active:false}).eq('id',id);
+  await loadDriverList();
+}
+async function activateDriver(id){
+  await db.from('drivers').update({active:true}).eq('id',id);
+  await loadDriverList();
+}
 function resetAll(){
   pin='';pinBusy=false;driverObj=null;sigInited=false;sigData='';sigMode='draw';updateDots();$('pin-error').textContent='';clearAllFields();
   if($('sig-typed-name'))$('sig-typed-name').value='';
@@ -1261,5 +1440,26 @@ function resetAll(){
   $('app').style.display='none';$('success-screen').classList.remove('show');$('pin-screen').style.display='flex';
 }
 </script>
+
+<!-- DRIVER ADMIN SCREEN -->
+<div id="admin-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bk);z-index:9000;flex-direction:column;overflow-y:auto;">
+  <div style="background:var(--bk2);padding:1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--y);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--y);">DRIVER MANAGEMENT</div>
+    <button onclick="closeAdmin()" style="background:transparent;border:1.5px solid var(--y);border-radius:6px;color:var(--y);font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.4rem .8rem;cursor:pointer;">CLOSE</button>
+  </div>
+  <div style="padding:1rem;">
+    <!-- Add driver form -->
+    <div style="background:var(--bk3);border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid var(--border);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.8rem;">ADD NEW DRIVER</div>
+      <input id="admin-name" type="text" placeholder="Full name..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <input id="admin-phone" type="tel" placeholder="Phone number (PIN = last 4)..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <button onclick="addDriver()" style="width:100%;background:var(--y);border:none;border-radius:8px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.06em;padding:.75rem;cursor:pointer;">+ ADD DRIVER</button>
+      <div id="admin-msg" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:.5rem;display:none;"></div>
+    </div>
+    <!-- Driver list -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--y);margin-bottom:.5rem;">CURRENT DRIVERS</div>
+    <div id="admin-driver-list"></div>
+  </div>
+</div>
 </body>
 </html>
