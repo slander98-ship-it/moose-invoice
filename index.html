@@ -746,7 +746,7 @@ async function submitInvoice(){
   }catch(err){alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent='SUBMIT INVOICE';}
 }
 
-function downloadPDF(){
+function downloadPDF(fmt){
   const d=lastInvoice;if(!d){alert('No invoice data available.');return;}
   const pos=d.position||'';const chk=(p)=>pos===p?'[X]':'[ ]';const fq=(v)=>v>0?v:'';const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
@@ -793,6 +793,119 @@ function clearAllFields(){
   if($('trips-container'))renderTrips();
   sv('driver_name',driverObj?driverObj.name:'');sv('driver_phone',driverObj?driverObj.phone:'');
 }
+function downloadRigMove(d,invNum){
+  const logo=LOGO_BW;
+  const pos=d.position||'';
+  const isF=pos==='Lead'||pos==='Chase';
+  const isHP=pos==='High Pole';
+  const chkF=isF?'<b>X</b>':'&nbsp;';
+  const chkR='&nbsp;';
+  const chkHP=isHP?'<b>X</b>':'&nbsp;';
+  const fq=(v)=>v>0?v:'';
+  const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
+  const C='border:1px solid #000;padding:3px 5px;font-size:10px;';
+  const CH=C+'font-weight:700;background:#f0f0f0;';
+  const puCity=(d.pickup_city||'')+(d.pickup_state?' '+d.pickup_state:'');
+  const doCity=(d.dropoff_city||'')+(d.dropoff_state?' '+d.dropoff_state:'');
+  const totalMi=d.tripMi>0?d.tripMi.toFixed(1):'';
+  const dh=d.deadhead_miles>0?d.deadhead_miles.toFixed(1):'';
+  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:40px;max-width:200px;filter:brightness(0);vertical-align:bottom;" alt=""/>`:'';
+  const driverRow=`<tr>
+    <td style="${C}width:45%;">&nbsp;${d.driver_name||''}</td>
+    <td style="${C}width:20%;">&nbsp;${d.driver_truck||''}</td>
+    <td style="${C}width:12%;text-align:center;">${chkF}</td>
+    <td style="${C}width:12%;text-align:center;">${chkR}</td>
+    <td style="${C}width:11%;text-align:center;">${chkHP}</td>
+  </tr>
+  <tr><td colspan="5" style="${C}font-size:9px;">&nbsp;Load: ${d.load_type||''}&nbsp;|&nbsp;H:${d.load_height||''} W:${d.load_width||''} L:${d.load_length||''}</td></tr>`;
+  const blankRows=[...Array(5)].map(()=>`<tr>
+    <td style="${C}height:28px;">&nbsp;</td><td style="${C}">&nbsp;</td>
+    <td style="${C}text-align:center;">&nbsp;</td><td style="${C}text-align:center;">&nbsp;</td><td style="${C}text-align:center;">&nbsp;</td>
+  </tr><tr><td colspan="5" style="${C}font-size:9px;">&nbsp;Load:&nbsp;</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#000;padding:12px;}
+@media print{@page{margin:.4in .5in;size:letter portrait;}body{padding:0;}}</style></head><body>
+<table style="width:100%;border-collapse:collapse;margin-bottom:10px;"><tr>
+  <td style="width:150px;vertical-align:middle;"><img src="${logo}" style="width:140px;display:block;" onerror="this.style.display='none'"/></td>
+  <td style="text-align:center;vertical-align:middle;">
+    <div style="font-family:Georgia,serif;font-size:24px;font-weight:700;">Moose's</div>
+    <div style="font-family:Georgia,serif;font-size:20px;font-weight:700;">Pilot Car Service, LLC</div>
+    <div style="font-size:10px;margin-top:4px;">525 N Peniel &nbsp;|&nbsp; Oklahoma City, OK 73127 &nbsp;|&nbsp; 405-255-5484</div>
+  </td>
+  <td style="width:140px;text-align:right;vertical-align:top;padding-top:4px;">
+    <div style="font-size:11px;font-weight:700;">Invoice #</div>
+    <div style="font-size:26px;font-weight:900;">${invNum}</div>
+    <div style="font-size:10px;margin-top:2px;">${d.date||''}</div>
+  </td>
+</tr></table>
+<table style="width:100%;border-collapse:collapse;margin-bottom:5px;">
+  <tr>
+    <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">Truck Company Name:</td>
+    <td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${d.trucking_co||''}</td>
+    <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;padding-right:4px;">RIG#</td>
+    <td style="border-bottom:1px solid #000;width:90px;padding:1px 3px;">&nbsp;${d.driver_truck||''}</td>
+  </tr>
+  <tr><td colspan="4" style="height:4px;"></td></tr>
+  <tr>
+    <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">Start Odometer:</td>
+    <td style="border-bottom:1px solid #000;width:100px;padding:1px 3px;">&nbsp;${d.start_odometer||''}</td>
+    <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;padding-right:4px;">End Odometer:</td>
+    <td style="border-bottom:1px solid #000;width:100px;padding:1px 3px;">&nbsp;${d.end_odometer||''}</td>
+  </tr>
+  <tr><td colspan="4" style="height:4px;"></td></tr>
+  <tr>
+    <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">Total Miles:</td>
+    <td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${totalMi}</td>
+    <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;padding-right:4px;">Total DH Miles:</td>
+    <td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${dh}</td>
+  </tr>
+  <tr><td colspan="4" style="height:4px;"></td></tr>
+  <tr>
+    <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">Pick Up:</td>
+    <td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${puCity}</td>
+    <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;padding-right:4px;">Drop Off:</td>
+    <td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${doCity}</td>
+  </tr>
+</table>
+<div style="text-align:center;font-size:18px;margin:4px 0;">&#8592;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#8594;</div>
+<table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+  <tr><th style="${CH}width:45%;">Driver Name</th><th style="${CH}width:20%;">Truck #</th><th style="${CH}width:12%;text-align:center;">F</th><th style="${CH}width:12%;text-align:center;">R</th><th style="${CH}width:11%;text-align:center;">HP</th></tr>
+  ${driverRow}${blankRows}
+</table>
+<div style="text-align:center;font-size:18px;margin:4px 0;">&#8592;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#8594;</div>
+<table style="width:100%;border-collapse:collapse;margin-top:6px;">
+  <tr>
+    <td style="width:55%;vertical-align:top;padding-right:8px;">
+      <table style="width:100%;border-collapse:collapse;">
+        ${[['Total Escorted Miles',d.escorted_miles,d.escorted_rate],['Flat Day Rate',d.flat_day_qty,d.flat_day_rate],['High Pole Day Rate',pos==='High Pole'?d.flat_day_qty:0,pos==='High Pole'?d.flat_day_rate:0],['Hotels',d.motel_qty,d.motel_rate]].map(([lbl,q,r])=>`<tr style="height:24px;"><td style="font-size:10px;font-weight:700;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #000;min-width:40px;text-align:right;">${fq(q)}</td><td style="font-size:10px;padding:0 4px;">@</td><td style="font-size:10px;border-bottom:1px solid #000;min-width:40px;text-align:right;">${r>0?r.toFixed(2):''}</td></tr>`).join('')}
+      </table>
+    </td>
+    <td style="vertical-align:top;">
+      <table style="width:100%;border-collapse:collapse;">
+        ${[['Per Mile =',d.escorted_miles,d.escorted_rate],['Per Day =',d.flat_day_qty,d.flat_day_rate],['Per Day =',pos==='High Pole'?d.flat_day_qty:0,pos==='High Pole'?d.flat_day_rate:0],['Per Day =',d.motel_qty,d.motel_rate]].map(([lbl,q,r])=>`<tr style="height:24px;"><td style="font-size:10px;font-weight:700;white-space:nowrap;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #000;min-width:90px;text-align:right;">${fa(q,r)}</td></tr>`).join('')}
+        <tr><td colspan="2" style="padding-top:5px;border-top:2px solid #000;text-align:right;"><span style="font-size:12px;font-weight:900;">Total Charges $</span><span style="font-size:14px;font-weight:900;border-bottom:2px solid #000;padding:0 8px;">${d.total.toFixed(2)}</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<div style="text-align:center;font-size:9.5px;font-weight:700;margin-top:8px;border-top:1px solid #000;padding-top:5px;">TERMS DUE UPON RECEIPT</div>
+<div style="font-size:8px;text-align:center;margin-top:2px;">After 30 days a 5% per month interest will be added to your bill.</div>
+<table style="width:100%;border-collapse:collapse;margin-top:8px;">
+  <tr>
+    <td style="width:65%;font-size:10px;font-weight:700;">Driver Signature: <span style="display:inline-block;border-bottom:1.5px solid #000;min-width:180px;vertical-align:bottom;">${sigHtml}</span></td>
+    <td style="font-size:10px;font-weight:700;">Date: <span style="display:inline-block;border-bottom:1px solid #000;min-width:90px;">&nbsp;${d.date||''}&nbsp;</span></td>
+  </tr>
+</table>
+<div style="font-size:10px;margin-top:6px;"><b>Escort Subcontracting for Moose's Pilot Service:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:140px;">&nbsp;${d.escort_sub||''}&nbsp;</span><b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:90px;">&nbsp;</span></div>
+<div style="text-align:center;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:12px;margin-top:8px;">Thank You for Your Business!!!</div>
+<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},600);});<\/script>
+</body></html>`;
+  const win=window.open('','_blank','width=900,height=1100');
+  if(!win){alert('Allow pop-ups to download the invoice.');return;}
+  win.document.write(html);
+  win.document.close();
+}
+
 async function shareInvoice(){
   const d=lastInvoice;if(!d)return;
   // Build the same PDF HTML as downloadPDF
@@ -855,6 +968,7 @@ async function sendInvoiceEmail(){
   const status2=document.getElementById('email-status');
   btn.disabled=true;btn.textContent='GENERATING PDF...';
   const invNum=(d.invNum||'').replace('INV-','');
+  if(fmt==='rig'){downloadRigMove(d,invNum);return;}
   // Build full branded invoice HTML (same as downloadPDF)
   const pos=d.position||'';const chk=(p)=>pos===p?'[X]':'[ ]';const fq=(v)=>v>0?v:'';const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
