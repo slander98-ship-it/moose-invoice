@@ -471,12 +471,9 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="success-num" id="success-num">#—</div>
     <p class="success-msg">Approval request sent to<br>Moose's Pilot Car Service.</p>
     <button class="success-btn" onclick="resetAll()">NEW INVOICE</button>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.2em;color:#555;text-align:center;margin-bottom:.4rem;">— SELECT INVOICE TYPE —</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
-      <button id="btn-pilot" class="success-btn-ghost" onclick="selectFormat('pilot')" style="padding:.7rem .3rem;font-size:.95rem;">PILOT CAR</button>
-      <button id="btn-rig" class="success-btn-ghost" onclick="selectFormat('rig')" style="padding:.7rem .3rem;font-size:.95rem;opacity:.5;">RIG MOVE</button>
-    </div>
-    <button class="success-btn-ghost" onclick="downloadPDF(selectedFormat)" style="width:100%;margin-bottom:.4rem;">⬇ DOWNLOAD</button>
+    <button class="success-btn-ghost" onclick="downloadPDF('pilot')" style="width:100%;margin-bottom:.4rem;">
+      ⬇ DOWNLOAD PILOT CAR PDF
+    </button>
     <div id="email-panel" style="display:none;margin-top:.5rem;">
       <input id="email-to" type="email" placeholder="Enter email address..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
       <button class="success-btn" onclick="sendInvoiceEmail()" style="width:100%;" id="send-email-btn">SEND INVOICE</button>
