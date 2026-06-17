@@ -825,7 +825,8 @@ async function sendInvoiceEmail(){
           motel_qty:d.motel_qty,motel_rate:d.motel_rate,
           downtime_hours:d.downtime_hours,downtime_rate:d.downtime_rate,
           nogo_qty:d.nogo_qty,nogo_rate:d.nogo_rate,
-          total:d.total,escort_sub:d.escort_sub
+          total:d.total,escort_sub:d.escort_sub,
+          sigData:d.sigData||null
         }
       })
     });
