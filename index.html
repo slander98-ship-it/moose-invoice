@@ -705,9 +705,9 @@ async function submitInvoice(){
   // Get next sequential invoice number starting at 6000
   let invNum='INV-6000';
   try{
-    const {data:lastInv}=await db.from('invoices').select('invoice_number').like('invoice_number','INV-%').order('created_at',{ascending:false}).limit(1).maybeSingle();
-    if(lastInv&&lastInv.invoice_number){
-      const lastNum=parseInt(lastInv.invoice_number.replace('INV-',''))||5999;
+    const {data:lastInv}=await db.from('invoices').select('invoice_num').order('created_at',{ascending:false}).limit(1).maybeSingle();
+    if(lastInv&&lastInv.invoice_num){
+      const lastNum=parseInt((lastInv.invoice_num||'').replace('INV-',''))||5999;
       const nextNum=Math.max(lastNum+1,6000);
       invNum='INV-'+nextNum;
     }
