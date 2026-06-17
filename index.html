@@ -475,16 +475,18 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="success-num" id="success-num">#—</div>
     <p class="success-msg">Approval request sent to<br>Moose's Pilot Car Service.</p>
     <button class="success-btn" onclick="resetAll()">NEW INVOICE</button>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.2em;color:#555;text-align:center;margin-bottom:.4rem;">— SELECT INVOICE TYPE —</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
-      <button class="success-btn-ghost" onclick="downloadPDF('pilot')" style="flex-direction:column;gap:.2rem;padding:.7rem .3rem;font-size:.95rem;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <button id="btn-pilot" class="success-btn-ghost" onclick="selectFormat('pilot')" style="flex-direction:column;gap:.2rem;padding:.7rem .3rem;font-size:.95rem;">
         PILOT CAR
       </button>
-      <button class="success-btn-ghost" onclick="downloadPDF('rig')" style="flex-direction:column;gap:.2rem;padding:.7rem .3rem;font-size:.95rem;opacity:.7;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <button id="btn-rig" class="success-btn-ghost" onclick="selectFormat('rig')" style="flex-direction:column;gap:.2rem;padding:.7rem .3rem;font-size:.95rem;opacity:.5;">
         RIG MOVE
       </button>
     </div>
+    <button class="success-btn-ghost" onclick="downloadPDF(selectedFormat)" style="width:100%;margin-bottom:.4rem;">
+      ⬇ DOWNLOAD
+    </button>
     <div id="email-panel" style="display:none;margin-top:.5rem;">
       <input id="email-to" type="email" placeholder="Enter email address..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
       <button class="success-btn" onclick="sendInvoiceEmail()" style="width:100%;" id="send-email-btn">SEND INVOICE</button>
@@ -716,14 +718,10 @@ async function submitInvoice(){
   // Get next sequential invoice number starting at 6000
   let invNum='INV-6000';
   try{
-    // Get all recent invoices and find the highest number >= 6000
-    const {data:recentInvs}=await db.from('invoices').select('invoice_number').order('created_at',{ascending:false}).limit(50);
-    if(recentInvs&&recentInvs.length>0){
-      const nums=recentInvs.map(r=>parseInt((r.invoice_number||'').replace('INV-',''))||0).filter(n=>n>=6000);
-      const lastNum=nums.length>0?Math.max(...nums):5999;
-      invNum='INV-'+(lastNum+1);
-    }
-  }catch(e){invNum='INV-'+Math.max(6000,Date.now().toString().slice(-4)*1+6000);}
+    const {count}=await db.from('invoices').select('*',{count:'exact',head:true});
+    const nextNum=6000+(count||0);
+    invNum='INV-'+nextNum;
+  }catch(e){invNum='INV-6000';}
     const firstTrip=trips[0]||{};
     const{data,error}=await db.from('invoices').insert({
       invoice_number:invNum,pilot_position:radios.pilot_position,load_job_number:fv('load_job_number'),job_date:fv('job_date')||null,
@@ -993,6 +991,12 @@ async function scanPermit(input){
     setTimeout(()=>{status.style.display='none';status.style.color='var(--y)';},5000);
   }
   input.value='';
+}
+let selectedFormat='pilot';
+function selectFormat(fmt){
+  selectedFormat=fmt;
+  document.getElementById('btn-pilot').style.opacity=fmt==='pilot'?'1':'0.5';
+  document.getElementById('btn-rig').style.opacity=fmt==='rig'?'1':'0.5';
 }
 function resetAll(){
   pin='';pinBusy=false;driverObj=null;sigInited=false;sigData='';sigMode='draw';updateDots();$('pin-error').textContent='';clearAllFields();
