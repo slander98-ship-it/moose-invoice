@@ -196,11 +196,20 @@ export default async function handler(req, res) {
       y += 20;
 
       // ── SIGNATURE ──
-      doc.moveTo(ML, y + 6).lineTo(ML + 200, y + 6).stroke();
-      doc.font('Helvetica-Bold').fontSize(8).text("DRIVER'S SIGNATURE:", ML, y + 10);
-      doc.font('Helvetica-Bold').text('DATE:', ML + PW - 80, y + 10);
-      doc.font('Helvetica').text(d.date || '', ML + PW - 52, y + 10);
-      y += 24;
+      doc.font('Helvetica-Bold').fontSize(8).text("DRIVER'S SIGNATURE:", ML, y);
+      // Draw signature image if available
+      if (d.sigData) {
+        try {
+          // sigData is a data URI: data:image/png;base64,...
+          const sigB64 = d.sigData.replace(/^data:image\/png;base64,/, '');
+          const sigBuf = Buffer.from(sigB64, 'base64');
+          doc.image(sigBuf, ML + 110, y - 14, { height: 28, fit: [180, 28] });
+        } catch(e) { console.warn('sig image failed', e.message); }
+      }
+      doc.moveTo(ML + 110, y + 10).lineTo(ML + 300, y + 10).stroke();
+      doc.font('Helvetica-Bold').fontSize(8).text('DATE:', ML + PW - 80, y);
+      doc.font('Helvetica').text(d.date || '', ML + PW - 52, y);
+      y += 22;
 
       // Terms
       doc.font('Helvetica').fontSize(7)
@@ -210,10 +219,16 @@ export default async function handler(req, res) {
         .text("After 45 days a 9% LATE FEE will be added to your BILL. All collections cost/Attorney's fees incurred to collect Debit is the Responsibility of the Trucking Company.", ML, y, { width: PW, align: 'center' });
       y += 12;
 
+      // Escort subcontracting line
       doc.font('Helvetica-Bold').fontSize(8)
-        .text('Escort Subcontracting for Moose\'s Pilot Service:', ML, y);
-      doc.font('Helvetica').text(d.escort_sub || '___________________________', ML + 230, y);
-      doc.font('Helvetica-Bold').text('DBA', ML + PW - 80, y);
+        .text("Escort Subcontracting for Moose's Pilot Service:", ML, y);
+      // Print the name if provided
+      if (d.escort_sub) {
+        doc.font('Helvetica').text(d.escort_sub, ML + 232, y);
+      }
+      doc.moveTo(ML + 232, y + 9).lineTo(ML + PW - 50, y + 9).stroke();
+      doc.font('Helvetica-Bold').text('DBA', ML + PW - 44, y);
+      doc.moveTo(ML + PW - 36, y + 9).lineTo(ML + PW, y + 9).stroke();
       y += 14;
 
       doc.font('Helvetica-BoldOblique').fontSize(10)
