@@ -774,8 +774,33 @@ async function shareInvoice(){
 <td style="vertical-align:top;text-align:right;width:170px;padding-top:8px;"><div style="font-size:12px;font-weight:700;">Invoice #&nbsp;&nbsp;<span style="font-size:30px;font-weight:900;">${invNum}</span></div></td>
 </tr></table>
 <div style="font-size:10px;margin-bottom:4px;"><b>Pilot Position:</b>&nbsp;&nbsp;${chk('Lead')} Front&nbsp;&nbsp;${chk('Chase')} Rear&nbsp;&nbsp;${chk('High Pole')} High Pole&nbsp;&nbsp;${chk('Steer Man')} Steer mon&nbsp;&nbsp;&nbsp;&nbsp;<b>DATE:</b>${ul(d.date,100)}</div>
-<table style="width:100%;border-collapse:collapse;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">TRUCKING CO:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.trucking_co||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:16px;width:1%;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:160px;padding:1px 3px;">&nbsp;${d.trucking_co_phone||''}</td></tr><tr><td colspan="4" style="height:3px;"></td></tr><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">BILLING ADDRESS:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.billing_address||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:16px;padding-right:4px;">CONTACT:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.contact_name||''}</td></tr></table>
-<table style="width:100%;border-collapse:collapse;margin-top:6px;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">DRIVER:</td><td style="border-bottom:1px solid #000;font-size:10px;width:190px;padding:1px 3px;">&nbsp;${d.driver_name||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;width:1%;padding-right:4px;">PHONE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:130px;padding:1px 3px;">&nbsp;${d.driver_phone||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;width:1%;padding-right:4px;">TRUCK#:</td><td style="border-bottom:1px solid #000;font-size:10px;width:70px;padding:1px 3px;">&nbsp;${d.driver_truck||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;width:1%;padding-right:4px;">TRAILER#:</td><td style="border-bottom:1px solid #000;font-size:10px;width:70px;padding:1px 3px;">&nbsp;${d.driver_trailer||''}</td></tr></table>
+<table style="width:100%;border-collapse:collapse;margin-bottom:3px;">
+<tr>
+  <td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">TRUCKING CO:</td>
+  <td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.trucking_co||''}</td>
+  <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:16px;width:1%;padding-right:4px;">PHONE:</td>
+  <td style="border-bottom:1px solid #000;font-size:10px;width:150px;padding:1px 3px;">&nbsp;${d.trucking_co_phone||''}</td>
+</tr>
+<tr><td colspan="4" style="height:4px;"></td></tr>
+<tr>
+  <td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;vertical-align:top;padding-top:2px;">BILLING ADDRESS:</td>
+  <td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;word-break:break-word;white-space:normal;max-width:200px;">&nbsp;${d.billing_address||''}</td>
+  <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:16px;width:1%;padding-right:4px;vertical-align:top;padding-top:2px;">CONTACT:</td>
+  <td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;word-break:break-word;white-space:normal;width:150px;">&nbsp;${d.contact_name||''}</td>
+</tr>
+</table>
+<table style="width:100%;border-collapse:collapse;margin-top:5px;margin-bottom:3px;">
+<tr>
+  <td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">DRIVER:</td>
+  <td style="border-bottom:1px solid #000;font-size:10px;width:22%;padding:1px 3px;">&nbsp;${d.driver_name||''}</td>
+  <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:8px;width:1%;padding-right:4px;">PHONE:</td>
+  <td style="border-bottom:1px solid #000;font-size:10px;width:18%;padding:1px 3px;">&nbsp;${d.driver_phone||''}</td>
+  <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:8px;width:1%;padding-right:4px;">TRUCK#:</td>
+  <td style="border-bottom:1px solid #000;font-size:10px;width:10%;padding:1px 3px;">&nbsp;${d.driver_truck||''}</td>
+  <td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:8px;width:1%;padding-right:4px;">TRAILER#:</td>
+  <td style="border-bottom:1px solid #000;font-size:10px;width:10%;padding:1px 3px;">&nbsp;${d.driver_trailer||''}</td>
+</tr>
+</table>
 <table style="width:100%;border-collapse:collapse;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">LOAD:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.load_type||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;width:1%;padding-right:4px;">H/W/L:</td><td style="border-bottom:1px solid #000;font-size:10px;width:80px;padding:1px 3px;">&nbsp;${loadLen}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;width:1%;padding-right:4px;">WEIGHT:</td><td style="border-bottom:1px solid #000;font-size:10px;width:90px;padding:1px 3px;">&nbsp;${d.load_weight||''}</td></tr></table>
 <table style="width:100%;border-collapse:collapse;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">PICK UP:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${puAddr}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;width:1%;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:100px;padding:1px 3px;">&nbsp;${d.pickup_date||''}</td></tr><tr><td colspan="4" style="height:3px;"></td></tr><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">DROP OFF:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${doAddr}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.dropoff_date||''}</td></tr></table>
 <table style="width:100%;border-collapse:collapse;margin-top:6px;"><thead><tr><th style="${CH}width:9%;">DATE</th><th style="${CH}width:18%;">START-CITY,ST</th><th style="${CH}width:9%;">START TIME</th><th style="${CH}width:11%;">START ODO</th><th style="${CH}width:18%;">END-CITY,ST</th><th style="${CH}width:9%;">END TIME</th><th style="${CH}width:11%;">END ODO</th><th style="${CH}width:8%;">MILES</th><th style="${CH}width:7%;">MOTEL</th></tr></thead><tbody>${tripRows}</tbody></table>
