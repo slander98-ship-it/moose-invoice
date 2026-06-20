@@ -618,7 +618,7 @@ function renderTrips(){
   trips.forEach((t,i)=>{
     const card=document.createElement('div');card.className='trip-card';card.id='trip-card-'+i;
     card.innerHTML=`<div class="trip-card-head"><div class="trip-day-label">DAY ${i+1}</div>${i>0?`<button class="trip-remove" onclick="removeTrip(${i})">REMOVE DAY</button>`:''}</div>
-    <div class="g3"><div class="fg"><label>DATE *</label><input id="t${i}-date" type="date" value="${t.date||''}" oninput="updateTrip(${i},'date',this.value)"/></div><div class="fg"><label>START TIME *</label><input id="t${i}-start" type="time" value="${t.startTime||''}" oninput="updateTrip(${i},'startTime',this.value)"/></div><div class="fg"><label>END TIME *</label><input id="t${i}-end" type="time" value="${t.endTime||''}" oninput="updateTrip(${i},'endTime',this.value)"/></div></div>
+    <div class="g3"><div class="fg"><label>DATE *</label><input id="t${i}-date" type="date" autocomplete="off" value="${t.date||''}" oninput="updateTrip(${i},'date',this.value)" onchange="updateTrip(${i},'date',this.value)"/></div><div class="fg"><label>START TIME *</label><input id="t${i}-start" type="time" autocomplete="off" value="${t.startTime||''}" oninput="updateTrip(${i},'startTime',this.value)" onchange="updateTrip(${i},'startTime',this.value)"/></div><div class="fg"><label>END TIME *</label><input id="t${i}-end" type="time" autocomplete="off" value="${t.endTime||''}" oninput="updateTrip(${i},'endTime',this.value)" onchange="updateTrip(${i},'endTime',this.value)"/></div></div>
     <div class="g2"><div class="fg"><label>START CITY, ST</label><input type="text" autocomplete="off" value="${t.startCity||''}" placeholder="Davidson, OK" oninput="updateTrip(${i},'startCity',this.value)" onchange="updateTrip(${i},'startCity',this.value)"/></div><div class="fg"><label>END CITY, ST</label><input type="text" autocomplete="off" value="${t.endCity||''}" placeholder="Rush Springs, OK" oninput="updateTrip(${i},'endCity',this.value)" onchange="updateTrip(${i},'endCity',this.value)"/></div></div>
     <div class="rg-wrap"><div class="rg-label">MOTEL / OVERNIGHT?</div><div class="radio-group"><label><input type="radio" name="t${i}-motel" value="N" ${t.motel!=='Y'?'checked':''} onchange="updateTrip(${i},'motel','N')"><span>NO</span></label><label><input type="radio" name="t${i}-motel" value="Y" ${t.motel==='Y'?'checked':''} onchange="updateTrip(${i},'motel','Y')"><span>YES — OVERNIGHT</span></label></div></div>`;
     c.appendChild(card);
@@ -873,8 +873,6 @@ function selectFormat(fmt){
   const rb=document.getElementById('btn-rig');
   if(pb){pb.style.background=fmt==='pilot'?'var(--y)':'transparent';pb.style.color=fmt==='pilot'?'var(--bk)':'var(--y)';pb.style.opacity=fmt==='pilot'?'1':'0.5';}
   if(rb){rb.style.background=fmt==='rig'?'var(--y)':'transparent';rb.style.color=fmt==='rig'?'var(--bk)':'var(--y)';rb.style.opacity=fmt==='rig'?'1':'0.5';}
-  const emailBtn=document.getElementById('email-invoice-btn');
-  if(emailBtn)emailBtn.style.display=fmt==='rig'?'none':'flex';
 }
 function downloadSelected(){
   if(selectedFormat==='rig'){downloadRigMove(lastInvoice);}else{downloadPilotCar('pilot');}
