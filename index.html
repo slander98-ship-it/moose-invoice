@@ -483,7 +483,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <button class="success-btn" onclick="sendInvoiceEmail()" style="width:100%;" id="send-email-btn">SEND INVOICE</button>
       <button onclick="document.getElementById('email-panel').style.display='none'" style="background:transparent;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;width:100%;margin-top:.3rem;">CANCEL</button>
     </div>
-    <button class="success-btn-ghost" onclick="document.getElementById('email-panel').style.display='block';document.getElementById('email-to').focus();" style="margin-top:.5rem;display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;">
+    <button id="email-invoice-btn" class="success-btn-ghost" onclick="document.getElementById('email-panel').style.display='block';document.getElementById('email-to').focus();" style="margin-top:.5rem;display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       EMAIL MY INVOICE
     </button>
@@ -605,7 +605,7 @@ function clearDraft(){clearAllFields();$('draft-banner').classList.remove('show'
 
 function onPositionChange(pos){radios.pilot_position=pos;$('rg-position').classList.remove('err');showRateChip(pos);applyDefaultRates(pos,false);saveDraft();}
 function showRateChip(pos){const r=RATES[pos];if(!r)return;$('chip-day').innerHTML='$'+r.day+'<em>/ DAY</em>';$('chip-mile').innerHTML='$'+r.mile.toFixed(2)+'<em>/ MI</em>';$('chip-motel').innerHTML='$'+r.motel+'<em>/ OVERNIGHT</em>';$('rate-chip').classList.add('show');}
-function applyDefaultRates(pos,force){const r=RATES[pos];if(!r)return;if(force||!bv('escorted_rate'))sbv('escorted_rate',r.mile.toFixed(2));if(force||!bv('motel_rate'))sbv('motel_rate',r.motel);if(force||!bv('flat_day_qty'))sbv('flat_day_qty',1);if(force||!bv('flat_day_rate'))sbv('flat_day_rate',r.day);updateRateWinner();}
+function applyDefaultRates(pos,force){const r=RATES[pos];if(!r)return;if(force||!bv('escorted_rate'))sbv('escorted_rate',r.mile.toFixed(2));if(force||!bv('motel_rate'))sbv('motel_rate',r.motel);if(force||!bv('flat_day_qty'))sbv('flat_day_qty',trips.length||1);if(force||!bv('flat_day_rate'))sbv('flat_day_rate',r.day);updateRateWinner();}
 
 function calcTripMiles(){const s=parseFloat($('f-start_odometer').value)||0;const e=parseFloat($('f-end_odometer').value)||0;return(e>s)?e-s:0;}
 function onOdoInput(){
@@ -619,7 +619,7 @@ function renderTrips(){
     const card=document.createElement('div');card.className='trip-card';card.id='trip-card-'+i;
     card.innerHTML=`<div class="trip-card-head"><div class="trip-day-label">DAY ${i+1}</div>${i>0?`<button class="trip-remove" onclick="removeTrip(${i})">REMOVE DAY</button>`:''}</div>
     <div class="g3"><div class="fg"><label>DATE *</label><input id="t${i}-date" type="date" value="${t.date||''}" oninput="updateTrip(${i},'date',this.value)"/></div><div class="fg"><label>START TIME *</label><input id="t${i}-start" type="time" value="${t.startTime||''}" oninput="updateTrip(${i},'startTime',this.value)"/></div><div class="fg"><label>END TIME *</label><input id="t${i}-end" type="time" value="${t.endTime||''}" oninput="updateTrip(${i},'endTime',this.value)"/></div></div>
-    <div class="g2"><div class="fg"><label>START CITY, ST</label><input type="text" value="${t.startCity||''}" placeholder="Davidson, OK" oninput="updateTrip(${i},'startCity',this.value)"/></div><div class="fg"><label>END CITY, ST</label><input type="text" value="${t.endCity||''}" placeholder="Rush Springs, OK" oninput="updateTrip(${i},'endCity',this.value)"/></div></div>
+    <div class="g2"><div class="fg"><label>START CITY, ST</label><input type="text" autocomplete="off" value="${t.startCity||''}" placeholder="Davidson, OK" oninput="updateTrip(${i},'startCity',this.value)" onchange="updateTrip(${i},'startCity',this.value)"/></div><div class="fg"><label>END CITY, ST</label><input type="text" autocomplete="off" value="${t.endCity||''}" placeholder="Rush Springs, OK" oninput="updateTrip(${i},'endCity',this.value)" onchange="updateTrip(${i},'endCity',this.value)"/></div></div>
     <div class="rg-wrap"><div class="rg-label">MOTEL / OVERNIGHT?</div><div class="radio-group"><label><input type="radio" name="t${i}-motel" value="N" ${t.motel!=='Y'?'checked':''} onchange="updateTrip(${i},'motel','N')"><span>NO</span></label><label><input type="radio" name="t${i}-motel" value="Y" ${t.motel==='Y'?'checked':''} onchange="updateTrip(${i},'motel','Y')"><span>YES — OVERNIGHT</span></label></div></div>`;
     c.appendChild(card);
   });
@@ -639,7 +639,7 @@ function updateRateWinner(){
   $('rc-day-amt').textContent='$'+dayPay.toFixed(2);$('rc-day-detail').textContent=dayQty+' day × $'+dayRate.toFixed(2);
   const mWins=milesPay>=dayPay;
   $('rc-miles').className='rc-option '+(mWins?'winner':'loser');$('rc-day').className='rc-option '+(mWins?'loser':'winner');
-  if(mWins){$('rc-verdict').textContent='MILES RATE WINS — CHARGING $'+milesPay.toFixed(2);if(dayPay<milesPay){sbv('flat_day_qty',0);sbv('flat_day_rate',0);}highlightRows(true,false);}
+  if(mWins){$('rc-verdict').textContent='MILES RATE WINS — CHARGING $'+milesPay.toFixed(2);if(dayPay<milesPay){sbv('flat_day_rate',0);}highlightRows(true,false);}
   else{$('rc-verdict').textContent='DAY RATE WINS — CHARGING $'+dayPay.toFixed(2);if(milesPay<dayPay)sbv('escorted_rate',0);highlightRows(false,true);}
   calcTotal();
 }
@@ -789,7 +789,7 @@ async function shareInvoice(){
   <td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;word-break:break-word;white-space:normal;width:150px;">&nbsp;${d.contact_name||''}</td>
 </tr>
 </table>
-<table style="width:100%;border-collapse:collapse;margin-top:5px;margin-bottom:3px;">
+<table style="width:100%;border-collapse:collapse;margin-top:10px;margin-bottom:3px;">
 <tr>
   <td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">DRIVER:</td>
   <td style="border-bottom:1px solid #000;font-size:10px;width:22%;padding:1px 3px;">&nbsp;${d.driver_name||''}</td>
@@ -873,6 +873,8 @@ function selectFormat(fmt){
   const rb=document.getElementById('btn-rig');
   if(pb){pb.style.background=fmt==='pilot'?'var(--y)':'transparent';pb.style.color=fmt==='pilot'?'var(--bk)':'var(--y)';pb.style.opacity=fmt==='pilot'?'1':'0.5';}
   if(rb){rb.style.background=fmt==='rig'?'var(--y)':'transparent';rb.style.color=fmt==='rig'?'var(--bk)':'var(--y)';rb.style.opacity=fmt==='rig'?'1':'0.5';}
+  const emailBtn=document.getElementById('email-invoice-btn');
+  if(emailBtn)emailBtn.style.display=fmt==='rig'?'none':'flex';
 }
 function downloadSelected(){
   if(selectedFormat==='rig'){downloadRigMove(lastInvoice);}else{downloadPilotCar('pilot');}
@@ -1078,9 +1080,9 @@ function downloadRigMove(d){
   const invNum=(d.invNum||'').replace('INV-','');
   const pos=d.position||'';
   const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:40px;max-width:200px;filter:brightness(0);vertical-align:bottom;" alt=""/>`:' ';
-  const isF=pos==='Lead'||pos==='Chase';
+  const isF=pos==='Lead';
   const isR=pos==='Chase';
-  const isHP=pos==='High Pole';
+  const isHP=pos==='High Pole'||pos==='Steer Man';
   const fq=(v)=>v>0?v:'';
   const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const puAddr=[(d.pickup_location||''),(d.pickup_city||''),(d.pickup_state||'')].filter(Boolean).join(', ');
