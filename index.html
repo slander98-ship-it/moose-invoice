@@ -471,8 +471,12 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="success-num" id="success-num">#—</div>
     <p class="success-msg">Approval request sent to<br>Moose's Pilot Car Service.</p>
     <button class="success-btn" onclick="resetAll()">NEW INVOICE</button>
-    <button class="success-btn-ghost" onclick="downloadPilotCar('pilot')" style="width:100%;margin-bottom:.4rem;">
-      ⬇ DOWNLOAD PILOT CAR PDF
+    <div style="display:flex;gap:.4rem;margin-bottom:.4rem;">
+      <button id="btn-pilot" onclick="selectFormat('pilot')" style="flex:1;background:var(--y);border:2px solid var(--y);border-radius:8px;color:var(--bk);font-family:'Bebas Neue',sans-serif;font-size:.95rem;padding:.55rem .5rem;cursor:pointer;transition:opacity .15s;">📋 PILOT CAR</button>
+      <button id="btn-rig" onclick="selectFormat('rig')" style="flex:1;background:transparent;border:2px solid var(--y);border-radius:8px;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:.95rem;padding:.55rem .5rem;cursor:pointer;opacity:0.5;transition:opacity .15s;">🚛 RIG MOVE</button>
+    </div>
+    <button class="success-btn-ghost" onclick="selectedFormat==='rig'?downloadRigMove(lastInvoice):downloadPilotCar('pilot')" style="width:100%;margin-bottom:.4rem;">
+      ⬇ DOWNLOAD PDF
     </button>
     <div id="email-panel" style="display:none;margin-top:.5rem;">
       <input id="email-to" type="email" placeholder="Enter email address..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
@@ -842,8 +846,9 @@ function selectFormat(fmt){
   selectedFormat=fmt;
   const pb=document.getElementById('btn-pilot');
   const rb=document.getElementById('btn-rig');
+  if(pb){pb.style.opacity='1';pb.style.background=fmt==='pilot'?'var(--y)':'transparent';pb.style.color=fmt==='pilot'?'var(--bk)':'var(--y)';}
+  if(rb){rb.style.opacity='1';rb.style.background=fmt==='rig'?'var(--y)':'transparent';rb.style.color=fmt==='rig'?'var(--bk)':'var(--y)';rb.style.opacity=fmt==='rig'?'1':'0.5';}
   if(pb)pb.style.opacity=fmt==='pilot'?'1':'0.5';
-  if(rb)rb.style.opacity=fmt==='rig'?'1':'0.5';
 }
 
 async function scanPermit(input){
@@ -1102,3 +1107,4 @@ function resetAll(){
 </script>
 </body>
 </html>
+
