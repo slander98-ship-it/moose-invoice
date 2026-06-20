@@ -1049,54 +1049,143 @@ ${[...Array(Math.max(0,5-tdata.length))].map(()=>'<tr><td class="box" style="hei
 }
 
 function downloadRigMove(d){
+  if(!d){alert('No invoice data.');return;}
   const invNum=(d.invNum||'').replace('INV-','');
   const pos=d.position||'';
-  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:40px;max-width:200px;filter:brightness(0);vertical-align:bottom;" alt=""/>`:'';
-  const C='border:1px solid #000;padding:3px 5px;font-size:10px;';const CH=C+'font-weight:700;background:#f0f0f0;';
-  const fq=(v)=>v>0?v:'';const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
-  const puCity=(d.pickup_city||'')+(d.pickup_state?' '+d.pickup_state:'');
-  const doCity=(d.dropoff_city||'')+(d.dropoff_state?' '+d.dropoff_state:'');
+  const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:40px;max-width:200px;filter:brightness(0);vertical-align:bottom;" alt=""/>`:' ';
+  const isF=pos==='Lead'||pos==='Chase';
+  const isR=pos==='Chase';
+  const isHP=pos==='High Pole';
+  const fq=(v)=>v>0?v:'';
+  const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
+  const puAddr=[(d.pickup_location||''),(d.pickup_city||''),(d.pickup_state||'')].filter(Boolean).join(', ');
+  const doAddr=[(d.dropoff_location||''),(d.dropoff_city||''),(d.dropoff_state||'')].filter(Boolean).join(', ');
   const totalMi=d.tripMi>0?d.tripMi.toFixed(1):'';
-  const isF=pos==='Lead'||pos==='Chase';const isHP=pos==='High Pole';
-  const driverRow=`<tr><td style="${C}">&nbsp;${d.driver_name||''}</td><td style="${C}">&nbsp;${d.driver_truck||''}</td><td style="${C}text-align:center;">${isF?'X':''}</td><td style="${C}text-align:center;"></td><td style="${C}text-align:center;">${isHP?'X':''}</td></tr><tr><td colspan="5" style="${C}font-size:9px;">&nbsp;Load: ${d.load_type||''}</td></tr>`;
-  const blankRows=[...Array(5)].map(()=>`<tr><td style="${C}height:26px;">&nbsp;</td><td style="${C}">&nbsp;</td><td style="${C}">&nbsp;</td><td style="${C}">&nbsp;</td><td style="${C}">&nbsp;</td></tr><tr><td colspan="5" style="${C}font-size:9px;">&nbsp;Load:&nbsp;</td></tr>`).join('');
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10px;color:#000;padding:12px;}@media print{@page{margin:.4in .5in;}body{padding:0;}}</style></head><body>
-<table style="width:100%;border-collapse:collapse;margin-bottom:10px;"><tr>
-<td style="width:140px;vertical-align:middle;"><img src="${LOGO_BW}" style="width:130px;display:block;" onerror="this.style.display='none'"/></td>
-<td style="text-align:center;vertical-align:middle;"><div style="font-family:Georgia,serif;font-size:22px;font-weight:700;">Moose's</div><div style="font-family:Georgia,serif;font-size:18px;font-weight:700;">Pilot Car Service, LLC</div><div style="font-size:9px;margin-top:3px;">525 N Peniel — Oklahoma City, OK 73127 — 405-255-5484</div></td>
-<td style="text-align:right;vertical-align:top;width:120px;padding-top:4px;"><span style="font-size:10px;font-weight:700;">Invoice #</span><div style="font-size:24px;font-weight:900;">${invNum}</div><div style="font-size:9px;">${d.date||''}</div></td>
+  const C='border:1px solid #000;padding:3px 6px;font-size:10px;';
+  const CH=C+'font-weight:700;background:#f0f0f0;text-align:center;';
+  // Driver row — current driver fills first slot, 5 blank rows below
+  const driverRow=`<tr>
+    <td style="${C}">&nbsp;${d.driver_name||''}</td>
+    <td style="${C}text-align:center;">&nbsp;${d.driver_truck||''}</td>
+    <td style="${C}text-align:center;">${isF?'X':''}</td>
+    <td style="${C}text-align:center;">${isR?'X':''}</td>
+    <td style="${C}text-align:center;">${isHP?'X':''}</td>
+  </tr>
+  <tr><td colspan="5" style="${C}font-size:9px;">&nbsp;Load: ${d.load_type||''}</td></tr>`;
+  const blankRow=`<tr>
+    <td style="${C}height:24px;">&nbsp;</td><td style="${C}">&nbsp;</td>
+    <td style="${C}">&nbsp;</td><td style="${C}">&nbsp;</td><td style="${C}">&nbsp;</td>
+  </tr><tr><td colspan="5" style="${C}font-size:9px;">&nbsp;Load:&nbsp;</td></tr>`;
+  const blankRows=[...Array(5)].map(()=>blankRow).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#000;padding:14px;}
+table{border-collapse:collapse;width:100%;}
+@media print{@page{margin:.4in .45in;size:letter portrait;}body{padding:0;}}
+</style></head><body>
+
+<table style="margin-bottom:10px;"><tr>
+<td style="width:140px;vertical-align:middle;">
+  <img src="${LOGO_BW}" style="width:128px;display:block;" onerror="this.style.display='none'"/>
+</td>
+<td style="text-align:center;vertical-align:middle;padding:0 10px;">
+  <div style="font-family:Georgia,serif;font-size:21px;font-weight:700;">Moose's</div>
+  <div style="font-family:Georgia,serif;font-size:17px;font-weight:700;">Pilot Car Service, LLC</div>
+  <div style="font-size:8.5px;margin-top:3px;">525 N Peniel &mdash; Oklahoma City, OK 73127 &mdash; 405-255-5484</div>
+  <div style="font-size:8.5px;">mooseou@yahoo.com</div>
+</td>
+<td style="text-align:right;vertical-align:top;width:120px;padding-top:4px;">
+  <div style="font-size:10px;font-weight:700;">Invoice #</div>
+  <div style="font-size:26px;font-weight:900;line-height:1.1;">${invNum}</div>
+</td>
 </tr></table>
-<table style="width:100%;border-collapse:collapse;margin-bottom:5px;">
-<tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">Truck Company:</td><td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${d.trucking_co||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;padding-right:4px;">RIG#</td><td style="border-bottom:1px solid #000;width:80px;padding:1px 3px;">&nbsp;${d.driver_truck||''}</td></tr>
-<tr><td style="font-size:10px;font-weight:700;white-space:nowrap;">Start Odo:</td><td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${d.start_odometer||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;">End Odo:</td><td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${d.end_odometer||''}</td></tr>
-<tr><td style="font-size:10px;font-weight:700;white-space:nowrap;">Total Miles:</td><td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${totalMi}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;">Pick Up:</td><td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${puCity}</td></tr>
-<tr><td></td><td></td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;">Drop Off:</td><td style="border-bottom:1px solid #000;padding:1px 3px;">&nbsp;${doCity}</td></tr>
+
+<div style="text-align:center;font-size:9px;margin-bottom:6px;">Date: ${d.date||''}</div>
+
+<table style="margin-bottom:4px;">
+<tr>
+  <td style="font-weight:700;white-space:nowrap;padding-right:6px;">Truck Company Name:</td>
+  <td style="border-bottom:1px solid #000;padding:1px 4px;width:55%;">&nbsp;${d.trucking_co||''}</td>
+  <td style="font-weight:700;white-space:nowrap;padding-left:12px;padding-right:6px;">RIG#</td>
+  <td style="border-bottom:1px solid #000;width:80px;padding:1px 4px;">&nbsp;${d.driver_truck||''}</td>
+</tr>
+<tr>
+  <td style="font-weight:700;white-space:nowrap;padding-right:6px;padding-top:3px;">Start Odometer:</td>
+  <td style="border-bottom:1px solid #000;padding:1px 4px;">&nbsp;${d.start_odometer||''}</td>
+  <td style="font-weight:700;white-space:nowrap;padding-left:12px;padding-right:6px;">End Odometer:</td>
+  <td style="border-bottom:1px solid #000;padding:1px 4px;">&nbsp;${d.end_odometer||''}</td>
+</tr>
+<tr>
+  <td style="font-weight:700;white-space:nowrap;padding-right:6px;padding-top:3px;">Total Miles:</td>
+  <td style="border-bottom:1px solid #000;padding:1px 4px;">&nbsp;${totalMi}</td>
+  <td style="font-weight:700;white-space:nowrap;padding-left:12px;padding-right:6px;">Total DH Miles:</td>
+  <td style="border-bottom:1px solid #000;padding:1px 4px;">&nbsp;${fq(d.deadhead_miles)}</td>
+</tr>
+<tr>
+  <td style="font-weight:700;white-space:nowrap;padding-right:6px;padding-top:3px;">Pick Up:</td>
+  <td style="border-bottom:1px solid #000;padding:1px 4px;" colspan="3">&nbsp;${puAddr}</td>
+</tr>
+<tr>
+  <td style="font-size:20px;text-align:center;padding:2px 0;" colspan="4">&larr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&rarr;</td>
+</tr>
+<tr>
+  <td style="font-weight:700;white-space:nowrap;padding-right:6px;">Drop Off:</td>
+  <td style="border-bottom:1px solid #000;padding:1px 4px;" colspan="3">&nbsp;${doAddr}</td>
+</tr>
 </table>
-<div style="text-align:center;font-size:16px;margin:4px 0;">&#8592;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#8594;</div>
-<table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
-<tr><th style="${CH}width:45%;">Driver Name</th><th style="${CH}width:20%;">Truck #</th><th style="${CH}width:12%;text-align:center;">F</th><th style="${CH}width:12%;text-align:center;">R</th><th style="${CH}width:11%;text-align:center;">HP</th></tr>
+
+<table style="margin-bottom:6px;margin-top:6px;">
+<tr>
+  <th style="${CH}width:42%;">Driver's Name</th>
+  <th style="${CH}width:18%;">Truck #</th>
+  <th style="${CH}width:13%;">F</th>
+  <th style="${CH}width:13%;">R</th>
+  <th style="${CH}width:14%;">HP</th>
+</tr>
 ${driverRow}${blankRows}
 </table>
-<div style="text-align:center;font-size:16px;margin:4px 0;">&#8592;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#8594;</div>
-<table style="width:100%;border-collapse:collapse;margin-top:6px;">
-<tr><td style="width:50%;vertical-align:top;padding-right:8px;">
-${[['Total Escorted Miles',d.escorted_miles,d.escorted_rate],['Flat Day Rate',d.flat_day_qty,d.flat_day_rate],['High Pole Day Rate',isHP?d.flat_day_qty:0,isHP?d.flat_day_rate:0],['Hotels',d.motel_qty,d.motel_rate]].map(([l,q,r])=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid #ccc;padding:2px 0;font-size:10px;"><b>${l}</b><span>${fq(q)} ${r>0?'@ $'+r.toFixed(2):''}</span></div>`).join('')}
-</td>
-<td style="vertical-align:top;font-size:10px;">
-${[['Per Mile =',d.escorted_miles,d.escorted_rate],['Per Day =',d.flat_day_qty,d.flat_day_rate],['Per Day =',isHP?d.flat_day_qty:0,isHP?d.flat_day_rate:0],['Per Day =',d.motel_qty,d.motel_rate]].map(([l,q,r])=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid #ccc;padding:2px 0;"><span>${l}</span><b>${fa(q,r)}</b></div>`).join('')}
-<div style="border-top:2px solid #000;margin-top:5px;padding-top:4px;text-align:right;"><b style="font-size:12px;">Total Charges $${d.total.toFixed(2)}</b></div>
-</td></tr></table>
-<div style="margin-top:8px;font-size:9px;text-align:center;font-weight:700;border-top:1px solid #000;padding-top:4px;">TERMS DUE UPON RECEIPT — After 30 days 5%/month interest.</div>
-<table style="width:100%;margin-top:8px;"><tr>
-<td style="font-size:10px;font-weight:700;">Driver Signature: &nbsp;${sigHtml}&nbsp;<span style="display:inline-block;border-bottom:1px solid #000;min-width:150px;">&nbsp;</span></td>
-<td style="font-size:10px;font-weight:700;white-space:nowrap;">Date: <span style="display:inline-block;border-bottom:1px solid #000;min-width:80px;">&nbsp;${d.date||''}&nbsp;</span></td>
-</tr></table>
-<div style="font-size:10px;margin-top:6px;"><b>Escort Subcontracting for Moose's Pilot Service:</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:140px;">&nbsp;${d.escort_sub||''}&nbsp;</span> <b>DTA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:80px;">&nbsp;</span></div>
-<div style="text-align:center;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:11px;margin-top:8px;">Thank You for Your Business!!!</div>
+
+<div style="font-size:20px;text-align:center;margin:4px 0;">&larr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&rarr;</div>
+
+<table style="margin-top:8px;margin-bottom:6px;">
+<tr>
+  <td style="width:50%;vertical-align:top;padding-right:10px;">
+    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><b>Total Escorts &amp; Miles</b><span>${fq(d.escorted_miles)} ${d.escorted_rate>0?'@ $'+d.escorted_rate.toFixed(2):''}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><b>Pilot Only Rate</b><span>${fq(d.flat_day_qty)} ${d.flat_day_rate>0?'@ $'+d.flat_day_rate.toFixed(2):''}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><b>High Pole Day Rate</b><span>${isHP?fq(d.flat_day_qty):''} ${isHP&&d.flat_day_rate>0?'@ $'+d.flat_day_rate.toFixed(2):''}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0;"><b>Houses</b><span>${fq(d.motel_qty)} ${d.motel_rate>0?'@ $'+d.motel_rate.toFixed(2):''}</span></div>
+  </td>
+  <td style="vertical-align:top;">
+    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><span>Fuel Mile's</span><b>${fa(d.escorted_miles,d.escorted_rate)}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><span>Per Day's</span><b>${fa(d.flat_day_qty,d.flat_day_rate)}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><span>Per Day Air</span><b>${isHP?fa(d.flat_day_qty,d.flat_day_rate):''}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Per Trip's</span><b>${fa(d.motel_qty,d.motel_rate)}</b></div>
+    <div style="border-top:2px solid #000;margin-top:6px;padding-top:5px;text-align:right;"><b style="font-size:12px;">Total Charges $${d.total.toFixed(2)}</b></div>
+  </td>
+</tr>
+</table>
+
+<div style="font-size:9px;font-weight:700;text-align:center;border-top:1px solid #000;padding-top:5px;margin-bottom:6px;">
+  DRIVER IS CHARGEABLE<br>
+  <span style="font-weight:400;">After 30 mins or trip turn down a truck will be a $150.00 cancellation fee. Lockouts over 5 mins will be a responsibility of Trucking Company.</span>
+</div>
+
+<table style="width:100%;margin-top:8px;">
+<tr>
+  <td style="font-size:10px;font-weight:700;">Driver's Signature: &nbsp;${sigHtml}&nbsp;<span style="display:inline-block;border-bottom:1px solid #000;min-width:130px;">&nbsp;</span></td>
+  <td style="font-size:10px;font-weight:700;white-space:nowrap;text-align:right;">Date: <span style="display:inline-block;border-bottom:1px solid #000;min-width:80px;">&nbsp;${d.date||''}&nbsp;</span></td>
+</tr>
+</table>
+<div style="font-size:10px;margin-top:8px;">
+  <b>Escort Subcontracting for Moose's Pilot Service:</b>
+  <span style="display:inline-block;border-bottom:1px solid #000;min-width:140px;">&nbsp;${d.escort_sub||''}&nbsp;</span>
+  &nbsp;<b>DTA</b>&nbsp;<span style="display:inline-block;border-bottom:1px solid #000;min-width:80px;">&nbsp;</span>
+</div>
+
 <script>window.addEventListener('load',function(){setTimeout(function(){window.print();},500);});<\/script>
 </body></html>`;
   const win=window.open('','_blank','width=900,height=1100');
-  if(!win){alert('Allow pop-ups.');return;}
+  if(!win){alert('Allow pop-ups to download PDF.');return;}
   win.document.write(html);win.document.close();
 }
 
