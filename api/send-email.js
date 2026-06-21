@@ -74,9 +74,10 @@ export default async function handler(req, res) {
         doc.font('Helvetica').fontSize(8).text(v1, ML + 90, y, { width: 170 });
         doc.font('Helvetica-Bold').text(l2, ML + 280, y);
         doc.font('Helvetica').text(v2, ML + 330, y, { width: PW - 330 });
-        doc.moveTo(ML + 90, y + 9).lineTo(ML + 258, y + 9).stroke();
-        doc.moveTo(ML + 330, y + 9).lineTo(ML + PW, y + 9).stroke();
-        y += 14;
+        const rowH = (v1.length > 28) ? 22 : 14;
+        doc.moveTo(ML + 90, y + rowH - 2).lineTo(ML + 258, y + rowH - 2).stroke();
+        doc.moveTo(ML + 330, y + rowH - 2).lineTo(ML + PW, y + rowH - 2).stroke();
+        y += rowH;
       }
 
       // Pickup / Dropoff
@@ -123,7 +124,8 @@ export default async function handler(req, res) {
         const so = (i === 0 && d.start_odometer) ? Number(d.start_odometer).toFixed(1) : '';
         const eo = (i === trips.length - 1 && d.end_odometer) ? Number(d.end_odometer).toFixed(1) : '';
         const mi = (i === trips.length - 1 && d.tripMi) ? Number(d.tripMi).toFixed(1) : '';
-        const cells = [t.date||'', t.startCity||'', t.startTime||'', so, t.endCity||'', t.endTime||'', eo, mi, t.motel||''];
+        const to12=(t)=>{if(!t)return'';const[h,m]=t.split(':').map(Number);if(isNaN(h)||isNaN(m))return t;const ap=h>=12?'PM':'AM';const hr=h%12||12;return hr+':'+(m<10?'0':'')+m+' '+ap;};
+        const cells = [t.date||'', t.startCity||'', to12(t.startTime), so, t.endCity||'', to12(t.endTime), eo, mi, t.motel||''];
         tx = ML;
         cells.forEach((val, j) => {
           doc.rect(tx, y, TCW[j], ROW_H).stroke();

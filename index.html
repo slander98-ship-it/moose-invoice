@@ -627,7 +627,7 @@ function renderTrips(){
   updateFab();
 }
 function updateTrip(i,field,val){trips[i][field]=val;const map={date:'t'+i+'-date',startTime:'t'+i+'-start',endTime:'t'+i+'-end'};if(map[field]){const e=$(map[field]);if(e)e.classList.remove('err');}saveDraft();}
-function addTrip(){if(trips.length>=5)return;trips.push({date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'});renderTrips();const card=$('trip-card-'+(trips.length-1));if(card)setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),80);saveDraft();}
+function addTrip(){if(trips.length>=5)return;trips.push({date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'});renderTrips();const card=$('trip-card-'+(trips.length-1));if(card)setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),80);sbv('flat_day_qty',trips.length);updateRateWinner();saveDraft();}
 function removeTrip(i){trips.splice(i,1);renderTrips();saveDraft();}
 function updateFab(){$('trip-fab').classList.toggle('show',step===5&&trips.length<5);}
 
