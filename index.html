@@ -451,7 +451,6 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <div class="sum-row"><span class="sum-lbl">Route</span><span class="sum-val" id="sum-route">—</span></div>
       <div class="sum-row"><span class="sum-lbl">Odometer</span><span class="sum-val" id="sum-odo">—</span></div>
       <div class="sum-row"><span class="sum-lbl">Trip Miles</span><span class="sum-val" id="sum-miles">—</span></div>
-      <div class="sum-row" id="sum-dh-row" style="display:none;"><span class="sum-lbl">Deadhead Miles</span><span class="sum-val" id="sum-dh">—</span></div>
       <div class="sum-total-row">
         <span class="sum-total-lbl">TOTAL CHARGES</span>
         <span class="sum-total-val" id="sum-total">$0.00</span>
@@ -491,7 +490,6 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
   </div>
 </div>
 
-<!-- BUILD:20260624-rigmove-fix -->
 <script>
 const{createClient}=supabase;
 const SB_URL='https://akdgwvhdsisoosrleuqw.supabase.co';
@@ -502,7 +500,7 @@ let cachedPdfB64=null;
 let selectedFormat='pilot';
 function to12(t){if(!t)return'';const[h,m]=t.split(':').map(Number);if(isNaN(h)||isNaN(m))return t;const ampm=h>=12?'PM':'AM';const hr=h%12||12;return hr+':'+(m<10?'0':'')+m+' '+ampm;}
 const db=createClient(SB_URL,SB_ANON);
-const RATES={'Lead':{day:550,mile:1.95,motel:125},'Chase':{day:550,mile:1.95,motel:125},'High Pole':{day:550,mile:2.15,motel:125},'Steer Man':{day:550,mile:2.15,motel:125}};
+const RATES={'Lead':{day:550,mile:1.95,motel:125,dh:1.95},'Chase':{day:550,mile:1.95,motel:125,dh:1.95},'High Pole':{day:550,mile:2.15,motel:125,dh:2.15},'Steer Man':{day:550,mile:2.15,motel:125,dh:2.15}};
 let pin='',pinBusy=false,driverObj=null,step=1;
 let sigMode='draw',sigDrawing=false,sigLast={x:0,y:0},sigData='',sigInited=false;
 const radios={pilot_position:'',motel_yn:'N'};
@@ -608,7 +606,7 @@ function clearDraft(){clearAllFields();$('draft-banner').classList.remove('show'
 
 function onPositionChange(pos){radios.pilot_position=pos;$('rg-position').classList.remove('err');showRateChip(pos);applyDefaultRates(pos,false);saveDraft();}
 function showRateChip(pos){const r=RATES[pos];if(!r)return;$('chip-day').innerHTML='$'+r.day+'<em>/ DAY</em>';$('chip-mile').innerHTML='$'+r.mile.toFixed(2)+'<em>/ MI</em>';$('chip-motel').innerHTML='$'+r.motel+'<em>/ OVERNIGHT</em>';$('rate-chip').classList.add('show');}
-function applyDefaultRates(pos,force){const r=RATES[pos];if(!r)return;if(force||!bv('escorted_rate'))sbv('escorted_rate',r.mile.toFixed(2));if(force||!bv('motel_rate'))sbv('motel_rate',r.motel);if(force||!bv('flat_day_qty'))sbv('flat_day_qty',trips.length||1);if(force||!bv('flat_day_rate'))sbv('flat_day_rate',r.day);updateRateWinner();}
+function applyDefaultRates(pos,force){const r=RATES[pos];if(!r)return;if(force||!bv('escorted_rate'))sbv('escorted_rate',r.mile.toFixed(2));if(force||!bv('deadhead_rate'))sbv('deadhead_rate',r.dh.toFixed(2));if(force||!bv('motel_rate'))sbv('motel_rate',r.motel);if(force||!bv('flat_day_qty'))sbv('flat_day_qty',trips.length||1);if(force||!bv('flat_day_rate'))sbv('flat_day_rate',r.day);updateRateWinner();}
 
 function calcTripMiles(){const s=parseFloat($('f-start_odometer').value)||0;const e=parseFloat($('f-end_odometer').value)||0;return(e>s)?e-s:0;}
 function onOdoInput(){
@@ -686,9 +684,7 @@ function fillSummary(){
   $('sum-driver').textContent=fv('driver_name')||'—';$('sum-pos').textContent=radios.pilot_position||'—';$('sum-company').textContent=fv('trucking_co_name')||'—';$('sum-load').textContent=fv('load_type')||'—';
   const pu=fv('pickup_location')||fv('pickup_city'),dr=fv('dropoff_location')||fv('dropoff_city');$('sum-route').textContent=(pu&&dr)?pu+' → '+dr:(pu||dr||'—');
   const s=$('f-start_odometer').value,e=$('f-end_odometer').value;$('sum-odo').textContent=(s&&e)?parseFloat(s).toFixed(1)+' → '+parseFloat(e).toFixed(1):'—';
-  const m=calcTripMiles();$('sum-miles').textContent=m>0?m.toFixed(1)+' mi':'—';
-  const dhm=bv('deadhead_miles'),dhr=bv('deadhead_rate');if(dhm>0){$('sum-dh').textContent=dhm.toFixed(1)+' mi @ $'+dhr.toFixed(2)+' = $'+(dhm*dhr).toFixed(2);$('sum-dh-row').style.display='flex';}else{$('sum-dh-row').style.display='none';}
-  $('sum-total').textContent='$'+calcTotal().toFixed(2);
+  const m=calcTripMiles();$('sum-miles').textContent=m>0?m.toFixed(1)+' mi':'—';$('sum-total').textContent='$'+calcTotal().toFixed(2);
 }
 
 function switchSigTab(mode){sigMode=mode;$('tab-draw').classList.toggle('active',mode==='draw');$('tab-type').classList.toggle('active',mode==='type');$('sig-draw-mode').style.display=mode==='draw'?'block':'none';$('sig-type-mode').classList.toggle('active',mode==='type');if(mode==='type')renderTypedSig();}
