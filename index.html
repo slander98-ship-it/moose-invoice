@@ -234,10 +234,10 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="rg-wrap" id="rg-position">
       <div class="rg-label">PILOT POSITION *</div>
       <div class="radio-group">
-        <label><input type="radio" name="pilot_position" value="Lead"      onchange="onPositionChange('Lead')"><span>LEAD</span></label>
-        <label><input type="radio" name="pilot_position" value="Chase"     onchange="onPositionChange('Chase')"><span>CHASE</span></label>
-        <label><input type="radio" name="pilot_position" value="High Pole" onchange="onPositionChange('High Pole')"><span>HIGH POLE</span></label>
-        <label><input type="radio" name="pilot_position" value="Steer Man" onchange="onPositionChange('Steer Man')"><span>STEER MAN</span></label>
+        <label><input type="checkbox" name="pilot_position" value="Lead"      onchange="onPositionChange('Lead')"><span>LEAD</span></label>
+        <label><input type="checkbox" name="pilot_position" value="Chase"     onchange="onPositionChange('Chase')"><span>CHASE</span></label>
+        <label><input type="checkbox" name="pilot_position" value="High Pole" onchange="onPositionChange('High Pole')"><span>HIGH POLE</span></label>
+        <label><input type="checkbox" name="pilot_position" value="Steer Man" onchange="onPositionChange('Steer Man')"><span>STEER MAN</span></label>
       </div>
     </div>
     <div class="rate-chip" id="rate-chip">
@@ -503,7 +503,7 @@ const db=createClient(SB_URL,SB_ANON);
 const RATES={'Lead':{day:550,mile:1.95,motel:125,dh:1.95},'Chase':{day:550,mile:1.95,motel:125,dh:1.95},'High Pole':{day:550,mile:2.15,motel:125,dh:2.15},'Steer Man':{day:550,mile:2.15,motel:125,dh:2.15}};
 let pin='',pinBusy=false,driverObj=null,step=1;
 let sigMode='draw',sigDrawing=false,sigLast={x:0,y:0},sigData='',sigInited=false;
-const radios={pilot_position:'',motel_yn:'N'};
+const radios={pilot_position:[],motel_yn:'N'};
 let trips=[{date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'}];
 let lastInvoice=null;
 const $=id=>document.getElementById(id);
@@ -573,7 +573,7 @@ function clearErrs(){document.querySelectorAll('.err').forEach(e=>e.classList.re
 function validate(n){
   clearErrs();let ok=true;
   function req(id){const e=$('f-'+id);if(!e||!e.value.trim()){if(e)e.classList.add('err');ok=false;}}
-  if(n===1){const odo=$('f-start_odometer');if(!odo||!odo.value.trim()){if(odo)odo.classList.add('err');ok=false;}if(!radios.pilot_position){$('rg-position').classList.add('err');ok=false;}req('job_date');}
+  if(n===1){const odo=$('f-start_odometer');if(!odo||!odo.value.trim()){if(odo)odo.classList.add('err');ok=false;}if(!radios.pilot_position||!radios.pilot_position.length){$('rg-position').classList.add('err');ok=false;}req('job_date');}
   if(n===2){req('trucking_co_name');}
   if(n===3){req('driver_name');req('load_type');}
   if(n===4){req('pickup_location');req('dropoff_location');}
@@ -594,19 +594,60 @@ function restoreDraft(){
     const saved=localStorage.getItem('moose_draft_v4');if(!saved)return;
     const d=JSON.parse(saved);
     Object.entries(d.f||{}).forEach(([k,v])=>sv(k,v));Object.entries(d.b||{}).forEach(([k,v])=>sbv(k,v));
-    Object.entries(d.r||{}).forEach(([k,v])=>{radios[k]=v;document.querySelectorAll(`input[name="${k}"]`).forEach(r=>r.checked=r.value===v);});
+    Object.entries(d.r||{}).forEach(([k,v])=>{
+      if(k==='pilot_position'){
+        // Backward-compatible: old drafts saved this as a single string; new drafts save an array.
+        radios.pilot_position=Array.isArray(v)?v:(v?[v]:[]);
+        document.querySelectorAll('input[name="pilot_position"]').forEach(c=>{c.checked=radios.pilot_position.includes(c.value);});
+        return;
+      }
+      radios[k]=v;document.querySelectorAll(`input[name="${k}"]`).forEach(r=>r.checked=r.value===v);
+    });
     if(d.trips&&d.trips.length)trips=d.trips;
     // sig not restored from draft
-    if(radios.pilot_position)showRateChip(radios.pilot_position);
+    if(radios.pilot_position&&radios.pilot_position.length)showRateChip(radios.pilot_position);
     onOdoInput();onBillInput();renderTrips();
     $('draft-banner').classList.add('show');
   }catch{}
 }
 function clearDraft(){clearAllFields();$('draft-banner').classList.remove('show');localStorage.removeItem('moose_draft_v4');}
 
-function onPositionChange(pos){radios.pilot_position=pos;$('rg-position').classList.remove('err');showRateChip(pos);applyDefaultRates(pos,false);saveDraft();}
-function showRateChip(pos){const r=RATES[pos];if(!r)return;$('chip-day').innerHTML='$'+r.day+'<em>/ DAY</em>';$('chip-mile').innerHTML='$'+r.mile.toFixed(2)+'<em>/ MI</em>';$('chip-motel').innerHTML='$'+r.motel+'<em>/ OVERNIGHT</em>';$('rate-chip').classList.add('show');}
-function applyDefaultRates(pos,force){const r=RATES[pos];if(!r)return;if(force||!bv('escorted_rate'))sbv('escorted_rate',r.mile.toFixed(2));if(force||!bv('deadhead_rate'))sbv('deadhead_rate',r.dh.toFixed(2));if(force||!bv('motel_rate'))sbv('motel_rate',r.motel);if(force||!bv('flat_day_qty'))sbv('flat_day_qty',trips.length||1);if(force||!bv('flat_day_rate'))sbv('flat_day_rate',r.day);updateRateWinner();}
+function onPositionChange(pos){
+  const idx=radios.pilot_position.indexOf(pos);
+  if(idx===-1)radios.pilot_position.push(pos);else radios.pilot_position.splice(idx,1);
+  $('rg-position').classList.remove('err');
+  showRateChip(radios.pilot_position);
+  applyDefaultRates(radios.pilot_position,false);
+  saveDraft();
+}
+function showRateChip(posArr){
+  if(!posArr||!posArr.length){$('rate-chip').classList.remove('show');return;}
+  if(posArr.length===1){
+    const r=RATES[posArr[0]];if(!r)return;
+    $('chip-day').innerHTML='$'+r.day+'<em>/ DAY</em>';$('chip-mile').innerHTML='$'+r.mile.toFixed(2)+'<em>/ MI</em>';$('chip-motel').innerHTML='$'+r.motel+'<em>/ OVERNIGHT</em>';
+  }else{
+    const dayTotal=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].day:0),0);
+    const mileTotal=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].mile:0),0);
+    const motelTotal=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].motel:0),0);
+    $('chip-day').innerHTML='$'+dayTotal+'<em>/ DAY (COMBINED)</em>';$('chip-mile').innerHTML='$'+mileTotal.toFixed(2)+'<em>/ MI (COMBINED)</em>';$('chip-motel').innerHTML='$'+motelTotal+'<em>/ OVERNIGHT (COMBINED)</em>';
+  }
+  $('rate-chip').classList.add('show');
+}
+function applyDefaultRates(posArr,force){
+  if(!posArr||!posArr.length)return;
+  // Pre-fill the visible mile/day rate fields with the SUM of each selected position's rate.
+  // updateRateWinner() does the real per-position miles-vs-day math at calc time.
+  const mileSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].mile:0),0);
+  const dhSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].dh:0),0);
+  const motelMax=Math.max(...posArr.map(p=>RATES[p]?RATES[p].motel:0));
+  const daySum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].day:0),0);
+  if(force||!bv('escorted_rate'))sbv('escorted_rate',mileSum.toFixed(2));
+  if(force||!bv('deadhead_rate'))sbv('deadhead_rate',dhSum.toFixed(2));
+  if(force||!bv('motel_rate'))sbv('motel_rate',motelMax);
+  if(force||!bv('flat_day_qty'))sbv('flat_day_qty',trips.length||1);
+  if(force||!bv('flat_day_rate'))sbv('flat_day_rate',daySum);
+  updateRateWinner();
+}
 
 function calcTripMiles(){const s=parseFloat($('f-start_odometer').value)||0;const e=parseFloat($('f-end_odometer').value)||0;return(e>s)?e-s:0;}
 function onOdoInput(){
@@ -632,16 +673,55 @@ function removeTrip(i){trips.splice(i,1);renderTrips();saveDraft();}
 function updateFab(){$('trip-fab').classList.toggle('show',step===5&&trips.length<5);}
 
 function updateRateWinner(){
-  const pos=radios.pilot_position;const escMiles=bv('escorted_miles'),escRate=bv('escorted_rate');const dayQty=bv('flat_day_qty'),dayRate=bv('flat_day_rate');
-  const milesPay=escMiles*escRate,dayPay=dayQty*dayRate;const rc=$('rate-compare');
-  if(!pos||(!milesPay&&!dayPay)){if(rc)rc.classList.remove('show');calcTotal();return;}
+  const pos=radios.pilot_position;const escMiles=bv('escorted_miles');const dayQty=bv('flat_day_qty');const rc=$('rate-compare');
+
+  if(!pos||!pos.length){if(rc)rc.classList.remove('show');calcTotal();return;}
+
+  if(pos.length===1){
+    // Single position — original behavior, unchanged.
+    const escRate=bv('escorted_rate'),dayRate=bv('flat_day_rate');
+    const milesPay=escMiles*escRate,dayPay=dayQty*dayRate;
+    if(!milesPay&&!dayPay){rc.classList.remove('show');calcTotal();return;}
+    rc.classList.add('show');
+    $('rc-miles-amt').textContent='$'+milesPay.toFixed(2);$('rc-miles-detail').textContent=escMiles.toFixed(1)+' mi × $'+escRate.toFixed(2);
+    $('rc-day-amt').textContent='$'+dayPay.toFixed(2);$('rc-day-detail').textContent=dayQty+' day × $'+dayRate.toFixed(2);
+    const mWins=milesPay>=dayPay;
+    $('rc-miles').className='rc-option '+(mWins?'winner':'loser');$('rc-day').className='rc-option '+(mWins?'loser':'winner');
+    if(mWins){$('rc-verdict').textContent='MILES RATE WINS — CHARGING $'+milesPay.toFixed(2);if(dayPay<milesPay){sbv('flat_day_rate',0);}highlightRows(true,false);}
+    else{$('rc-verdict').textContent='DAY RATE WINS — CHARGING $'+dayPay.toFixed(2);if(milesPay<dayPay)sbv('escorted_rate',0);highlightRows(false,true);}
+    calcTotal();
+    return;
+  }
+
+  // Two (or more) positions — each position gets its own miles-vs-day winner,
+  // then the winners are SUMMED into one combined charge (Option A: single line on PDF).
+  let combinedMilesPay=0,combinedDayPay=0,detailParts=[];
+  pos.forEach(p=>{
+    const r=RATES[p];if(!r)return;
+    const mPay=escMiles*r.mile,dPay=dayQty*r.day;
+    const winner=Math.max(mPay,dPay);
+    detailParts.push(p+': $'+winner.toFixed(2)+(mPay>=dPay?' (miles)':' (day rate)'));
+    combinedMilesPay+=mPay;combinedDayPay+=dPay;
+  });
+  const combinedTotal=pos.reduce((s,p)=>{const r=RATES[p];if(!r)return s;return s+Math.max(escMiles*r.mile,dayQty*r.day);},0);
+
   rc.classList.add('show');
-  $('rc-miles-amt').textContent='$'+milesPay.toFixed(2);$('rc-miles-detail').textContent=escMiles.toFixed(1)+' mi × $'+escRate.toFixed(2);
-  $('rc-day-amt').textContent='$'+dayPay.toFixed(2);$('rc-day-detail').textContent=dayQty+' day × $'+dayRate.toFixed(2);
-  const mWins=milesPay>=dayPay;
-  $('rc-miles').className='rc-option '+(mWins?'winner':'loser');$('rc-day').className='rc-option '+(mWins?'loser':'winner');
-  if(mWins){$('rc-verdict').textContent='MILES RATE WINS — CHARGING $'+milesPay.toFixed(2);if(dayPay<milesPay){sbv('flat_day_rate',0);}highlightRows(true,false);}
-  else{$('rc-verdict').textContent='DAY RATE WINS — CHARGING $'+dayPay.toFixed(2);if(milesPay<dayPay)sbv('escorted_rate',0);highlightRows(false,true);}
+  $('rc-miles-amt').textContent='$'+combinedMilesPay.toFixed(2);$('rc-miles-detail').textContent=escMiles.toFixed(1)+' mi × combined rate';
+  $('rc-day-amt').textContent='$'+combinedDayPay.toFixed(2);$('rc-day-detail').textContent=dayQty+' day × combined rate';
+  $('rc-miles').className='rc-option';$('rc-day').className='rc-option';
+  $('rc-verdict').textContent='COMBINED ('+pos.join(' + ')+'): $'+combinedTotal.toFixed(2)+'  —  '+detailParts.join(' | ');
+  highlightRows(false,false);
+
+  // Write the true combined total into the visible mile-rate field (qty stays as actual miles),
+  // and zero the day-rate row so calcTotal() doesn't double count.
+  // This keeps Step 8's existing total math (qty × rate, summed across rows) correct.
+  if(escMiles>0){sbv('escorted_rate',(combinedTotal/escMiles).toFixed(4));}
+  sbv('flat_day_rate',0);
+  if(escMiles<=0&&dayQty>0){
+    // No mileage entered yet — fall back to day-rate-only combined total.
+    sbv('escorted_rate',0);
+    sbv('flat_day_rate',dayQty>0?(combinedTotal/dayQty).toFixed(2):0);
+  }
   calcTotal();
 }
 function highlightRows(m,d){document.querySelectorAll('#row-miles input').forEach(el=>{el.classList.toggle('hi',m);el.classList.toggle('dim',!m);});document.querySelectorAll('#row-day input').forEach(el=>{el.classList.toggle('hi',d);el.classList.toggle('dim',!d);});}
@@ -664,7 +744,7 @@ function goTo(n){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-bar').forEach(nb=>nb.remove());
   step=n;const panel=$('panel-'+n);panel.classList.add('active');updateStepBar();updateFab();
   if(n===5)renderTrips();if(n===7)onOdoInput();
-  if(n===8){const pos=radios.pilot_position;if(pos)applyDefaultRates(pos,false);const mc=trips.filter(t=>t.motel==='Y').length;if(mc>0&&!bv('motel_qty'))sbv('motel_qty',mc);updateRateWinner();}
+  if(n===8){const pos=radios.pilot_position;if(pos&&pos.length)applyDefaultRates(pos,false);const mc=trips.filter(t=>t.motel==='Y').length;if(mc>0&&!bv('motel_qty'))sbv('motel_qty',mc);updateRateWinner();}
   if(n===9){initSig();fillSummary();}
   window.scrollTo({top:0,behavior:'smooth'});
   const nav=document.createElement('div');nav.className='nav-bar';
@@ -681,7 +761,7 @@ function goTo(n){
 }
 
 function fillSummary(){
-  $('sum-driver').textContent=fv('driver_name')||'—';$('sum-pos').textContent=radios.pilot_position||'—';$('sum-company').textContent=fv('trucking_co_name')||'—';$('sum-load').textContent=fv('load_type')||'—';
+  $('sum-driver').textContent=fv('driver_name')||'—';$('sum-pos').textContent=(radios.pilot_position&&radios.pilot_position.length)?radios.pilot_position.join(' + '):'—';$('sum-company').textContent=fv('trucking_co_name')||'—';$('sum-load').textContent=fv('load_type')||'—';
   const pu=fv('pickup_location')||fv('pickup_city'),dr=fv('dropoff_location')||fv('dropoff_city');$('sum-route').textContent=(pu&&dr)?pu+' → '+dr:(pu||dr||'—');
   const s=$('f-start_odometer').value,e=$('f-end_odometer').value;$('sum-odo').textContent=(s&&e)?parseFloat(s).toFixed(1)+' → '+parseFloat(e).toFixed(1):'—';
   const m=calcTripMiles();$('sum-miles').textContent=m>0?m.toFixed(1)+' mi':'—';$('sum-total').textContent='$'+calcTotal().toFixed(2);
@@ -715,7 +795,7 @@ async function submitInvoice(){
   }catch(e){invNum='INV-6000';}
     const firstTrip=trips[0]||{};
     const{data,error}=await db.from('invoices').insert({
-      invoice_number:invNum,pilot_position:radios.pilot_position,load_job_number:fv('load_job_number'),job_date:fv('job_date')||null,
+      invoice_number:invNum,pilot_position:(radios.pilot_position||[]).join(' + '),load_job_number:fv('load_job_number'),job_date:fv('job_date')||null,
       trucking_co_name:fv('trucking_co_name'),company_name:fv('trucking_co_name'),trucking_co_phone:fv('trucking_co_phone'),billing_address:fv('billing_address'),contact_name:fv('contact_name'),
       driver_name:fv('driver_name'),driver_phone:fv('driver_phone'),driver_truck_number:fv('driver_truck_number'),driver_trailer_number:fv('driver_trailer_number'),
       load_type:fv('load_type'),load_height:fv('load_height'),load_width:fv('load_width'),load_length:fv('load_length'),load_weight:fv('load_weight'),
@@ -741,7 +821,7 @@ async function submitInvoice(){
 
 function clearAllFields(){
   FF.forEach(n=>sv(n,''));BF.forEach(n=>{const e=$('b-'+n);if(e){e.value='';e.classList.remove('hi','dim');}});
-  radios.pilot_position='';document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  radios.pilot_position=[];document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);document.querySelectorAll('input[name=pilot_position]').forEach(c=>c.checked=false);
   trips=[{date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'}];
   $('rate-chip').classList.remove('show');$('miles-calc').textContent='—';$('bill-total').textContent='$0.00';$('rate-compare').classList.remove('show');
   if($('trips-container'))renderTrips();
@@ -750,8 +830,8 @@ function clearAllFields(){
 async function shareInvoice(){
   const d=lastInvoice;if(!d)return;
   // Build the same PDF HTML as downloadPDF
-  const pos=d.position||'';
-  const chk=(p)=>pos===p?'[X]':'[ ]';
+  const pos=d.position||[];
+  const chk=(p)=>(Array.isArray(pos)?pos.includes(p):pos===p)?'[X]':'[ ]';
   const fq=(v)=>v>0?v:'';
   const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const ul=(val,minW)=>`<span style="display:inline-block;border-bottom:1px solid #000;min-width:${minW||70}px;padding:0 3px;vertical-align:bottom;">&nbsp;${val||''}&nbsp;</span>`;
@@ -910,7 +990,7 @@ async function scanPermit(input){
 function downloadPilotCar(fmt){
   const d=lastInvoice;if(!d){alert('No invoice data.');return;}
   // rig move disabled
-  const pos=d.position||'';const chk=(p)=>pos===p?'[X]':'[ ]';
+  const pos=d.position||[];const chk=(p)=>(Array.isArray(pos)?pos.includes(p):pos===p)?'[X]':'[ ]';
   const fq=(v)=>v>0?v:'';const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const invNum=(d.invNum||'').replace('INV-','');
   const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
@@ -1077,11 +1157,12 @@ ${[...Array(Math.max(0,5-tdata.length))].map(()=>'<tr><td class="box" style="hei
 function downloadRigMove(d){
   if(!d){alert('No invoice data.');return;}
   const invNum=(d.invNum||'').replace('INV-','');
-  const pos=d.position||'';
+  const pos=d.position||[];
+  const posArr=Array.isArray(pos)?pos:(pos?[pos]:[]);
   const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:40px;max-width:200px;filter:brightness(0);vertical-align:bottom;" alt=""/>`:' ';
-  const isF=pos==='Lead';
-  const isR=pos==='Chase';
-  const isHP=pos==='High Pole'||pos==='Steer Man';
+  const isF=posArr.includes('Lead');
+  const isR=posArr.includes('Chase');
+  const isHP=posArr.includes('High Pole')||posArr.includes('Steer Man');
   const fq=(v)=>v>0?v:'';
   const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const puAddr=[(d.pickup_location||''),(d.pickup_city||''),(d.pickup_state||'')].filter(Boolean).join(', ');
