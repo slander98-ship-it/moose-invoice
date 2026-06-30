@@ -642,13 +642,11 @@ function showRateChip(posArr){
 function applyDefaultRates(posArr,force){
   if(!posArr||!posArr.length)return;
   const n=posArr.length;
-  // Mileage & deadhead: there's only ONE real mileage figure no matter how many
-  // positions are on the job, so for these two the RATE is summed (e.g. $1.95+$1.95)
-  // and quantity stays as the actual miles driven.
+  // Mileage rate is summed across positions (one real mileage figure regardless of position count).
+  // Deadhead is intentionally NOT auto-filled — real deadhead billing is usually a flat
+  // arbitrary number Chamus sets per job, not a calculated per-position rate.
   const mileSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].mile:0),0);
-  const dhSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].dh:0),0);
   if(force||!bv('escorted_rate'))sbv('escorted_rate',mileSum.toFixed(2));
-  if(force||!bv('deadhead_rate'))sbv('deadhead_rate',dhSum.toFixed(2));
 
   // Day rate & motels: each position has its own real day/night — so QUANTITY is
   // multiplied by position count, and RATE stays the true single-position rate.
