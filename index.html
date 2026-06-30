@@ -605,7 +605,13 @@ function restoreDraft(){
     });
     if(d.trips&&d.trips.length)trips=d.trips;
     // sig not restored from draft
-    if(radios.pilot_position&&radios.pilot_position.length)showRateChip(radios.pilot_position);
+    if(radios.pilot_position&&radios.pilot_position.length){
+      showRateChip(radios.pilot_position);
+      // Force-recalculate rate/qty fields tied to position selection. A restored draft may
+      // carry stale numbers from before this position was selected (or from before multi-select
+      // existed at all), and the normal !bv() "only fill if empty" guards would never overwrite them.
+      applyDefaultRates(radios.pilot_position,true);
+    }
     onOdoInput();onBillInput();renderTrips();
     $('draft-banner').classList.add('show');
   }catch{}
