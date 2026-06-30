@@ -635,17 +635,27 @@ function showRateChip(posArr){
 }
 function applyDefaultRates(posArr,force){
   if(!posArr||!posArr.length)return;
-  // Pre-fill the visible mile/day rate fields with the SUM of each selected position's rate.
-  // updateRateWinner() does the real per-position miles-vs-day math at calc time.
+  const n=posArr.length;
+  // Mileage & deadhead: there's only ONE real mileage figure no matter how many
+  // positions are on the job, so for these two the RATE is summed (e.g. $1.95+$1.95)
+  // and quantity stays as the actual miles driven.
   const mileSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].mile:0),0);
   const dhSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].dh:0),0);
-  const motelSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].motel:0),0);
-  const daySum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].day:0),0);
   if(force||!bv('escorted_rate'))sbv('escorted_rate',mileSum.toFixed(2));
   if(force||!bv('deadhead_rate'))sbv('deadhead_rate',dhSum.toFixed(2));
-  if(force||!bv('motel_rate'))sbv('motel_rate',motelSum);
-  if(force||!bv('flat_day_qty'))sbv('flat_day_qty',trips.length||1);
-  if(force||!bv('flat_day_rate'))sbv('flat_day_rate',daySum);
+
+  // Day rate & motels: each position has its own real day/night — so QUANTITY is
+  // multiplied by position count, and RATE stays the true single-position rate.
+  // e.g. 1 day, 2 positions -> qty 2 @ $550 = $1100. 1 motel night, 2 positions -> qty 2 @ $125 = $250.
+  const dayRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].day:0),0)/n; // all positions share $550, so this is just $550
+  const motelRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].motel:0),0)/n; // all positions share $125
+  if(force||!bv('flat_day_rate'))sbv('flat_day_rate',dayRateSingle);
+  if(force||!bv('flat_day_qty'))sbv('flat_day_qty',(trips.length||1)*n);
+  if(force||!bv('motel_rate'))sbv('motel_rate',motelRateSingle);
+  // motel_qty is driven by actual overnight count from trips (set elsewhere) — multiply by n when (re)applying defaults
+  const baseMotelQty=trips.filter(t=>t.motel==='Y').length;
+  if(baseMotelQty>0&&(force||!bv('motel_qty')))sbv('motel_qty',baseMotelQty*n);
+
   updateRateWinner();
 }
 
@@ -695,34 +705,36 @@ function updateRateWinner(){
 
   // Two (or more) positions — each position gets its own miles-vs-day winner,
   // then the winners are SUMMED into one combined charge (Option A: single line on PDF).
-  let combinedMilesPay=0,combinedDayPay=0,detailParts=[];
+  const n=pos.length;
+  let combinedTotal=0,allMiles=true,allDay=true,detailParts=[];
   pos.forEach(p=>{
     const r=RATES[p];if(!r)return;
-    const mPay=escMiles*r.mile,dPay=dayQty*r.day;
+    const mPay=escMiles*r.mile,dPay=(dayQty/n)*r.day; // dayQty is pre-multiplied by n in applyDefaultRates, so divide back to get the real per-position day count
     const winner=Math.max(mPay,dPay);
+    combinedTotal+=winner;
+    if(mPay>=dPay)allDay=false;else allMiles=false;
     detailParts.push(p+': $'+winner.toFixed(2)+(mPay>=dPay?' (miles)':' (day rate)'));
-    combinedMilesPay+=mPay;combinedDayPay+=dPay;
   });
-  const combinedTotal=pos.reduce((s,p)=>{const r=RATES[p];if(!r)return s;return s+Math.max(escMiles*r.mile,dayQty*r.day);},0);
 
   rc.classList.add('show');
-  $('rc-miles-amt').textContent='$'+combinedMilesPay.toFixed(2);$('rc-miles-detail').textContent=escMiles.toFixed(1)+' mi × combined rate';
-  $('rc-day-amt').textContent='$'+combinedDayPay.toFixed(2);$('rc-day-detail').textContent=dayQty+' day × combined rate';
-  const mWinsOverall=combinedMilesPay>=combinedDayPay;
-  $('rc-miles').className='rc-option '+(mWinsOverall?'winner':'loser');$('rc-day').className='rc-option '+(mWinsOverall?'loser':'winner');
+  $('rc-miles-amt').textContent='$'+(escMiles*pos.reduce((s,p)=>s+(RATES[p]?RATES[p].mile:0),0)).toFixed(2);$('rc-miles-detail').textContent=escMiles.toFixed(1)+' mi × combined rate';
+  $('rc-day-amt').textContent='$'+(dayQty*bv('flat_day_rate')).toFixed(2);$('rc-day-detail').textContent=dayQty+' day × $'+bv('flat_day_rate').toFixed(2);
   $('rc-verdict').textContent='COMBINED ('+pos.join(' + ')+'): $'+combinedTotal.toFixed(2)+'  —  '+detailParts.join(' | ');
 
-  // Route the TRUE combined total (per-position winner, summed) into whichever visible
-  // line item matches the overall verdict, and zero the other — same pattern as the
-  // single-position branch above, so the Qty/Rate boxes on screen always show real numbers.
-  if(mWinsOverall){
-    if(escMiles>0)sbv('escorted_rate',(combinedTotal/escMiles).toFixed(4));
+  if(allMiles){
+    // Every position clears on mileage — quantity is real miles, rate is the true summed mile rate.
     sbv('flat_day_rate',0);
-    highlightRows(true,false);
-  }else{
-    if(dayQty>0)sbv('flat_day_rate',(combinedTotal/dayQty).toFixed(2));
+    highlightRows(true,false);$('rc-miles').className='rc-option winner';$('rc-day').className='rc-option loser';
+  }else if(allDay){
+    // Every position clears on day rate — quantity is real (days × positions), rate is the true single-position $550.
     sbv('escorted_rate',0);
-    highlightRows(false,true);
+    highlightRows(false,true);$('rc-miles').className='rc-option loser';$('rc-day').className='rc-option winner';
+  }else{
+    // Mixed: some positions clear on miles, others on day rate. No single qty/rate pair can
+    // express this honestly as two clean numbers, so we fall back to a blended effective rate
+    // on whichever side has the larger contribution, and zero only the OTHER side's rate (not qty).
+    if(escMiles>0){sbv('escorted_rate',(combinedTotal/escMiles).toFixed(4));sbv('flat_day_rate',0);highlightRows(true,false);}
+    else{sbv('flat_day_rate',(combinedTotal/(dayQty||1)).toFixed(2));sbv('escorted_rate',0);highlightRows(false,true);}
   }
   calcTotal();
 }
@@ -746,7 +758,7 @@ function goTo(n){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-bar').forEach(nb=>nb.remove());
   step=n;const panel=$('panel-'+n);panel.classList.add('active');updateStepBar();updateFab();
   if(n===5)renderTrips();if(n===7)onOdoInput();
-  if(n===8){const pos=radios.pilot_position;if(pos&&pos.length)applyDefaultRates(pos,false);const mc=trips.filter(t=>t.motel==='Y').length;if(mc>0&&!bv('motel_qty'))sbv('motel_qty',mc);updateRateWinner();}
+  if(n===8){const pos=radios.pilot_position;if(pos&&pos.length)applyDefaultRates(pos,false);updateRateWinner();}
   if(n===9){initSig();fillSummary();}
   window.scrollTo({top:0,behavior:'smooth'});
   const nav=document.createElement('div');nav.className='nav-bar';
