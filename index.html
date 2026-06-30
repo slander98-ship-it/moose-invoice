@@ -639,11 +639,11 @@ function applyDefaultRates(posArr,force){
   // updateRateWinner() does the real per-position miles-vs-day math at calc time.
   const mileSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].mile:0),0);
   const dhSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].dh:0),0);
-  const motelMax=Math.max(...posArr.map(p=>RATES[p]?RATES[p].motel:0));
+  const motelSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].motel:0),0);
   const daySum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].day:0),0);
   if(force||!bv('escorted_rate'))sbv('escorted_rate',mileSum.toFixed(2));
   if(force||!bv('deadhead_rate'))sbv('deadhead_rate',dhSum.toFixed(2));
-  if(force||!bv('motel_rate'))sbv('motel_rate',motelMax);
+  if(force||!bv('motel_rate'))sbv('motel_rate',motelSum);
   if(force||!bv('flat_day_qty'))sbv('flat_day_qty',trips.length||1);
   if(force||!bv('flat_day_rate'))sbv('flat_day_rate',daySum);
   updateRateWinner();
@@ -708,19 +708,21 @@ function updateRateWinner(){
   rc.classList.add('show');
   $('rc-miles-amt').textContent='$'+combinedMilesPay.toFixed(2);$('rc-miles-detail').textContent=escMiles.toFixed(1)+' mi × combined rate';
   $('rc-day-amt').textContent='$'+combinedDayPay.toFixed(2);$('rc-day-detail').textContent=dayQty+' day × combined rate';
-  $('rc-miles').className='rc-option';$('rc-day').className='rc-option';
+  const mWinsOverall=combinedMilesPay>=combinedDayPay;
+  $('rc-miles').className='rc-option '+(mWinsOverall?'winner':'loser');$('rc-day').className='rc-option '+(mWinsOverall?'loser':'winner');
   $('rc-verdict').textContent='COMBINED ('+pos.join(' + ')+'): $'+combinedTotal.toFixed(2)+'  —  '+detailParts.join(' | ');
-  highlightRows(false,false);
 
-  // Write the true combined total into the visible mile-rate field (qty stays as actual miles),
-  // and zero the day-rate row so calcTotal() doesn't double count.
-  // This keeps Step 8's existing total math (qty × rate, summed across rows) correct.
-  if(escMiles>0){sbv('escorted_rate',(combinedTotal/escMiles).toFixed(4));}
-  sbv('flat_day_rate',0);
-  if(escMiles<=0&&dayQty>0){
-    // No mileage entered yet — fall back to day-rate-only combined total.
+  // Route the TRUE combined total (per-position winner, summed) into whichever visible
+  // line item matches the overall verdict, and zero the other — same pattern as the
+  // single-position branch above, so the Qty/Rate boxes on screen always show real numbers.
+  if(mWinsOverall){
+    if(escMiles>0)sbv('escorted_rate',(combinedTotal/escMiles).toFixed(4));
+    sbv('flat_day_rate',0);
+    highlightRows(true,false);
+  }else{
+    if(dayQty>0)sbv('flat_day_rate',(combinedTotal/dayQty).toFixed(2));
     sbv('escorted_rate',0);
-    sbv('flat_day_rate',dayQty>0?(combinedTotal/dayQty).toFixed(2):0);
+    highlightRows(false,true);
   }
   calcTotal();
 }
