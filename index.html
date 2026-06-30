@@ -656,11 +656,10 @@ function applyDefaultRates(posArr,force){
   const dayRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].day:0),0)/n; // all positions share $550, so this is just $550
   const motelRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].motel:0),0)/n; // all positions share $125
   if(force||!bv('flat_day_rate'))sbv('flat_day_rate',dayRateSingle);
-  if(force||!bv('flat_day_qty'))sbv('flat_day_qty',(trips.length||1)*n);
+  sbv('flat_day_qty',(trips.length||1)*n);
   if(force||!bv('motel_rate'))sbv('motel_rate',motelRateSingle);
-  // motel_qty is driven by actual overnight count from trips (set elsewhere) — multiply by n when (re)applying defaults
   const baseMotelQty=trips.filter(t=>t.motel==='Y').length;
-  if(baseMotelQty>0&&(force||!bv('motel_qty')))sbv('motel_qty',baseMotelQty*n);
+  if(baseMotelQty>0)sbv('motel_qty',baseMotelQty*n);
 
   updateRateWinner();
 }
@@ -684,8 +683,8 @@ function renderTrips(){
   updateFab();
 }
 function updateTrip(i,field,val){trips[i][field]=val;const map={date:'t'+i+'-date',startTime:'t'+i+'-start',endTime:'t'+i+'-end'};if(map[field]){const e=$(map[field]);if(e)e.classList.remove('err');}saveDraft();}
-function addTrip(){if(trips.length>=5)return;trips.push({date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'});renderTrips();const card=$('trip-card-'+(trips.length-1));if(card)setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),80);sbv('flat_day_qty',trips.length);updateRateWinner();saveDraft();}
-function removeTrip(i){trips.splice(i,1);renderTrips();saveDraft();}
+function addTrip(){if(trips.length>=5)return;trips.push({date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'});renderTrips();const card=$('trip-card-'+(trips.length-1));if(card)setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),80);if(radios.pilot_position&&radios.pilot_position.length)applyDefaultRates(radios.pilot_position,true);else updateRateWinner();saveDraft();}
+function removeTrip(i){trips.splice(i,1);renderTrips();if(radios.pilot_position&&radios.pilot_position.length)applyDefaultRates(radios.pilot_position,true);saveDraft();}
 function updateFab(){$('trip-fab').classList.toggle('show',step===5&&trips.length<5);}
 
 function updateRateWinner(){
@@ -764,7 +763,7 @@ function goTo(n){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-bar').forEach(nb=>nb.remove());
   step=n;const panel=$('panel-'+n);panel.classList.add('active');updateStepBar();updateFab();
   if(n===5)renderTrips();if(n===7)onOdoInput();
-  if(n===8){const pos=radios.pilot_position;if(pos&&pos.length)applyDefaultRates(pos,false);updateRateWinner();}
+  if(n===8){const pos=radios.pilot_position;if(pos&&pos.length)applyDefaultRates(pos,true);updateRateWinner();}
   if(n===9){initSig();fillSummary();}
   window.scrollTo({top:0,behavior:'smooth'});
   const nav=document.createElement('div');nav.className='nav-bar';
