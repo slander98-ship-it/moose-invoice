@@ -157,14 +157,19 @@ export default async function handler(req, res) {
       // DT rows (row 1 filled with actual downtime entry if present, row 2 blank)
       const to12dt=(t)=>{if(!t)return'';const[h,m]=t.split(':').map(Number);if(isNaN(h)||isNaN(m))return t;const ap=h>=12?'PM':'AM';const hr=h%12||12;return hr+':'+(m<10?'0':'')+m+' '+ap;};
       const dtRow0 = [d.downtime_date||'', to12dt(d.downtime_start), to12dt(d.downtime_end), d.downtime_reason||''];
-      for (let r = 0; r < 2; r++) {
-        doc.rect(ML, y - 2, PW, 12).stroke();
-        if (r === 0) {
-          tx = ML;
-          doc.font('Helvetica').fontSize(6.5);
-          dtRow0.forEach((val, i) => { doc.text(val, tx + 2, y, { width: dtCW[i] - 4 }); tx += dtCW[i]; });
-        }
-        y += 12;
+      const dtRow0H = 16; // taller to avoid clipping a wrapped reason line
+      doc.rect(ML, y - 2, PW, dtRow0H).stroke();
+      tx = ML;
+      doc.font('Helvetica').fontSize(6.5);
+      dtRow0.forEach((val, i) => { doc.text(val, tx + 2, y, { width: dtCW[i] - 4, height: dtRow0H, ellipsis: true }); tx += dtCW[i]; });
+      y += dtRow0H;
+      // Blank second DT row
+      doc.rect(ML, y - 2, PW, 12).stroke();
+      y += 12;
+      // Notes (from driver's general Notes field on the Down Time step) — printed directly under the reason row
+      if (d.notes) {
+        doc.font('Helvetica-Oblique').fontSize(6.5).text('Notes: ' + d.notes, ML + 2, y, { width: PW - 4 });
+        y += 11;
       }
       y += 6;
 
