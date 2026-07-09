@@ -25,6 +25,8 @@ function drawRigMovePdf(doc, d, PW, ML, LOGO_B64) {
   doc.font('Helvetica-Bold').fontSize(9).text('Invoice #', ML + PW - 78, y + 8);
   doc.font('Helvetica-Bold').fontSize(20).text(invNum, ML + PW - 82, y + 20, { width: 82, align: 'right' });
   y += 84;
+  doc.moveTo(ML, y).lineTo(ML + PW, y).stroke();
+  y += 10;
   doc.font('Helvetica').fontSize(8).text('Date: ' + (d.date || ''), ML, y, { width: PW, align: 'center' });
   y += 14;
 
