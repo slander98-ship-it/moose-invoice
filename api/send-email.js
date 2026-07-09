@@ -92,6 +92,30 @@ function drawRigMovePdf(doc, d, PW, ML, LOGO_B64) {
   });
   y += 6;
 
+  // ── DOWN TIME / REASON / NOTES ──
+  if (d.downtime_date || d.downtime_start || d.downtime_end || d.downtime_reason || d.notes) {
+    const to12 = (t) => { if (!t) return ''; const [h, m] = t.split(':').map(Number); if (isNaN(h) || isNaN(m)) return t; const ap = h >= 12 ? 'PM' : 'AM'; const hr = h % 12 || 12; return hr + ':' + (m < 10 ? '0' : '') + m + ' ' + ap; };
+    const dtCW2 = [60, 60, 60, PW - 180];
+    const dtH2 = ['DATE', 'START-TIME', 'END-TIME', 'REASON'];
+    tx = ML;
+    doc.rect(ML, y - 2, PW, 12).stroke();
+    doc.font('Helvetica-Bold').fontSize(6.5);
+    dtH2.forEach((h, i) => { doc.text(h, tx + 2, y, { width: dtCW2[i] - 4, align: 'center' }); tx += dtCW2[i]; });
+    y += 14;
+    const dtRow2 = [d.downtime_date || '', to12(d.downtime_start), to12(d.downtime_end), d.downtime_reason || ''];
+    const dtRowH2 = 16;
+    doc.rect(ML, y - 2, PW, dtRowH2).stroke();
+    tx = ML;
+    doc.font('Helvetica').fontSize(6.5);
+    dtRow2.forEach((val, i) => { doc.text(val, tx + 2, y, { width: dtCW2[i] - 4, height: dtRowH2, ellipsis: true }); tx += dtCW2[i]; });
+    y += dtRowH2;
+    if (d.notes) {
+      doc.font('Helvetica-Oblique').fontSize(6.5).text('Notes: ' + d.notes, ML + 2, y, { width: PW - 4 });
+      y += 11;
+    }
+    y += 6;
+  }
+
   // ── CHARGES ──
   const charges = [
     ['Total Escorted Miles', d.escorted_miles, d.escorted_rate, 'Per Mile ='],
