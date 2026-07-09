@@ -154,9 +154,16 @@ export default async function handler(req, res) {
       doc.text('<<REASON>>', tx, y, { width: halfW - 50 });
       doc.text('MOTEL', ML + PW - 36, y, { width: 36, align: 'center' });
       y += 14;
-      // 2 blank DT rows
+      // DT rows (row 1 filled with actual downtime entry if present, row 2 blank)
+      const to12dt=(t)=>{if(!t)return'';const[h,m]=t.split(':').map(Number);if(isNaN(h)||isNaN(m))return t;const ap=h>=12?'PM':'AM';const hr=h%12||12;return hr+':'+(m<10?'0':'')+m+' '+ap;};
+      const dtRow0 = [d.downtime_date||'', to12dt(d.downtime_start), to12dt(d.downtime_end), d.downtime_reason||''];
       for (let r = 0; r < 2; r++) {
         doc.rect(ML, y - 2, PW, 12).stroke();
+        if (r === 0) {
+          tx = ML;
+          doc.font('Helvetica').fontSize(6.5);
+          dtRow0.forEach((val, i) => { doc.text(val, tx + 2, y, { width: dtCW[i] - 4 }); tx += dtCW[i]; });
+        }
         y += 12;
       }
       y += 6;
