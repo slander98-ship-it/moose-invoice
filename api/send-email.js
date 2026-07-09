@@ -121,7 +121,7 @@ function drawRigMovePdf(doc, d, PW, ML, LOGO_B64) {
     ['Total Escorted Miles', d.escorted_miles, d.escorted_rate, 'Per Mile ='],
     ['Flat Day Rate', d.flat_day_qty, d.flat_day_rate, 'Per Day ='],
     ['High Pole Day Rate', d.motel_qty ? null : null, null, 'Per Day ='], // no dedicated HP field yet; left blank intentionally
-    ['Hotels', d.motel_qty, d.motel_rate, 'Per Day ='],
+    ['Hotels', d.motel_qty, d.motel_qty > 0 ? d.motel_rate : null, 'Per Day ='],
   ];
   const LW = PW / 2 - 10;
   doc.font('Helvetica').fontSize(8);
@@ -354,7 +354,7 @@ export default async function handler(req, res) {
         ['DEADHEAD MILES', d.deadhead_miles, d.deadhead_rate, 'PER MILE ='],
         ['FLAT DAY RATE', d.flat_day_qty, d.flat_day_rate, 'PER DAY ='],
         ['½ DAY RATE', d.half_day_qty, d.half_day_rate, '½ DAY ='],
-        ['MOTELS', d.motel_qty, d.motel_rate, 'PER DAY ='],
+        ['MOTELS', d.motel_qty, d.motel_qty > 0 ? d.motel_rate : null, 'PER DAY ='],
         ['DOWN TIME', d.downtime_hours, d.downtime_rate, 'PER HOUR ='],
         ["NO-GO'S", d.nogo_qty, d.nogo_rate, 'PER DAY ='],
       ];
