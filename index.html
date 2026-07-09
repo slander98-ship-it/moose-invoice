@@ -943,6 +943,7 @@ async function sendInvoiceEmail(){
         to,
         subject:'Invoice #'+invNum+' — Moose\'s Pilot Car Service',
         invoiceData:{
+          format:selectedFormat,
           invNum:d.invNum,position:d.position,date:d.date,
           trucking_co:d.trucking_co,trucking_co_phone:d.trucking_co_phone,
           billing_address:d.billing_address,contact_name:d.contact_name,
