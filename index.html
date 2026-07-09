@@ -668,6 +668,12 @@ function onOdoInput(){
   const m=calcTripMiles();$('miles-calc').textContent=m>0?m.toFixed(1)+' mi':'—';if(m>0)sbv('escorted_miles',m.toFixed(1));updateRateWinner();
 }
 
+function autofillTripCities(){
+  const puCity=[fv('pickup_city'),fv('pickup_state')].filter(Boolean).join(', ');
+  const doCity=[fv('dropoff_city'),fv('dropoff_state')].filter(Boolean).join(', ');
+  if(puCity&&trips[0]&&!trips[0].startCity)trips[0].startCity=puCity;
+  if(doCity&&trips.length&&!trips[trips.length-1].endCity)trips[trips.length-1].endCity=doCity;
+}
 function renderTrips(){
   const c=$('trips-container');c.innerHTML='';
   trips.forEach((t,i)=>{
@@ -760,7 +766,7 @@ function nextStep(){if(!validate(step))return;goTo(step+1);}
 function goTo(n){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-bar').forEach(nb=>nb.remove());
   step=n;const panel=$('panel-'+n);panel.classList.add('active');updateStepBar();updateFab();
-  if(n===5)renderTrips();if(n===7)onOdoInput();
+  if(n===5){autofillTripCities();renderTrips();}if(n===7)onOdoInput();
   if(n===8){const pos=radios.pilot_position;if(pos&&pos.length)applyDefaultRates(pos,true);updateRateWinner();}
   if(n===9){initSig();fillSummary();}
   window.scrollTo({top:0,behavior:'smooth'});
