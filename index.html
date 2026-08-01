@@ -1004,14 +1004,12 @@ async function loadMyInvoices(){
       trackerRows=trackerData||[];
     }catch(e){/* payment tracker is best-effort */}
 
-    // Hide markers: since UPDATE/DELETE on payment_tracker appear fully blocked for this
-    // app's key, "removing" an entry is done by INSERTing a tombstone row instead (insert
-    // is the one operation confirmed to work). Pull those out and build a set of hidden keys.
-    const hiddenKeys=new Set();
-    trackerRows=trackerRows.filter(t=>{
-      if(t.notes&&t.notes.indexOf('HIDE:')===0){hiddenKeys.add(t.notes.slice(5));return false;}
-      return true;
-    });
+    // "Removed" entries are tracked locally on this device (localStorage) rather than
+    // written to the database — the payment_tracker table's constraints made every
+    // database-side removal approach unreliable, and this sidesteps that entirely.
+    const hiddenKeys=new Set(getLocalHidden());
+    // Also strip any leftover tombstone rows from earlier attempts at a DB-based hide.
+    trackerRows=trackerRows.filter(t=>!(t.notes&&t.notes.indexOf('HIDE:')===0));
 
     const trackerByInvNum={};
     trackerRows.forEach(t=>{ if(t.invoice_num) trackerByInvNum[t.invoice_num]=t; });
@@ -1186,26 +1184,21 @@ async function toggleManualPaid(id,currentState){
   }catch(e){alert('Could not update: '+e.message);}
 }
 function uniqTag(prefix){return prefix+'-'+Date.now()+'-'+Math.floor(Math.random()*100000);}
-async function hideInvoiceItem(idx){
+function getLocalHidden(){
+  try{return JSON.parse(localStorage.getItem('moose_hidden_invoices')||'[]');}catch(e){return[];}
+}
+function addLocalHidden(key){
+  const arr=getLocalHidden();
+  if(!arr.includes(key))arr.push(key);
+  localStorage.setItem('moose_hidden_invoices',JSON.stringify(arr));
+}
+function hideInvoiceItem(idx){
   const it=myinvItems[idx];if(!it)return;
   const label=it.invoice_num?('invoice #'+it.invoice_num):'this entry';
   if(!confirm('Remove '+label+' from your list?'))return;
   const key=it.trackerId?('tid:'+it.trackerId):(it.invoice_num||'unknown');
-  try{
-    const{error}=await db.from('payment_tracker').insert({
-      invoice_num:uniqTag('HIDDEN'),
-      client:'(hidden)',
-      description:'',
-      amount:0,
-      status:'unpaid',
-      notes:'HIDE:'+key,
-      date_issued:new Date().toISOString().slice(0,10),
-      driver_name:driverObj.name,
-      driver_phone:driverObj.phone
-    });
-    if(error)throw error;
-    await loadMyInvoices();
-  }catch(e){alert('Could not remove: '+e.message);}
+  addLocalHidden(key);
+  loadMyInvoices();
 }
 
 function clearAllFields(){
