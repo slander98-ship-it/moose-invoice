@@ -1174,31 +1174,25 @@ async function toggleManualPaid(id,currentState){
   }catch(e){alert('Could not update: '+e.message);}
 }
 async function deleteManualEntry(id){
-  if(!confirm('Delete this manual entry? This cannot be undone.'))return;
+  if(!confirm('Remove this entry from your list?'))return;
   try{
-    const{error}=await db.from('payment_tracker').delete().eq('id',id);
+    const{data,error}=await db.from('payment_tracker').update({driver_phone:''}).eq('id',id).select();
     if(error)throw error;
+    if(!data||data.length===0){alert('Could not remove this entry — the database rejected the change.');return;}
     await loadMyInvoices();
-  }catch(e){alert('Could not delete: '+e.message);}
+  }catch(e){alert('Could not remove: '+e.message);}
 }
 async function deleteRealInvoice(idx){
   const it=myinvItems[idx];if(!it||!it.invoice_num)return;
-  if(!confirm('Permanently delete invoice #'+it.invoice_num+'? This cannot be undone.'))return;
+  if(!confirm('Remove invoice #'+it.invoice_num+' from your list?'))return;
   try{
-    const{data:ptRows}=await db.from('payment_tracker').delete().eq('invoice_num',it.invoice_num).select();
-    const{data:invRows,error:invErr}=await db.from('invoices').delete().eq('invoice_number',it.invoice_num).select();
-    if(invErr)throw invErr;
-    if(!invRows||invRows.length===0){
-      // Either there was no matching row in invoices (nothing to worry about — this entry
-      // only ever lived in the tracker), or a real row exists but delete is blocked by RLS.
-      // Try to hide it either way by clearing driver_phone so the lookup no longer finds it.
-      await db.from('invoices').update({driver_phone:''}).eq('invoice_number',it.invoice_num);
-    }
+    const{data:ptRows}=await db.from('payment_tracker').update({driver_phone:''}).eq('invoice_num',it.invoice_num).select();
+    const{data:invRows}=await db.from('invoices').update({driver_phone:''}).eq('invoice_number',it.invoice_num).select();
     await loadMyInvoices();
     if((!ptRows||ptRows.length===0)&&(!invRows||invRows.length===0)){
-      alert('Removed from your list. Note: I could not confirm anything was actually deleted in the database for this one — it may reappear if reloaded from elsewhere.');
+      alert('This could not be removed — the database rejected the change. This needs a permissions fix on the Supabase side that I can\'t make directly from here.');
     }
-  }catch(e){alert('Could not delete: '+e.message);}
+  }catch(e){alert('Could not remove: '+e.message);}
 }
 
 function clearAllFields(){
