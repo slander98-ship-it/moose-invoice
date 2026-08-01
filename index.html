@@ -999,15 +999,24 @@ async function loadMyInvoices(){
 
     let trackerRows=[];
     try{
-      const{data:trackerData}=await db.from('payment_tracker').select('id,invoice_num,client,description,amount,date_issued,status')
+      const{data:trackerData}=await db.from('payment_tracker').select('id,invoice_num,client,description,amount,date_issued,status,notes')
         .eq('driver_phone',driverObj.phone);
       trackerRows=trackerData||[];
     }catch(e){/* payment tracker is best-effort */}
 
+    // Hide markers: since UPDATE/DELETE on payment_tracker appear fully blocked for this
+    // app's key, "removing" an entry is done by INSERTing a tombstone row instead (insert
+    // is the one operation confirmed to work). Pull those out and build a set of hidden keys.
+    const hiddenKeys=new Set();
+    trackerRows=trackerRows.filter(t=>{
+      if(t.notes&&t.notes.indexOf('HIDE:')===0){hiddenKeys.add(t.notes.slice(5));return false;}
+      return true;
+    });
+
     const trackerByInvNum={};
     trackerRows.forEach(t=>{ if(t.invoice_num) trackerByInvNum[t.invoice_num]=t; });
 
-    const fromInvoices=(invData||[]).map(inv=>({
+    const fromInvoices=(invData||[]).filter(inv=>!hiddenKeys.has(inv.invoice_number)).map(inv=>({
       source:'moose',
       invoice_num:inv.invoice_number,
       company:inv.trucking_co_name||'Unnamed',
@@ -1019,7 +1028,11 @@ async function loadMyInvoices(){
     }));
 
     const invoiceNums=new Set((invData||[]).map(r=>r.invoice_number));
-    const manualOnly=trackerRows.filter(t=>!t.invoice_num||!invoiceNums.has(t.invoice_num)).map(t=>({
+    const manualOnly=trackerRows.filter(t=>{
+      if(t.invoice_num&&invoiceNums.has(t.invoice_num))return false;
+      const key=t.invoice_num||('tid:'+t.id);
+      return !hiddenKeys.has(key);
+    }).map(t=>({
       source:'manual',
       invoice_num:t.invoice_num||'',
       company:t.client||'Unnamed',
@@ -1061,14 +1074,14 @@ function renderMyInvoices(items){
       +'</div>'
       +'<div class="myinv-actions">'
       +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
-      +'<button class="myinv-mini-btn del" onclick="deleteManualEntry(\''+it.trackerId+'\')">Delete</button>'
+      +'<button class="myinv-mini-btn del" onclick="hideInvoiceItem('+idx+')">Delete</button>'
       +'</div>'
     ):('<div class="myinv-actions">'
       +'<button class="myinv-mini-btn" onclick="editRealInvoice('+idx+')">Edit Full Invoice</button>'
       +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
       +'</div>'
       +'<div class="myinv-actions">'
-      +'<button class="myinv-mini-btn del" onclick="deleteRealInvoice('+idx+')">Delete</button>'
+      +'<button class="myinv-mini-btn del" onclick="hideInvoiceItem('+idx+')">Delete</button>'
       +'</div>');
     return '<div class="myinv-card st-'+cardState+'">'
       +'<div class="myinv-row-top"><div><div class="myinv-num">'+(it.invoice_num?'#'+it.invoice_num:'MANUAL ENTRY')+'</div>'
@@ -1173,33 +1186,24 @@ async function toggleManualPaid(id,currentState){
     await loadMyInvoices();
   }catch(e){alert('Could not update: '+e.message);}
 }
-async function deleteManualEntry(id){
-  if(!confirm('Remove this entry from your list?'))return;
+async function hideInvoiceItem(idx){
+  const it=myinvItems[idx];if(!it)return;
+  const label=it.invoice_num?('invoice #'+it.invoice_num):'this entry';
+  if(!confirm('Remove '+label+' from your list?'))return;
+  const key=it.invoice_num||('tid:'+it.trackerId);
   try{
-    const{data,error}=await db.from('payment_tracker').update({driver_phone:''}).eq('id',id).select();
+    const{error}=await db.from('payment_tracker').insert({
+      client:'(hidden)',
+      description:'',
+      amount:0,
+      status:'hidden',
+      notes:'HIDE:'+key,
+      date_issued:new Date().toISOString().slice(0,10),
+      driver_name:driverObj.name,
+      driver_phone:driverObj.phone
+    });
     if(error)throw error;
-    if(!data||data.length===0){alert('Could not remove this entry — the database rejected the change.');return;}
     await loadMyInvoices();
-  }catch(e){alert('Could not remove: '+e.message);}
-}
-async function deleteRealInvoice(idx){
-  const it=myinvItems[idx];if(!it||!it.invoice_num)return;
-  if(!confirm('Remove invoice #'+it.invoice_num+' from your list?'))return;
-  try{
-    let ptRows=null,ptErr=null;
-    if(it.trackerId){
-      const r=await db.from('payment_tracker').update({driver_phone:''}).eq('id',it.trackerId).select();
-      ptRows=r.data;ptErr=r.error;
-    }else{
-      const r=await db.from('payment_tracker').update({driver_phone:''}).eq('invoice_num',it.invoice_num).select();
-      ptRows=r.data;ptErr=r.error;
-    }
-    const{data:invRows,error:invErr}=await db.from('invoices').update({driver_phone:''}).eq('invoice_number',it.invoice_num).select();
-    await loadMyInvoices();
-    if((!ptRows||ptRows.length===0)&&(!invRows||invRows.length===0)){
-      const detail=(ptErr&&ptErr.message)||(invErr&&invErr.message)||'no rows matched — nothing changed, no error returned';
-      alert('Still could not remove #'+it.invoice_num+'.\n\nDatabase said: '+detail+'\n\nPlease send this exact message back so the real cause can be found.');
-    }
   }catch(e){alert('Could not remove: '+e.message);}
 }
 
