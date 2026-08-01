@@ -187,6 +187,25 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .myinv-empty{text-align:center;padding:4rem 1.5rem;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;line-height:1.7;}
 .myinv-empty .big{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#999;display:block;margin-bottom:.5rem;}
 .myinv-loading{text-align:center;padding:4rem 1.5rem;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;letter-spacing:.05em;}
+.myinv-add{background:var(--y);border:1.5px solid var(--y);color:var(--bk);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .65rem;border-radius:4px;cursor:pointer;flex-shrink:0;margin-right:.4rem;}
+.myinv-badge.manual{background:rgba(255,255,255,.08);color:#aaa;}
+.myinv-actions{display:flex;gap:.5rem;margin-top:.7rem;}
+.myinv-mini-btn{flex:1;background:var(--bk3);border:1px solid var(--border);border-radius:5px;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;padding:.45rem .4rem;cursor:pointer;}
+.myinv-mini-btn.del{color:var(--red);border-color:rgba(229,57,53,.3);flex:0 0 auto;padding:.45rem .9rem;}
+.myinv-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:flex-end;justify-content:center;z-index:700;}
+.myinv-overlay.show{display:flex;}
+.myinv-modal{background:var(--bk2);border-top:3px solid var(--y);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:1.4rem 1.1rem 1.6rem;}
+.myinv-modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--y);letter-spacing:.03em;margin-bottom:.2rem;}
+.myinv-modal-sub{font-family:'Barlow',sans-serif;font-size:.78rem;color:#999;margin-bottom:1rem;}
+.myinv-fg{margin-bottom:.8rem;}
+.myinv-fg label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:#999;margin-bottom:.3rem;}
+.myinv-fg input{width:100%;background:var(--bk);border:1px solid var(--border);color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.6rem .65rem;outline:none;border-radius:5px;box-sizing:border-box;}
+.myinv-fg input:focus{border-color:var(--y);}
+.myinv-row2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.myinv-modal-actions{display:flex;gap:.6rem;margin-top:.4rem;}
+.myinv-modal-actions button{flex:1;font-family:'Bebas Neue',sans-serif;font-weight:600;text-transform:uppercase;font-size:.95rem;padding:.7rem;border:none;border-radius:6px;cursor:pointer;}
+.myinv-modal-save{background:var(--y);color:var(--bk);}
+.myinv-modal-cancel{background:transparent;border:1px solid var(--border)!important;color:#aaa;}
 </style>
 </head>
 <body>
@@ -523,9 +542,29 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <div class="tb-title">MY INVOICES</div>
       <div class="tb-sub" id="myinv-sub">—</div>
     </div>
+    <button class="myinv-add" onclick="openAddManual()">+ ADD</button>
     <button class="myinv-back" onclick="closeMyInvoices()">BACK</button>
   </div>
   <div id="myinv-body"></div>
+</div>
+
+<div class="myinv-overlay" id="manual-overlay">
+  <div class="myinv-modal">
+    <div class="myinv-modal-title">ADD INVOICE MANUALLY</div>
+    <div class="myinv-modal-sub">For jobs from other companies not run through this app.</div>
+    <form id="manual-form" onsubmit="return false;">
+      <div class="myinv-fg"><label>CLIENT / COMPANY *</label><input id="man-client" type="text" placeholder="e.g. ABC Logistics"/></div>
+      <div class="myinv-fg"><label>LOAD / DESCRIPTION</label><input id="man-desc" type="text" placeholder="optional"/></div>
+      <div class="myinv-row2">
+        <div class="myinv-fg"><label>AMOUNT ($) *</label><input id="man-amount" type="number" step="0.01" placeholder="0.00"/></div>
+        <div class="myinv-fg"><label>DATE</label><input id="man-date" type="date"/></div>
+      </div>
+    </form>
+    <div class="myinv-modal-actions">
+      <button class="myinv-modal-cancel" onclick="closeAddManual()">CANCEL</button>
+      <button class="myinv-modal-save" id="man-save-btn" onclick="saveManualEntry()">SAVE</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -882,7 +921,9 @@ async function submitInvoice(){
           amount:total,
           date_issued:new Date().toISOString().slice(0,10),
           notes:fv('driver_name')+' — Truck '+fv('driver_truck_number'),
-          status:'unpaid'
+          status:'unpaid',
+          driver_name:fv('driver_name'),
+          driver_phone:fv('driver_phone')
         });
       }
     }catch(ptErr){/* tracker insert is best-effort — never blocks submission */}
@@ -893,7 +934,7 @@ async function submitInvoice(){
   }catch(err){alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent='SUBMIT INVOICE';}
 }
 
-// --- My Invoices (read-only view for the logged-in driver) ---
+// --- My Invoices (driver's own invoices + personal manual tracker — one-stop-shop) ---
 async function openMyInvoices(){
   if(!driverObj){alert('Please log in first.');return;}
   $('myinv-sub').textContent=driverObj.name+' — driver invoices';
@@ -910,39 +951,120 @@ function closeMyInvoices(){
 async function loadMyInvoices(){
   try{
     const{data:invData,error:invErr}=await db.from('invoices')
-      .select('invoice_number,trucking_co_name,load_type,job_date,total_amount,status,approval_token')
+      .select('invoice_number,trucking_co_name,load_type,job_date,total_amount')
       .eq('driver_name',driverObj.name).eq('driver_phone',driverObj.phone)
       .order('invoice_number',{ascending:false});
     if(invErr)throw invErr;
-    if(!invData||invData.length===0){
-      $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">NOTHING HERE YET</span>Invoices you submit will show up here.</div>';
+
+    let trackerRows=[];
+    try{
+      const{data:trackerData}=await db.from('payment_tracker').select('id,invoice_num,client,description,amount,date_issued,status')
+        .eq('driver_phone',driverObj.phone);
+      trackerRows=trackerData||[];
+    }catch(e){/* payment tracker is best-effort */}
+
+    const trackerByInvNum={};
+    trackerRows.forEach(t=>{ if(t.invoice_num) trackerByInvNum[t.invoice_num]=t; });
+
+    const fromInvoices=(invData||[]).map(inv=>({
+      source:'moose',
+      invoice_num:inv.invoice_number,
+      company:inv.trucking_co_name||'Unnamed',
+      description:inv.load_type||'',
+      amount:Number(inv.total_amount||0),
+      date:inv.job_date||'',
+      payStatus:(trackerByInvNum[inv.invoice_number]&&trackerByInvNum[inv.invoice_number].status)||'unpaid',
+      trackerId:trackerByInvNum[inv.invoice_number]?trackerByInvNum[inv.invoice_number].id:null
+    }));
+
+    const invoiceNums=new Set((invData||[]).map(r=>r.invoice_number));
+    const manualOnly=trackerRows.filter(t=>!t.invoice_num||!invoiceNums.has(t.invoice_num)).map(t=>({
+      source:'manual',
+      invoice_num:t.invoice_num||'',
+      company:t.client||'Unnamed',
+      description:t.description||'',
+      amount:Number(t.amount||0),
+      date:t.date_issued||'',
+      payStatus:t.status||'unpaid',
+      trackerId:t.id
+    }));
+
+    const all=[...fromInvoices,...manualOnly].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+    if(all.length===0){
+      $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">NOTHING HERE YET</span>Invoices you submit, or jobs you add manually, will show up here.</div>';
       return;
     }
-    const invNums=invData.map(r=>r.invoice_number);
-    let statusMap={};
-    try{
-      const{data:trackerData}=await db.from('payment_tracker').select('invoice_num,status').in('invoice_num',invNums);
-      (trackerData||[]).forEach(t=>{statusMap[t.invoice_num]=t.status;});
-    }catch(e){/* payment status is best-effort */}
-    renderMyInvoices(invData,statusMap);
+    renderMyInvoices(all);
   }catch(e){
     $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">COULD NOT LOAD</span>'+(e.message||'Connection error — please try again.')+'</div>';
   }
 }
-function renderMyInvoices(invData,statusMap){
-  $('myinv-body').innerHTML='<div class="myinv-list">'+invData.map(inv=>{
-    const payStatus=statusMap[inv.invoice_number]||'unpaid';
-    const cardState=payStatus==='paid'?'paid':'unpaid';
+function renderMyInvoices(items){
+  $('myinv-body').innerHTML='<div class="myinv-list">'+items.map(it=>{
+    const cardState=it.payStatus==='paid'?'paid':'unpaid';
     const payBadge='<span class="myinv-badge '+cardState+'">'+(cardState==='paid'?'PAID':'UNPAID')+'</span>';
+    const manualBadge=it.source==='manual'?'<span class="myinv-badge manual">MANUAL</span>':'';
+    const manualActions=it.source==='manual'?(
+      '<button class="myinv-mini-btn" onclick="toggleManualPaid(\''+it.trackerId+'\',\''+cardState+'\')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
+      +'<button class="myinv-mini-btn del" onclick="deleteManualEntry(\''+it.trackerId+'\')">Delete</button>'
+    ):'';
     return '<div class="myinv-card st-'+cardState+'">'
-      +'<div class="myinv-row-top"><div><div class="myinv-num">#'+(inv.invoice_number||'')+'</div>'
-      +'<div class="myinv-company">'+(inv.trucking_co_name||'Unnamed')+'</div></div>'
-      +'<div class="myinv-amount">$'+Number(inv.total_amount||0).toFixed(2)+'</div></div>'
-      +(inv.load_type?'<div class="myinv-load">'+inv.load_type+'</div>':'')
-      +'<div class="myinv-meta">'+payBadge
-      +(inv.job_date?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#888;">'+inv.job_date+'</span>':'')
-      +'</div></div>';
+      +'<div class="myinv-row-top"><div><div class="myinv-num">'+(it.invoice_num?'#'+it.invoice_num:'MANUAL ENTRY')+'</div>'
+      +'<div class="myinv-company">'+it.company+'</div></div>'
+      +'<div class="myinv-amount">$'+it.amount.toFixed(2)+'</div></div>'
+      +(it.description?'<div class="myinv-load">'+it.description+'</div>':'')
+      +'<div class="myinv-meta">'+payBadge+manualBadge
+      +(it.date?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#888;">'+it.date+'</span>':'')
+      +'</div>'
+      +(manualActions?'<div class="myinv-actions">'+manualActions+'</div>':'')
+      +'</div>';
   }).join('')+'</div>';
+}
+function openAddManual(){
+  $('manual-form').reset();
+  $('manual-overlay').classList.add('show');
+}
+function closeAddManual(){
+  $('manual-overlay').classList.remove('show');
+}
+async function saveManualEntry(){
+  const client=$('man-client').value.trim();
+  const amount=parseFloat($('man-amount').value);
+  if(!client){alert('Enter a client/company name.');return;}
+  if(isNaN(amount)){alert('Enter a valid amount.');return;}
+  const btn=$('man-save-btn');btn.disabled=true;btn.textContent='SAVING...';
+  try{
+    const{error}=await db.from('payment_tracker').insert({
+      client,
+      description:$('man-desc').value.trim(),
+      amount,
+      date_issued:$('man-date').value||new Date().toISOString().slice(0,10),
+      status:'unpaid',
+      driver_name:driverObj.name,
+      driver_phone:driverObj.phone
+    });
+    if(error)throw error;
+    closeAddManual();
+    await loadMyInvoices();
+  }catch(e){alert('Could not save: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='SAVE';}
+}
+async function toggleManualPaid(id,currentState){
+  try{
+    const newStatus=currentState==='paid'?'unpaid':'paid';
+    const{error}=await db.from('payment_tracker').update({status:newStatus,paid_date:newStatus==='paid'?new Date().toISOString().slice(0,10):null}).eq('id',id);
+    if(error)throw error;
+    await loadMyInvoices();
+  }catch(e){alert('Could not update: '+e.message);}
+}
+async function deleteManualEntry(id){
+  if(!confirm('Delete this manual entry? This cannot be undone.'))return;
+  try{
+    const{error}=await db.from('payment_tracker').delete().eq('id',id);
+    if(error)throw error;
+    await loadMyInvoices();
+  }catch(e){alert('Could not delete: '+e.message);}
 }
 
 function clearAllFields(){
