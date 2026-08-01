@@ -1170,7 +1170,7 @@ async function saveManualEntry(){
       const{error}=await db.from('payment_tracker').update(payload).eq('id',editingManualId);
       if(error)throw error;
     }else{
-      const{error}=await db.from('payment_tracker').insert({...payload,status:'unpaid',driver_name:driverObj.name,driver_phone:driverObj.phone});
+      const{error}=await db.from('payment_tracker').insert({...payload,invoice_num:'',status:'unpaid',driver_name:driverObj.name,driver_phone:driverObj.phone});
       if(error)throw error;
     }
     closeAddManual();
@@ -1193,6 +1193,7 @@ async function hideInvoiceItem(idx){
   const key=it.invoice_num||('tid:'+it.trackerId);
   try{
     const{error}=await db.from('payment_tracker').insert({
+      invoice_num:'',
       client:'(hidden)',
       description:'',
       amount:0,
