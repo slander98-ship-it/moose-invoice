@@ -1004,17 +1004,10 @@ async function loadMyInvoices(){
       trackerRows=trackerData||[];
     }catch(e){/* payment tracker is best-effort */}
 
-    // "Removed" entries are tracked locally on this device (localStorage) rather than
-    // written to the database — the payment_tracker table's constraints made every
-    // database-side removal approach unreliable, and this sidesteps that entirely.
-    const hiddenKeys=new Set(getLocalHidden());
-    // Also strip any leftover tombstone rows from earlier attempts at a DB-based hide.
-    trackerRows=trackerRows.filter(t=>!(t.notes&&t.notes.indexOf('HIDE:')===0));
-
     const trackerByInvNum={};
     trackerRows.forEach(t=>{ if(t.invoice_num) trackerByInvNum[t.invoice_num]=t; });
 
-    const fromInvoices=(invData||[]).filter(inv=>!hiddenKeys.has(inv.invoice_number)).map(inv=>({
+    const fromInvoices=(invData||[]).map(inv=>({
       source:'moose',
       invoice_num:inv.invoice_number,
       company:inv.trucking_co_name||'Unnamed',
@@ -1026,10 +1019,7 @@ async function loadMyInvoices(){
     }));
 
     const invoiceNums=new Set((invData||[]).map(r=>r.invoice_number));
-    const manualOnly=trackerRows.filter(t=>{
-      if(t.invoice_num&&invoiceNums.has(t.invoice_num))return false;
-      return !hiddenKeys.has('tid:'+t.id);
-    }).map(t=>({
+    const manualOnly=trackerRows.filter(t=>!(t.invoice_num&&invoiceNums.has(t.invoice_num))).map(t=>({
       source:'manual',
       invoice_num:(t.invoice_num&&!/^MANUAL-|^HIDDEN-/.test(t.invoice_num))?t.invoice_num:'',
       company:t.client||'Unnamed',
@@ -1184,21 +1174,21 @@ async function toggleManualPaid(id,currentState){
   }catch(e){alert('Could not update: '+e.message);}
 }
 function uniqTag(prefix){return prefix+'-'+Date.now()+'-'+Math.floor(Math.random()*100000);}
-function getLocalHidden(){
-  try{return JSON.parse(localStorage.getItem('moose_hidden_invoices')||'[]');}catch(e){return[];}
-}
-function addLocalHidden(key){
-  const arr=getLocalHidden();
-  if(!arr.includes(key))arr.push(key);
-  localStorage.setItem('moose_hidden_invoices',JSON.stringify(arr));
-}
-function hideInvoiceItem(idx){
+async function hideInvoiceItem(idx){
   const it=myinvItems[idx];if(!it)return;
   const label=it.invoice_num?('invoice #'+it.invoice_num):'this entry';
-  if(!confirm('Remove '+label+' from your list?'))return;
-  const key=it.trackerId?('tid:'+it.trackerId):(it.invoice_num||'unknown');
-  addLocalHidden(key);
-  loadMyInvoices();
+  if(!confirm('Delete '+label+'? This cannot be undone.'))return;
+  try{
+    if(it.trackerId){
+      const{error:ptErr}=await db.from('payment_tracker').delete().eq('id',it.trackerId);
+      if(ptErr)throw ptErr;
+    }
+    if(it.invoice_num){
+      const{error:invErr}=await db.from('invoices').delete().eq('invoice_number',it.invoice_num);
+      if(invErr)throw invErr;
+    }
+    await loadMyInvoices();
+  }catch(e){alert('Could not delete: '+e.message+'\n\nIf this mentions the invoices table specifically, that table still needs the same anon DELETE policy Bolt just added to payment_tracker.');}
 }
 
 function clearAllFields(){
