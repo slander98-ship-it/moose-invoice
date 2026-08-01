@@ -170,9 +170,8 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .myinv-back{background:transparent;border:1.5px solid var(--border);border-radius:6px;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.5rem 1rem;cursor:pointer;}
 .myinv-list{padding:1rem;display:flex;flex-direction:column;gap:.7rem;}
 .myinv-card{background:var(--bk2);border:1px solid var(--border);border-left:4px solid var(--border);border-radius:8px;padding:.9rem 1rem;}
-.myinv-card.st-approved{border-left-color:var(--green);}
-.myinv-card.st-pending{border-left-color:var(--y);}
-.myinv-card.st-denied{border-left-color:var(--red);}
+.myinv-card.st-paid{border-left-color:var(--green);}
+.myinv-card.st-unpaid{border-left-color:var(--y);}
 .myinv-row-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;}
 .myinv-num{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:#888;letter-spacing:.05em;}
 .myinv-company{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;color:#fff;margin-top:.1rem;}
@@ -932,17 +931,15 @@ async function loadMyInvoices(){
 }
 function renderMyInvoices(invData,statusMap){
   $('myinv-body').innerHTML='<div class="myinv-list">'+invData.map(inv=>{
-    let approvalState='pending',approvalLabel='PENDING APPROVAL';
-    if(inv.status==='approved'){approvalState='approved';approvalLabel='APPROVED';}
-    else if(inv.status==='denied'){approvalState='denied';approvalLabel='DENIED';}
-    const payStatus=statusMap[inv.invoice_number];
-    const payBadge=payStatus==='paid'?'<span class="myinv-badge paid">PAID</span>':(payStatus==='unpaid'?'<span class="myinv-badge unpaid">UNPAID</span>':'');
-    return '<div class="myinv-card st-'+approvalState+'">'
+    const payStatus=statusMap[inv.invoice_number]||'unpaid';
+    const cardState=payStatus==='paid'?'paid':'unpaid';
+    const payBadge='<span class="myinv-badge '+cardState+'">'+(cardState==='paid'?'PAID':'UNPAID')+'</span>';
+    return '<div class="myinv-card st-'+cardState+'">'
       +'<div class="myinv-row-top"><div><div class="myinv-num">#'+(inv.invoice_number||'')+'</div>'
       +'<div class="myinv-company">'+(inv.trucking_co_name||'Unnamed')+'</div></div>'
       +'<div class="myinv-amount">$'+Number(inv.total_amount||0).toFixed(2)+'</div></div>'
       +(inv.load_type?'<div class="myinv-load">'+inv.load_type+'</div>':'')
-      +'<div class="myinv-meta"><span class="myinv-badge '+approvalState+'">'+approvalLabel+'</span>'+payBadge
+      +'<div class="myinv-meta">'+payBadge
       +(inv.job_date?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#888;">'+inv.job_date+'</span>':'')
       +'</div></div>';
   }).join('')+'</div>';
