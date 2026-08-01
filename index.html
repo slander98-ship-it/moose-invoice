@@ -194,7 +194,10 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .myinv-stat .num{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;}
 .myinv-stat .num.owed{color:var(--y);}
 .myinv-stat .num.paid{color:var(--green);}
+.myinv-stat .num.miles{color:#6db3ff;}
+.myinv-stat .num.jobs{color:#e0e0e0;}
 .myinv-stat .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#888;margin-top:.2rem;}
+.myinv-stat .sub{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;color:#666;margin-top:.15rem;}
 .myinv-actions{display:flex;gap:.5rem;margin-top:.7rem;}
 .myinv-mini-btn{flex:1;background:var(--bk3);border:1px solid var(--border);border-radius:5px;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;padding:.45rem .4rem;cursor:pointer;}
 .myinv-mini-btn.del{color:var(--red);border-color:rgba(229,57,53,.3);flex:0 0 auto;padding:.45rem .9rem;}
@@ -559,6 +562,8 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
   <div class="myinv-stats-row">
     <div class="myinv-stat"><div class="num owed" id="myinv-stat-owed">$0.00</div><div class="lbl">Outstanding</div></div>
     <div class="myinv-stat"><div class="num paid" id="myinv-stat-paid">$0.00</div><div class="lbl">Paid</div></div>
+    <div class="myinv-stat"><div class="num miles" id="myinv-stat-miles">0 mi</div><div class="lbl">Total Miles</div><div class="sub" id="myinv-stat-miles-sub">—</div></div>
+    <div class="myinv-stat"><div class="num jobs" id="myinv-stat-jobs">0</div><div class="lbl">Jobs</div><div class="sub" id="myinv-stat-jobs-sub">—</div></div>
   </div>
   <div id="myinv-body"></div>
 </div>
@@ -992,7 +997,7 @@ let editingInvoiceNumber=null;
 async function loadMyInvoices(){
   try{
     const{data:invData,error:invErr}=await db.from('invoices')
-      .select('invoice_number,trucking_co_name,load_type,job_date,total_amount')
+      .select('invoice_number,trucking_co_name,load_type,job_date,total_amount,mileage')
       .eq('driver_phone',driverObj.phone)
       .order('invoice_number',{ascending:false});
     if(invErr)throw invErr;
@@ -1014,6 +1019,7 @@ async function loadMyInvoices(){
       description:inv.load_type||'',
       amount:Number(inv.total_amount||0),
       date:inv.job_date||'',
+      miles:Number(inv.mileage||0),
       payStatus:(trackerByInvNum[inv.invoice_number]&&trackerByInvNum[inv.invoice_number].status)||'unpaid',
       trackerId:trackerByInvNum[inv.invoice_number]?trackerByInvNum[inv.invoice_number].id:null
     }));
@@ -1026,6 +1032,7 @@ async function loadMyInvoices(){
       description:t.description||'',
       amount:Number(t.amount||0),
       date:t.date_issued||'',
+      miles:0,
       payStatus:t.status||'unpaid',
       trackerId:t.id
     }));
@@ -1044,10 +1051,18 @@ async function loadMyInvoices(){
   }
 }
 function renderMyInvoicesStats(items){
-  let owed=0,paid=0;
-  items.forEach(it=>{ if(it.payStatus==='paid') paid+=it.amount; else owed+=it.amount; });
+  let owed=0,paid=0,miles=0,paidCount=0;
+  items.forEach(it=>{
+    if(it.payStatus==='paid'){paid+=it.amount;paidCount++;}else{owed+=it.amount;}
+    miles+=it.miles||0;
+  });
+  const total=paid+owed;
   $('myinv-stat-owed').textContent='$'+owed.toFixed(2);
   $('myinv-stat-paid').textContent='$'+paid.toFixed(2);
+  $('myinv-stat-miles').textContent=miles>0?miles.toLocaleString(undefined,{maximumFractionDigits:0})+' mi':'—';
+  $('myinv-stat-miles-sub').textContent=miles>0?('$'+(total/miles).toFixed(2)+'/mi'):'no mileage yet';
+  $('myinv-stat-jobs').textContent=items.length;
+  $('myinv-stat-jobs-sub').textContent=paidCount+' paid • '+(items.length-paidCount)+' unpaid';
 }
 function renderMyInvoices(items){
   $('myinv-body').innerHTML='<div class="myinv-list">'+items.map((it,idx)=>{
@@ -1076,6 +1091,7 @@ function renderMyInvoices(items){
       +'<div class="myinv-amount">$'+it.amount.toFixed(2)+'</div></div>'
       +(it.description?'<div class="myinv-load">'+it.description+'</div>':'')
       +'<div class="myinv-meta">'+payBadge+manualBadge
+      +(it.miles>0?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#6db3ff;">'+it.miles.toLocaleString(undefined,{maximumFractionDigits:0})+' mi</span>':'')
       +(it.date?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#888;">'+it.date+'</span>':'')
       +'</div>'
       +manualActions
