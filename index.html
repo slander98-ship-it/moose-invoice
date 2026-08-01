@@ -574,6 +574,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="myinv-modal-sub">For jobs from other companies not run through this app.</div>
     <form id="manual-form" onsubmit="return false;">
       <div class="myinv-fg"><label>CLIENT / COMPANY *</label><input id="man-client" type="text" placeholder="e.g. ABC Logistics"/></div>
+      <div class="myinv-fg"><label>INVOICE #</label><input id="man-invnum" type="text" placeholder="optional — e.g. 4587"/></div>
       <div class="myinv-fg"><label>LOAD / DESCRIPTION</label><input id="man-desc" type="text" placeholder="optional"/></div>
       <div class="myinv-row2">
         <div class="myinv-fg"><label>AMOUNT ($) *</label><input id="man-amount" type="number" step="0.01" placeholder="0.00"/></div>
@@ -1144,6 +1145,7 @@ function openManualModal(item){
   editingManualId=item?item.trackerId:null;
   $('manual-modal-title').textContent=item?'EDIT INVOICE':'ADD INVOICE MANUALLY';
   $('man-client').value=item?item.company:'';
+  $('man-invnum').value=item?item.invoice_num:'';
   $('man-desc').value=item?item.description:'';
   $('man-amount').value=item?item.amount:'';
   $('man-date').value=item?item.date:'';
@@ -1161,6 +1163,7 @@ async function saveManualEntry(){
   const amount=parseFloat($('man-amount').value);
   if(!client){alert('Enter a client/company name.');return;}
   if(isNaN(amount)){alert('Enter a valid amount.');return;}
+  const enteredInvNum=$('man-invnum').value.trim();
   const btn=$('man-save-btn');btn.disabled=true;btn.textContent='SAVING...';
   try{
     const payload={
@@ -1170,15 +1173,21 @@ async function saveManualEntry(){
       date_issued:$('man-date').value||new Date().toISOString().slice(0,10)
     };
     if(editingManualId){
-      const{error}=await db.from('payment_tracker').update(payload).eq('id',editingManualId);
+      const{error}=await db.from('payment_tracker').update({...payload,invoice_num:enteredInvNum||uniqTag('MANUAL')}).eq('id',editingManualId);
       if(error)throw error;
     }else{
-      const{error}=await db.from('payment_tracker').insert({...payload,invoice_num:uniqTag('MANUAL'),status:'unpaid',driver_name:driverObj.name,driver_phone:driverObj.phone});
+      const{error}=await db.from('payment_tracker').insert({...payload,invoice_num:enteredInvNum||uniqTag('MANUAL'),status:'unpaid',driver_name:driverObj.name,driver_phone:driverObj.phone});
       if(error)throw error;
     }
     closeAddManual();
     await loadMyInvoices();
-  }catch(e){alert('Could not save: '+e.message);}
+  }catch(e){
+    if(e.message&&e.message.indexOf('duplicate key')!==-1){
+      alert('That invoice number is already used somewhere in the system. Try a slightly different number (e.g. add a suffix).');
+    }else{
+      alert('Could not save: '+e.message);
+    }
+  }
   finally{btn.disabled=false;btn.textContent='SAVE';}
 }
 async function toggleManualPaid(id,currentState){
