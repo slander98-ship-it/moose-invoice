@@ -189,8 +189,8 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .myinv-loading{text-align:center;padding:4rem 1.5rem;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;letter-spacing:.05em;}
 .myinv-add{background:var(--y);border:1.5px solid var(--y);color:var(--bk);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .65rem;border-radius:4px;cursor:pointer;flex-shrink:0;margin-right:.4rem;}
 .myinv-badge.manual{background:rgba(255,255,255,.08);color:#aaa;}
-.myinv-tabs{display:flex;gap:.5rem;padding:.7rem 1.2rem;background:var(--bk2);border-bottom:1px solid var(--border);}
-.myinv-tab{flex:1;background:transparent;border:1px solid var(--border);color:#999;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:.5rem .4rem;border-radius:4px;}
+.myinv-tabs{display:flex;gap:.4rem;padding:.7rem 1.2rem;background:var(--bk2);border-bottom:1px solid var(--border);}
+.myinv-tab{flex:1;background:transparent;border:1px solid var(--border);color:#999;font-family:'Barlow Condensed',sans-serif;font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700;padding:.5rem .2rem;border-radius:4px;}
 .myinv-tab.active{background:var(--y);border-color:var(--y);color:#000;}
 .myinv-scope{padding:.5rem 1.2rem 0;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:#888;display:none;}
 .myinv-scope.show{display:block;}
@@ -566,8 +566,9 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
   </div>
   <div class="myinv-tabs">
     <button class="myinv-tab active" data-f="all" onclick="setMyinvFilter('all')">ALL</button>
-    <button class="myinv-tab" data-f="last" onclick="setMyinvFilter('last')">LAST MONTH</button>
-    <button class="myinv-tab" data-f="next" onclick="setMyinvFilter('next')">NEXT MONTH</button>
+    <button class="myinv-tab" data-f="last" onclick="setMyinvFilter('last')">LAST MO</button>
+    <button class="myinv-tab" data-f="this" onclick="setMyinvFilter('this')">THIS MO</button>
+    <button class="myinv-tab" data-f="next" onclick="setMyinvFilter('next')">NEXT MO</button>
   </div>
   <div class="myinv-scope" id="myinv-scope"></div>
   <div class="myinv-stats-row">
@@ -1087,6 +1088,11 @@ function applyMyinvFilter(){
     const target=monthKey(nd);
     items=myinvAllItems.filter(it=>monthKey(addDaysStr(it.date,30))===target);
     scope.textContent='Expected in '+monthLabel(nd)+' (invoice date + 30 days) — '+items.length+' job'+(items.length===1?'':'s');
+    scope.classList.add('show');
+  }else if(myinvFilter==='this'){
+    const target=monthKey(now);
+    items=myinvAllItems.filter(it=>monthKey(addDaysStr(it.date,30))===target);
+    scope.textContent='Expected in '+monthLabel(now)+' (invoice date + 30 days) — '+items.length+' job'+(items.length===1?'':'s');
     scope.classList.add('show');
   }else if(myinvFilter==='last'){
     const ld=new Date(now.getFullYear(),now.getMonth()-1,1);
