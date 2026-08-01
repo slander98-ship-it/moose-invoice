@@ -1186,11 +1186,19 @@ async function deleteRealInvoice(idx){
   const it=myinvItems[idx];if(!it||!it.invoice_num)return;
   if(!confirm('Remove invoice #'+it.invoice_num+' from your list?'))return;
   try{
-    const{data:ptRows}=await db.from('payment_tracker').update({driver_phone:''}).eq('invoice_num',it.invoice_num).select();
-    const{data:invRows}=await db.from('invoices').update({driver_phone:''}).eq('invoice_number',it.invoice_num).select();
+    let ptRows=null,ptErr=null;
+    if(it.trackerId){
+      const r=await db.from('payment_tracker').update({driver_phone:''}).eq('id',it.trackerId).select();
+      ptRows=r.data;ptErr=r.error;
+    }else{
+      const r=await db.from('payment_tracker').update({driver_phone:''}).eq('invoice_num',it.invoice_num).select();
+      ptRows=r.data;ptErr=r.error;
+    }
+    const{data:invRows,error:invErr}=await db.from('invoices').update({driver_phone:''}).eq('invoice_number',it.invoice_num).select();
     await loadMyInvoices();
     if((!ptRows||ptRows.length===0)&&(!invRows||invRows.length===0)){
-      alert('This could not be removed — the database rejected the change. This needs a permissions fix on the Supabase side that I can\'t make directly from here.');
+      const detail=(ptErr&&ptErr.message)||(invErr&&invErr.message)||'no rows matched — nothing changed, no error returned';
+      alert('Still could not remove #'+it.invoice_num+'.\n\nDatabase said: '+detail+'\n\nPlease send this exact message back so the real cause can be found.');
     }
   }catch(e){alert('Could not remove: '+e.message);}
 }
