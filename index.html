@@ -1070,7 +1070,7 @@ function renderMyInvoices(items){
     const cardState=it.payStatus==='paid'?'paid':'unpaid';
     const payBadge='<span class="myinv-badge '+cardState+'">'+(cardState==='paid'?'PAID':'UNPAID')+'</span>';
     const manualBadge=it.source==='manual'?'<span class="myinv-badge manual">MANUAL</span>':'';
-    const manualActions=(!it.invoice_num)?(
+    const manualActions=(it.source==='manual')?(
       '<div class="myinv-actions">'
       +'<button class="myinv-mini-btn" onclick="toggleManualPaid(\''+it.trackerId+'\',\''+cardState+'\')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
       +'<button class="myinv-mini-btn" onclick="editManualEntry('+idx+')">Edit</button>'
