@@ -189,6 +189,11 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .myinv-loading{text-align:center;padding:4rem 1.5rem;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;letter-spacing:.05em;}
 .myinv-add{background:var(--y);border:1.5px solid var(--y);color:var(--bk);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .65rem;border-radius:4px;cursor:pointer;flex-shrink:0;margin-right:.4rem;}
 .myinv-badge.manual{background:rgba(255,255,255,.08);color:#aaa;}
+.myinv-searchrow{display:flex;gap:.5rem;padding:.7rem 1.2rem 0;background:var(--bk2);align-items:center;}
+.myinv-searchrow input{flex:1;background:var(--bk3);border:1px solid var(--border);color:#eee;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;padding:.55rem .7rem;border-radius:5px;}
+.myinv-searchrow input::placeholder{color:#777;}
+.myinv-archive-link{white-space:nowrap;background:transparent;border:1px solid var(--border);color:#999;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:.55rem .6rem;border-radius:5px;}
+.myinv-archive-link.active{background:var(--y);border-color:var(--y);color:#000;}
 .myinv-tabs{display:flex;gap:.4rem;padding:.7rem 1.2rem;background:var(--bk2);border-bottom:1px solid var(--border);}
 .myinv-tab{flex:1;background:transparent;border:1px solid var(--border);color:#999;font-family:'Barlow Condensed',sans-serif;font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700;padding:.5rem .2rem;border-radius:4px;}
 .myinv-tab.active{background:var(--y);border-color:var(--y);color:#000;}
@@ -564,7 +569,11 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <button class="myinv-add" onclick="openAddManual()">+ ADD</button>
     <button class="myinv-back" onclick="closeMyInvoices()">BACK</button>
   </div>
-  <div class="myinv-tabs">
+  <div class="myinv-searchrow">
+    <input id="myinv-search" type="text" placeholder="Search company, load, or invoice #…" oninput="setMyinvSearch(this.value)"/>
+    <button class="myinv-archive-link" id="myinv-archive-link" onclick="toggleArchiveView()">ARCHIVED (0)</button>
+  </div>
+  <div class="myinv-tabs" id="myinv-tabs">
     <button class="myinv-tab active" data-f="all" onclick="setMyinvFilter('all')">ALL</button>
     <button class="myinv-tab" data-f="last" onclick="setMyinvFilter('last')">LAST MO</button>
     <button class="myinv-tab" data-f="this" onclick="setMyinvFilter('this')">THIS MO</button>
@@ -995,6 +1004,11 @@ async function openMyInvoices(){
   $('myinv-screen').classList.add('show');
   $('myinv-body').innerHTML='<div class="myinv-loading">LOADING YOUR INVOICES…</div>';
   myinvFilter='all';
+  myinvShowArchived=false;
+  myinvSearchTerm='';
+  if($('myinv-search'))$('myinv-search').value='';
+  if($('myinv-archive-link'))$('myinv-archive-link').classList.remove('active');
+  if($('myinv-tabs'))$('myinv-tabs').style.display='flex';
   document.querySelectorAll('.myinv-tab').forEach(b=>b.classList.toggle('active',b.dataset.f==='all'));
   await loadMyInvoices();
 }
@@ -1008,6 +1022,9 @@ function closeMyInvoices(){
 }
 let myinvItems=[];
 let myinvAllItems=[];
+let myinvArchivedItems=[];
+let myinvShowArchived=false;
+let myinvSearchTerm='';
 let myinvFilter='all';
 let editingManualId=null;
 let editingInvoiceNumber=null;
@@ -1028,18 +1045,23 @@ async function loadMyInvoices(){
 
     const trackerByInvNum={};
     trackerRows.forEach(t=>{ if(t.invoice_num) trackerByInvNum[t.invoice_num]=t; });
+    const isArchived=t=>!!(t&&t.notes&&t.notes.indexOf('[ARCHIVED]')!==-1);
 
-    const fromInvoices=(invData||[]).map(inv=>({
-      source:'moose',
-      invoice_num:inv.invoice_number,
-      company:inv.trucking_co_name||'Unnamed',
-      description:inv.load_type||'',
-      amount:Number(inv.total_amount||0),
-      date:inv.job_date||'',
-      miles:Number(inv.mileage||0),
-      payStatus:(trackerByInvNum[inv.invoice_number]&&trackerByInvNum[inv.invoice_number].status)||'unpaid',
-      trackerId:trackerByInvNum[inv.invoice_number]?trackerByInvNum[inv.invoice_number].id:null
-    }));
+    const fromInvoices=(invData||[]).map(inv=>{
+      const tr=trackerByInvNum[inv.invoice_number];
+      return{
+        source:'moose',
+        invoice_num:inv.invoice_number,
+        company:inv.trucking_co_name||'Unnamed',
+        description:inv.load_type||'',
+        amount:Number(inv.total_amount||0),
+        date:inv.job_date||'',
+        miles:Number(inv.mileage||0),
+        payStatus:(tr&&tr.status)||'unpaid',
+        trackerId:tr?tr.id:null,
+        archived:isArchived(tr)
+      };
+    });
 
     const invoiceNums=new Set((invData||[]).map(r=>r.invoice_number));
     const manualOnly=trackerRows.filter(t=>!(t.invoice_num&&invoiceNums.has(t.invoice_num))).map(t=>({
@@ -1051,11 +1073,14 @@ async function loadMyInvoices(){
       date:t.date_issued||'',
       miles:0,
       payStatus:t.status||'unpaid',
-      trackerId:t.id
+      trackerId:t.id,
+      archived:isArchived(t)
     }));
 
     const all=[...fromInvoices,...manualOnly].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    myinvAllItems=all;
+    myinvAllItems=all.filter(it=>!it.archived);
+    myinvArchivedItems=all.filter(it=>it.archived);
+    $('myinv-archive-link').textContent='ARCHIVED ('+myinvArchivedItems.length+')';
     applyMyinvFilter();
   }catch(e){
     $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">COULD NOT LOAD</span>'+(e.message||'Connection error — please try again.')+'</div>';
@@ -1079,11 +1104,25 @@ function setMyinvFilter(f){
   document.querySelectorAll('.myinv-tab').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
   applyMyinvFilter();
 }
+function setMyinvSearch(v){
+  myinvSearchTerm=v.trim().toLowerCase();
+  applyMyinvFilter();
+}
+function toggleArchiveView(){
+  myinvShowArchived=!myinvShowArchived;
+  $('myinv-archive-link').classList.toggle('active',myinvShowArchived);
+  $('myinv-tabs').style.display=myinvShowArchived?'none':'flex';
+  applyMyinvFilter();
+}
 function applyMyinvFilter(){
   const now=new Date();
   const scope=$('myinv-scope');
-  let items=myinvAllItems;
-  if(myinvFilter==='next'){
+  let items;
+  if(myinvShowArchived){
+    items=myinvArchivedItems;
+    scope.textContent='ARCHIVED — '+items.length+' job'+(items.length===1?'':'s')+' (hidden from totals)';
+    scope.classList.add('show');
+  }else if(myinvFilter==='next'){
     const nd=new Date(now.getFullYear(),now.getMonth()+1,1);
     const target=monthKey(nd);
     items=myinvAllItems.filter(it=>monthKey(addDaysStr(it.date,30))===target);
@@ -1101,12 +1140,22 @@ function applyMyinvFilter(){
     scope.textContent='Was due in '+monthLabel(ld)+' (invoice date + 30 days) — '+items.length+' job'+(items.length===1?'':'s');
     scope.classList.add('show');
   }else{
+    items=myinvAllItems;
     scope.classList.remove('show');
+  }
+  if(myinvSearchTerm){
+    items=items.filter(it=>
+      (it.company||'').toLowerCase().indexOf(myinvSearchTerm)!==-1 ||
+      (it.description||'').toLowerCase().indexOf(myinvSearchTerm)!==-1 ||
+      (it.invoice_num||'').toLowerCase().indexOf(myinvSearchTerm)!==-1
+    );
   }
   myinvItems=items;
   renderMyInvoicesStats(items);
   if(items.length===0){
-    $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">'+(myinvFilter==='all'?'NOTHING HERE YET':'NOTHING IN THIS RANGE')+'</span>'+(myinvFilter==='all'?'Invoices you submit, or jobs you add manually, will show up here.':'No invoices land in this window based on their date.')+'</div>';
+    const emptyTitle=myinvSearchTerm?'NO MATCHES':(myinvShowArchived?'NOTHING ARCHIVED':(myinvFilter==='all'?'NOTHING HERE YET':'NOTHING IN THIS RANGE'));
+    const emptyMsg=myinvSearchTerm?'No invoices match that search.':(myinvShowArchived?'Archive an invoice from the active list to see it here.':(myinvFilter==='all'?'Invoices you submit, or jobs you add manually, will show up here.':'No invoices land in this window based on their date.'));
+    $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">'+emptyTitle+'</span>'+emptyMsg+'</div>';
     return;
   }
   renderMyInvoices(items);
@@ -1130,22 +1179,31 @@ function renderMyInvoices(items){
     const cardState=it.payStatus==='paid'?'paid':'unpaid';
     const payBadge='<span class="myinv-badge '+cardState+'">'+(cardState==='paid'?'PAID':'UNPAID')+'</span>';
     const manualBadge=it.source==='manual'?'<span class="myinv-badge manual">MANUAL</span>':'';
-    const manualActions=(it.source==='manual')?(
-      '<div class="myinv-actions">'
-      +'<button class="myinv-mini-btn" onclick="toggleManualPaid(\''+it.trackerId+'\',\''+cardState+'\')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
-      +'<button class="myinv-mini-btn" onclick="editManualEntry('+idx+')">Edit</button>'
-      +'</div>'
-      +'<div class="myinv-actions">'
-      +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
-      +'<button class="myinv-mini-btn del" onclick="hideInvoiceItem('+idx+')">Delete</button>'
-      +'</div>'
-    ):('<div class="myinv-actions">'
-      +'<button class="myinv-mini-btn" onclick="editRealInvoice('+idx+')">Edit Full Invoice</button>'
-      +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
-      +'</div>'
-      +'<div class="myinv-actions">'
-      +'<button class="myinv-mini-btn del" onclick="hideInvoiceItem('+idx+')">Delete</button>'
-      +'</div>');
+    let actions;
+    if(it.archived){
+      actions='<div class="myinv-actions"><button class="myinv-mini-btn" onclick="unarchiveItem('+idx+')">Unarchive</button></div>';
+    }else if(it.source==='manual'){
+      actions='<div class="myinv-actions">'
+        +'<button class="myinv-mini-btn" onclick="toggleManualPaid(\''+it.trackerId+'\',\''+cardState+'\')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
+        +'<button class="myinv-mini-btn" onclick="editManualEntry('+idx+')">Edit</button>'
+        +'</div>'
+        +'<div class="myinv-actions">'
+        +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
+        +'<button class="myinv-mini-btn" onclick="archiveItem('+idx+')">Archive</button>'
+        +'</div>'
+        +'<div class="myinv-actions">'
+        +'<button class="myinv-mini-btn del" onclick="hideInvoiceItem('+idx+')">Delete</button>'
+        +'</div>';
+    }else{
+      actions='<div class="myinv-actions">'
+        +'<button class="myinv-mini-btn" onclick="editRealInvoice('+idx+')">Edit Full Invoice</button>'
+        +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
+        +'</div>'
+        +'<div class="myinv-actions">'
+        +'<button class="myinv-mini-btn" onclick="archiveItem('+idx+')">Archive</button>'
+        +'<button class="myinv-mini-btn del" onclick="hideInvoiceItem('+idx+')">Delete</button>'
+        +'</div>';
+    }
     return '<div class="myinv-card st-'+cardState+'">'
       +'<div class="myinv-row-top"><div><div class="myinv-num">'+(it.invoice_num?'#'+it.invoice_num:'MANUAL ENTRY')+'</div>'
       +'<div class="myinv-company">'+it.company+'</div></div>'
@@ -1155,7 +1213,7 @@ function renderMyInvoices(items){
       +(it.miles>0?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#6db3ff;">'+it.miles.toLocaleString(undefined,{maximumFractionDigits:0})+' mi</span>':'')
       +(it.date?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#888;">'+it.date+'</span>':'')
       +'</div>'
-      +manualActions
+      +actions
       +'</div>';
   }).join('')+'</div>';
 }
@@ -1259,6 +1317,39 @@ async function toggleManualPaid(id,currentState){
   }catch(e){alert('Could not update: '+e.message);}
 }
 function uniqTag(prefix){return prefix+'-'+Date.now()+'-'+Math.floor(Math.random()*100000);}
+async function archiveItem(idx){
+  const it=myinvItems[idx];if(!it)return;
+  try{
+    if(it.trackerId){
+      const{data:cur}=await db.from('payment_tracker').select('notes').eq('id',it.trackerId).single();
+      const newNotes=((cur&&cur.notes)||'')+' [ARCHIVED]';
+      const{error}=await db.from('payment_tracker').update({notes:newNotes}).eq('id',it.trackerId);
+      if(error)throw error;
+    }else{
+      // No tracker row exists for this real invoice yet — create one just to hold the archive flag.
+      const{error}=await db.from('payment_tracker').insert({
+        invoice_num:it.invoice_num||uniqTag('MANUAL'),
+        client:it.company,description:it.description,amount:it.amount,
+        date_issued:it.date||new Date().toISOString().slice(0,10),
+        status:it.payStatus==='paid'?'paid':'unpaid',
+        notes:'[ARCHIVED]',
+        driver_name:driverObj.name,driver_phone:driverObj.phone
+      });
+      if(error)throw error;
+    }
+    await loadMyInvoices();
+  }catch(e){alert('Could not archive: '+e.message);}
+}
+async function unarchiveItem(idx){
+  const it=myinvItems[idx];if(!it||!it.trackerId)return;
+  try{
+    const{data:cur}=await db.from('payment_tracker').select('notes').eq('id',it.trackerId).single();
+    const newNotes=((cur&&cur.notes)||'').replace('[ARCHIVED]','').trim();
+    const{error}=await db.from('payment_tracker').update({notes:newNotes}).eq('id',it.trackerId);
+    if(error)throw error;
+    await loadMyInvoices();
+  }catch(e){alert('Could not unarchive: '+e.message);}
+}
 async function hideInvoiceItem(idx){
   const it=myinvItems[idx];if(!it)return;
   const label=it.invoice_num?('invoice #'+it.invoice_num):'this entry';
