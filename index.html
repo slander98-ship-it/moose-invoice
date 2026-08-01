@@ -519,9 +519,9 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="success-icon">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-    <div class="success-title">SUBMITTED</div>
+    <div class="success-title" id="success-title">SUBMITTED</div>
     <div class="success-num" id="success-num">#—</div>
-    <p class="success-msg">Approval request sent to<br>Moose's Pilot Car Service.</p>
+    <p class="success-msg" id="success-msg">Approval request sent to<br>Moose's Pilot Car Service.</p>
     <button class="success-btn" onclick="resetAll()" style="width:100%;">NEW INVOICE</button>
     <div style="display:flex;gap:.5rem;margin-top:.75rem;margin-bottom:.5rem;">
       <button id="btn-pilot" onclick="selectFormat('pilot')" style="flex:1;background:var(--y);border:2px solid var(--y);border-radius:8px;color:var(--bk);font-family:'Bebas Neue',sans-serif;font-size:1rem;padding:.6rem .5rem;cursor:pointer;">📋 PILOT CAR</button>
@@ -870,7 +870,7 @@ function goTo(n){
   mid.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg><span class="nav-save-lbl">DRAFT SAVED</span>`;
   nav.appendChild(mid);
   if(n<9){const nxt=document.createElement('button');nxt.className='nav-next';nxt.innerHTML=`NEXT <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;nxt.onclick=nextStep;nav.appendChild(nxt);}
-  else{const sub=document.createElement('button');sub.className='nav-submit';sub.id='submit-btn';sub.textContent='SUBMIT INVOICE';sub.onclick=submitInvoice;nav.appendChild(sub);}
+  else{const sub=document.createElement('button');sub.className='nav-submit';sub.id='submit-btn';sub.textContent=editingInvoiceNumber?'SAVE CHANGES':'SUBMIT INVOICE';sub.onclick=submitInvoice;nav.appendChild(sub);}
   panel.appendChild(nav);
 }
 
@@ -899,17 +899,13 @@ function renderTypedSig(){
 
 async function submitInvoice(){
   if(!fv('driver_name')||!fv('trucking_co_name')){alert('Please fill in Driver Name and Trucking Company.');return;}
-  const btn=$('submit-btn');btn.disabled=true;btn.textContent='SUBMITTING...';
+  const wasEdit=!!editingInvoiceNumber;
+  const btn=$('submit-btn');btn.disabled=true;btn.textContent=wasEdit?'SAVING...':'SUBMITTING...';
   try{
     const total=calcTotal(),tripMi=calcTripMiles();
-  let invNum='INV-6000';
-  try{
-    const {count}=await db.from('invoices').select('*',{count:'exact',head:true});
-    invNum='INV-'+(6000+(count||0));
-  }catch(e){invNum='INV-6000';}
     const firstTrip=trips[0]||{};
-    const{data,error}=await db.from('invoices').insert({
-      invoice_number:invNum,pilot_position:(radios.pilot_position||[]).join(' + '),load_job_number:fv('load_job_number'),job_date:fv('job_date')||null,
+    const payload={
+      pilot_position:(radios.pilot_position||[]).join(' + '),load_job_number:fv('load_job_number'),job_date:fv('job_date')||null,
       trucking_co_name:fv('trucking_co_name'),company_name:fv('trucking_co_name'),trucking_co_phone:fv('trucking_co_phone'),billing_address:fv('billing_address'),contact_name:fv('contact_name'),
       driver_name:fv('driver_name'),driver_phone:fv('driver_phone'),driver_truck_number:fv('driver_truck_number'),driver_trailer_number:fv('driver_trailer_number'),
       load_type:fv('load_type'),load_height:fv('load_height'),load_width:fv('load_width'),load_length:fv('load_length'),load_weight:fv('load_weight'),
@@ -922,12 +918,28 @@ async function submitInvoice(){
       flat_day_qty:bv('flat_day_qty'),flat_day_rate:bv('flat_day_rate'),half_day_qty:bv('half_day_qty'),half_day_rate:bv('half_day_rate'),motel_qty:bv('motel_qty'),motel_rate:bv('motel_rate'),
       downtime_hours:bv('downtime_hours'),downtime_rate:bv('downtime_rate'),nogo_qty:bv('nogo_qty'),nogo_rate:bv('nogo_rate'),
       rate_per_mile:bv('escorted_rate'),total_amount:total,signature_data:sigData,
-    }).select('approval_token').single();
-    if(error)throw error;
-    // --- Payment tracker auto-log (best-effort, never blocks invoice submission) ---
+    };
+    let invNum,approvalToken=null;
+    if(wasEdit){
+      invNum=editingInvoiceNumber;
+      const{error}=await db.from('invoices').update(payload).eq('invoice_number',invNum);
+      if(error)throw error;
+    }else{
+      invNum='INV-6000';
+      try{
+        const {count}=await db.from('invoices').select('*',{count:'exact',head:true});
+        invNum='INV-'+(6000+(count||0));
+      }catch(e){invNum='INV-6000';}
+      const{data,error}=await db.from('invoices').insert({...payload,invoice_number:invNum}).select('approval_token').single();
+      if(error)throw error;
+      approvalToken=data.approval_token;
+    }
+    // --- Payment tracker sync (best-effort, never blocks submission) ---
     try{
-      const{data:existingPT}=await db.from('payment_tracker').select('invoice_num').eq('invoice_num',invNum).maybeSingle();
-      if(!existingPT){
+      const{data:existingPT}=await db.from('payment_tracker').select('id').eq('invoice_num',invNum).maybeSingle();
+      if(existingPT){
+        await db.from('payment_tracker').update({client:fv('trucking_co_name'),description:fv('load_type')||'',amount:total}).eq('id',existingPT.id);
+      }else{
         await db.from('payment_tracker').insert({
           invoice_num:invNum,
           client:fv('trucking_co_name'),
@@ -940,12 +952,18 @@ async function submitInvoice(){
           driver_phone:fv('driver_phone')
         });
       }
-    }catch(ptErr){/* tracker insert is best-effort — never blocks submission */}
-    fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invNum,driverName:fv('driver_name'),truckingCoName:fv('trucking_co_name'),total,approvalToken:data.approval_token})}).catch(e=>console.warn('notify failed',e));
+    }catch(ptErr){/* tracker sync is best-effort — never blocks submission */}
+    if(!wasEdit){
+      fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invNum,driverName:fv('driver_name'),truckingCoName:fv('trucking_co_name'),total,approvalToken})}).catch(e=>console.warn('notify failed',e));
+    }
     localStorage.removeItem('moose_draft_v4');
     lastInvoice={invNum,total,sigData,position:radios.pilot_position,date:fv('job_date'),driver_name:fv('driver_name'),driver_phone:fv('driver_phone'),driver_truck:fv('driver_truck_number'),driver_trailer:fv('driver_trailer_number'),trucking_co:fv('trucking_co_name'),trucking_co_phone:fv('trucking_co_phone'),billing_address:fv('billing_address'),contact_name:fv('contact_name'),load_type:fv('load_type'),load_height:fv('load_height'),load_width:fv('load_width'),load_length:fv('load_length'),load_weight:fv('load_weight'),pickup_location:fv('pickup_location'),pickup_city:fv('pickup_city'),pickup_state:fv('pickup_state'),pickup_date:fv('pickup_date'),dropoff_location:fv('dropoff_location'),dropoff_city:fv('dropoff_city'),dropoff_state:fv('dropoff_state'),dropoff_date:fv('dropoff_date'),job_number:fv('load_job_number'),notes:fv('notes'),escort_sub:fv('escort_subcontractor'),tripMi,start_odometer:parseFloat($('f-start_odometer').value)||null,end_odometer:parseFloat($('f-end_odometer').value)||null,downtime_date:fv('downtime_date'),downtime_start:fv('downtime_start'),downtime_end:fv('downtime_end'),downtime_reason:fv('downtime_reason'),trips:[...trips],escorted_miles:bv('escorted_miles'),escorted_rate:bv('escorted_rate'),fuel_sc_miles:bv('fuel_sc_miles'),fuel_sc_rate:bv('fuel_sc_rate'),deadhead_miles:bv('deadhead_miles'),deadhead_rate:bv('deadhead_rate'),flat_day_qty:bv('flat_day_qty'),flat_day_rate:bv('flat_day_rate'),half_day_qty:bv('half_day_qty'),half_day_rate:bv('half_day_rate'),motel_qty:bv('motel_qty'),motel_rate:bv('motel_rate'),downtime_hours:bv('downtime_hours'),downtime_rate:bv('downtime_rate'),nogo_qty:bv('nogo_qty'),nogo_rate:bv('nogo_rate')};
-    $('app').style.display='none';$('success-num').textContent='#'+invNum;$('success-screen').classList.add('show');selectFormat('pilot');
-  }catch(err){alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent='SUBMIT INVOICE';}
+    editingInvoiceNumber=null;
+    $('app').style.display='none';$('success-num').textContent='#'+invNum;
+    if($('success-title'))$('success-title').textContent=wasEdit?'UPDATED':'SUBMITTED';
+    if($('success-msg'))$('success-msg').innerHTML=wasEdit?'Your changes have been saved.':'Approval request sent to<br>Moose\'s Pilot Car Service.';
+    $('success-screen').classList.add('show');selectFormat('pilot');
+  }catch(err){alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent=wasEdit?'SAVE CHANGES':'SUBMIT INVOICE';}
 }
 
 // --- My Invoices (driver's own invoices + personal manual tracker — one-stop-shop) ---
@@ -970,6 +988,7 @@ function closeMyInvoices(){
 }
 let myinvItems=[];
 let editingManualId=null;
+let editingInvoiceNumber=null;
 async function loadMyInvoices(){
   try{
     const{data:invData,error:invErr}=await db.from('invoices')
@@ -1044,7 +1063,7 @@ function renderMyInvoices(items){
       +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
       +'<button class="myinv-mini-btn del" onclick="deleteManualEntry(\''+it.trackerId+'\')">Delete</button>'
       +'</div>'
-    ):('<div class="myinv-actions"><button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button></div>');
+    ):('<div class="myinv-actions"><button class="myinv-mini-btn" onclick="editRealInvoice('+idx+')">Edit Full Invoice</button><button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button></div>');
     return '<div class="myinv-card st-'+cardState+'">'
       +'<div class="myinv-row-top"><div><div class="myinv-num">'+(it.invoice_num?'#'+it.invoice_num:'MANUAL ENTRY')+'</div>'
       +'<div class="myinv-company">'+it.company+'</div></div>'
@@ -1067,6 +1086,33 @@ function resendInvoiceEmail(idx){
   lines.push('','Sent from Moose\'s Pilot Car Service invoice tracker.');
   const bod=encodeURIComponent(lines.join('\n'));
   window.open('mailto:?subject='+sub+'&body='+bod,'_self');
+}
+async function editRealInvoice(idx){
+  const it=myinvItems[idx];if(!it||it.source!=='moose')return;
+  if(!confirm('Load invoice #'+it.invoice_num+' into the editor to make changes? Any unsaved draft will be cleared.'))return;
+  try{
+    const{data:row,error}=await db.from('invoices').select('*').eq('invoice_number',it.invoice_num).single();
+    if(error||!row){alert('Could not load that invoice: '+(error?error.message:'not found'));return;}
+    clearAllFields();
+    FF.forEach(n=>{ if(row[n]!=null) sv(n,row[n]); });
+    BF.forEach(n=>{ if(row[n]!=null) sbv(n,row[n]); });
+    radios.pilot_position=row.pilot_position?row.pilot_position.split(' + ').filter(Boolean):[];
+    document.querySelectorAll('input[name="pilot_position"]').forEach(c=>{c.checked=radios.pilot_position.includes(c.value);});
+    let loadedTrips=[];
+    if(row.trips_json){try{loadedTrips=JSON.parse(row.trips_json);}catch(e){loadedTrips=[];}}
+    if(!loadedTrips||!loadedTrips.length){
+      loadedTrips=[{date:row.trip_date||'',startTime:row.start_time||'',endTime:row.end_time||'',startCity:row.start_city||'',endCity:row.end_city||'',motel:row.motel_yn||'N'}];
+    }
+    trips=loadedTrips;
+    if(radios.pilot_position.length){showRateChip(radios.pilot_position);applyDefaultRates(radios.pilot_position,true);}
+    onOdoInput();onBillInput();renderTrips();
+    editingInvoiceNumber=row.invoice_number;
+    $('myinv-screen').classList.remove('show');
+    $('success-screen').classList.remove('show');
+    $('app').style.display='block';
+    $('tb-sub').textContent='EDITING #'+row.invoice_number;
+    goTo(1);
+  }catch(e){alert('Error loading invoice: '+e.message);}
 }
 function editManualEntry(idx){
   const it=myinvItems[idx];if(!it||it.source!=='manual')return;
@@ -1137,6 +1183,8 @@ function clearAllFields(){
   $('rate-chip').classList.remove('show');$('miles-calc').textContent='—';$('bill-total').textContent='$0.00';$('rate-compare').classList.remove('show');
   if($('trips-container'))renderTrips();
   sv('driver_name',driverObj?driverObj.name:'');sv('driver_phone',driverObj?driverObj.phone:'');
+  editingInvoiceNumber=null;
+  if($('tb-sub'))$('tb-sub').textContent=(driverObj?driverObj.name+' — INVOICE':'INVOICE');
 }
 async function shareInvoice(){
   const d=lastInvoice;if(!d)return;
