@@ -533,6 +533,11 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       EMAIL MY INVOICE
     </button>
+    <div style="border-top:1px dashed var(--border);margin:1rem 0 .8rem;"></div>
+    <button class="success-btn-ghost" onclick="openMyInvoices()" style="border-color:var(--green);color:var(--green);display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      TRACK MY INVOICES &amp; PAYMENTS
+    </button>
   </div>
 </div>
 
@@ -934,8 +939,10 @@ async function submitInvoice(){
 }
 
 // --- My Invoices (driver's own invoices + personal manual tracker — one-stop-shop) ---
+let myinvReturnTo='app';
 async function openMyInvoices(){
   if(!driverObj){alert('Please log in first.');return;}
+  myinvReturnTo=$('success-screen').classList.contains('show')?'success':'app';
   $('myinv-sub').textContent=driverObj.name+' — driver invoices';
   $('app').style.display='none';
   $('success-screen').classList.remove('show');
@@ -945,7 +952,11 @@ async function openMyInvoices(){
 }
 function closeMyInvoices(){
   $('myinv-screen').classList.remove('show');
-  $('app').style.display='block';
+  if(myinvReturnTo==='success'){
+    $('success-screen').classList.add('show');
+  }else{
+    $('app').style.display='block';
+  }
 }
 async function loadMyInvoices(){
   try{
