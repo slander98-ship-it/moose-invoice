@@ -993,7 +993,7 @@ async function loadMyInvoices(){
   try{
     const{data:invData,error:invErr}=await db.from('invoices')
       .select('invoice_number,trucking_co_name,load_type,job_date,total_amount')
-      .eq('driver_name',driverObj.name).eq('driver_phone',driverObj.phone)
+      .eq('driver_phone',driverObj.phone)
       .order('invoice_number',{ascending:false});
     if(invErr)throw invErr;
 
@@ -1054,7 +1054,7 @@ function renderMyInvoices(items){
     const cardState=it.payStatus==='paid'?'paid':'unpaid';
     const payBadge='<span class="myinv-badge '+cardState+'">'+(cardState==='paid'?'PAID':'UNPAID')+'</span>';
     const manualBadge=it.source==='manual'?'<span class="myinv-badge manual">MANUAL</span>':'';
-    const manualActions=it.source==='manual'?(
+    const manualActions=(!it.invoice_num)?(
       '<div class="myinv-actions">'
       +'<button class="myinv-mini-btn" onclick="toggleManualPaid(\''+it.trackerId+'\',\''+cardState+'\')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
       +'<button class="myinv-mini-btn" onclick="editManualEntry('+idx+')">Edit</button>'
