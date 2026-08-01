@@ -1183,11 +1183,23 @@ async function deleteManualEntry(id){
 }
 async function deleteRealInvoice(idx){
   const it=myinvItems[idx];if(!it||!it.invoice_num)return;
-  if(!confirm('Permanently delete invoice #'+it.invoice_num+'? This removes the invoice AND its tracker entry. This cannot be undone.'))return;
+  if(!confirm('Permanently delete invoice #'+it.invoice_num+'? This cannot be undone.'))return;
   try{
     await db.from('payment_tracker').delete().eq('invoice_num',it.invoice_num);
-    const{error}=await db.from('invoices').delete().eq('invoice_number',it.invoice_num);
+    // Supabase returns success with 0 rows affected (no error) if a DELETE policy blocks it —
+    // so we ask for the deleted rows back to actually confirm it happened.
+    const{data:delRows,error}=await db.from('invoices').delete().eq('invoice_number',it.invoice_num).select();
     if(error)throw error;
+    if(!delRows||delRows.length===0){
+      // Hard delete is blocked (no DELETE policy on the invoices table). Fall back to hiding
+      // it from this driver's list by clearing driver_phone, so the lookup no longer finds it.
+      const{data:updRows,error:updErr}=await db.from('invoices').update({driver_phone:''}).eq('invoice_number',it.invoice_num).select();
+      if(updErr)throw updErr;
+      if(!updRows||updRows.length===0){
+        alert('This invoice could not be removed — the database is blocking both delete and update on the invoices table for this app. This needs a permissions (RLS) fix on the Supabase side.');
+        return;
+      }
+    }
     await loadMyInvoices();
   }catch(e){alert('Could not delete: '+e.message);}
 }
