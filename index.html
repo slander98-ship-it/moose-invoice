@@ -161,6 +161,33 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .wlc-bar{width:56px;height:3px;background:var(--y);margin:.7rem 0;}
 .wlc-quote{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;letter-spacing:.06em;color:#aaa;max-width:300px;line-height:1.5;}
 .wlc-skip{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:#333;margin-top:2.5rem;}
+
+#myinv-screen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bk);z-index:600;flex-direction:column;overflow-y:auto;}
+#myinv-screen.show{display:flex;}
+.myinv-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem;border-bottom:1px solid var(--border);background:var(--bk2);}
+.myinv-topbar .tb-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--y);letter-spacing:.05em;}
+.myinv-topbar .tb-sub{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;color:#888;letter-spacing:.1em;text-transform:uppercase;}
+.myinv-back{background:transparent;border:1.5px solid var(--border);border-radius:6px;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.5rem 1rem;cursor:pointer;}
+.myinv-list{padding:1rem;display:flex;flex-direction:column;gap:.7rem;}
+.myinv-card{background:var(--bk2);border:1px solid var(--border);border-left:4px solid var(--border);border-radius:8px;padding:.9rem 1rem;}
+.myinv-card.st-approved{border-left-color:var(--green);}
+.myinv-card.st-pending{border-left-color:var(--y);}
+.myinv-card.st-denied{border-left-color:var(--red);}
+.myinv-row-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;}
+.myinv-num{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:#888;letter-spacing:.05em;}
+.myinv-company{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;color:#fff;margin-top:.1rem;}
+.myinv-amount{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--y);white-space:nowrap;}
+.myinv-load{font-family:'Barlow',sans-serif;font-size:.8rem;color:#aaa;margin-top:.4rem;}
+.myinv-meta{display:flex;flex-wrap:wrap;gap:.4rem .8rem;margin-top:.6rem;padding-top:.6rem;border-top:1px dashed var(--border);}
+.myinv-badge{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .55rem;border-radius:3px;font-weight:700;}
+.myinv-badge.approved{background:rgba(76,175,80,.15);color:var(--green);}
+.myinv-badge.pending{background:rgba(255,229,0,.15);color:var(--y);}
+.myinv-badge.denied{background:rgba(229,57,53,.15);color:var(--red);}
+.myinv-badge.paid{background:rgba(76,175,80,.15);color:var(--green);}
+.myinv-badge.unpaid{background:rgba(255,229,0,.15);color:var(--y);}
+.myinv-empty{text-align:center;padding:4rem 1.5rem;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;line-height:1.7;}
+.myinv-empty .big{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#999;display:block;margin-bottom:.5rem;}
+.myinv-loading{text-align:center;padding:4rem 1.5rem;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;letter-spacing:.05em;}
 </style>
 </head>
 <body>
@@ -210,6 +237,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <div class="tb-sub" id="tb-sub">INVOICE</div>
     </div>
     <div class="tb-step" id="step-badge">1/9</div>
+    <button class="tb-close" style="margin-right:.4rem;background:transparent;border:1.5px solid var(--y);color:var(--y);" onclick="openMyInvoices()">MY INVOICES</button>
     <button class="tb-close" onclick="resetAll()">CLOSE</button>
   </div>
   <div id="draft-banner">
@@ -488,6 +516,17 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       EMAIL MY INVOICE
     </button>
   </div>
+</div>
+
+<div id="myinv-screen">
+  <div class="myinv-topbar">
+    <div>
+      <div class="tb-title">MY INVOICES</div>
+      <div class="tb-sub" id="myinv-sub">—</div>
+    </div>
+    <button class="myinv-back" onclick="closeMyInvoices()">BACK</button>
+  </div>
+  <div id="myinv-body"></div>
 </div>
 
 <script>
@@ -833,6 +872,21 @@ async function submitInvoice(){
       rate_per_mile:bv('escorted_rate'),total_amount:total,signature_data:sigData,
     }).select('approval_token').single();
     if(error)throw error;
+    // --- Payment tracker auto-log (best-effort, never blocks invoice submission) ---
+    try{
+      const{data:existingPT}=await db.from('payment_tracker').select('invoice_num').eq('invoice_num',invNum).maybeSingle();
+      if(!existingPT){
+        await db.from('payment_tracker').insert({
+          invoice_num:invNum,
+          client:fv('trucking_co_name'),
+          description:fv('load_type')||'',
+          amount:total,
+          date_issued:new Date().toISOString().slice(0,10),
+          notes:fv('driver_name')+' — Truck '+fv('driver_truck_number'),
+          status:'unpaid'
+        });
+      }
+    }catch(ptErr){/* tracker insert is best-effort — never blocks submission */}
     fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:'Moose Pilot <invoices@moosepilotokc.com>',to:['Mooseou@yahoo.com'],subject:'🚛 New Invoice #'+invNum+' — '+fv('trucking_co_name')+' — $'+total.toFixed(2)+' — TAP TO APPROVE',html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;border-radius:12px;overflow:hidden;"><div style="background:#FFE500;padding:20px 24px;text-align:center;"><div style="font-size:22px;font-weight:900;color:#000;">🚛 MOOSES PILOT SERVICES</div></div><div style="padding:24px;"><table style="width:100%;border-collapse:collapse;margin-bottom:20px;"><tr><td style="padding:8px 12px;background:#1a1a1a;color:#FFE500;font-weight:bold;">Invoice #</td><td style="padding:8px 12px;background:#141414;">'+invNum+'</td></tr><tr><td style="padding:8px 12px;background:#1a1a1a;color:#FFE500;font-weight:bold;">Driver</td><td style="padding:8px 12px;background:#141414;">'+fv('driver_name')+'</td></tr><tr><td style="padding:8px 12px;background:#1a1a1a;color:#FFE500;font-weight:bold;">Trucking Co</td><td style="padding:8px 12px;background:#141414;">'+fv('trucking_co_name')+'</td></tr><tr><td style="padding:8px 12px;background:#1a1a1a;color:#FFE500;font-weight:bold;">Total</td><td style="padding:8px 12px;background:#141414;font-size:18px;font-weight:900;color:#FFE500;">$'+total.toFixed(2)+'</td></tr></table><a href="https://moosepilotokc.com/?token='+data.approval_token+'#approve" style="display:block;background:#FFE500;color:#000;text-align:center;padding:18px;border-radius:8px;font-size:18px;font-weight:900;text-decoration:none;">TAP TO APPROVE</a></div></div>'})});
     localStorage.removeItem('moose_draft_v4');
     lastInvoice={invNum,total,sigData,position:radios.pilot_position,date:fv('job_date'),driver_name:fv('driver_name'),driver_phone:fv('driver_phone'),driver_truck:fv('driver_truck_number'),driver_trailer:fv('driver_trailer_number'),trucking_co:fv('trucking_co_name'),trucking_co_phone:fv('trucking_co_phone'),billing_address:fv('billing_address'),contact_name:fv('contact_name'),load_type:fv('load_type'),load_height:fv('load_height'),load_width:fv('load_width'),load_length:fv('load_length'),load_weight:fv('load_weight'),pickup_location:fv('pickup_location'),pickup_city:fv('pickup_city'),pickup_state:fv('pickup_state'),pickup_date:fv('pickup_date'),dropoff_location:fv('dropoff_location'),dropoff_city:fv('dropoff_city'),dropoff_state:fv('dropoff_state'),dropoff_date:fv('dropoff_date'),job_number:fv('load_job_number'),notes:fv('notes'),escort_sub:fv('escort_subcontractor'),tripMi,start_odometer:parseFloat($('f-start_odometer').value)||null,end_odometer:parseFloat($('f-end_odometer').value)||null,downtime_date:fv('downtime_date'),downtime_start:fv('downtime_start'),downtime_end:fv('downtime_end'),downtime_reason:fv('downtime_reason'),trips:[...trips],escorted_miles:bv('escorted_miles'),escorted_rate:bv('escorted_rate'),fuel_sc_miles:bv('fuel_sc_miles'),fuel_sc_rate:bv('fuel_sc_rate'),deadhead_miles:bv('deadhead_miles'),deadhead_rate:bv('deadhead_rate'),flat_day_qty:bv('flat_day_qty'),flat_day_rate:bv('flat_day_rate'),half_day_qty:bv('half_day_qty'),half_day_rate:bv('half_day_rate'),motel_qty:bv('motel_qty'),motel_rate:bv('motel_rate'),downtime_hours:bv('downtime_hours'),downtime_rate:bv('downtime_rate'),nogo_qty:bv('nogo_qty'),nogo_rate:bv('nogo_rate')};
@@ -840,7 +894,59 @@ async function submitInvoice(){
   }catch(err){alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent='SUBMIT INVOICE';}
 }
 
-// downloadPDF handled below
+// --- My Invoices (read-only view for the logged-in driver) ---
+async function openMyInvoices(){
+  if(!driverObj){alert('Please log in first.');return;}
+  $('myinv-sub').textContent=driverObj.name+' — driver invoices';
+  $('app').style.display='none';
+  $('success-screen').classList.remove('show');
+  $('myinv-screen').classList.add('show');
+  $('myinv-body').innerHTML='<div class="myinv-loading">LOADING YOUR INVOICES…</div>';
+  await loadMyInvoices();
+}
+function closeMyInvoices(){
+  $('myinv-screen').classList.remove('show');
+  $('app').style.display='block';
+}
+async function loadMyInvoices(){
+  try{
+    const{data:invData,error:invErr}=await db.from('invoices')
+      .select('invoice_number,trucking_co_name,load_type,job_date,total_amount,status,approval_token')
+      .eq('driver_name',driverObj.name).eq('driver_phone',driverObj.phone)
+      .order('invoice_number',{ascending:false});
+    if(invErr)throw invErr;
+    if(!invData||invData.length===0){
+      $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">NOTHING HERE YET</span>Invoices you submit will show up here.</div>';
+      return;
+    }
+    const invNums=invData.map(r=>r.invoice_number);
+    let statusMap={};
+    try{
+      const{data:trackerData}=await db.from('payment_tracker').select('invoice_num,status').in('invoice_num',invNums);
+      (trackerData||[]).forEach(t=>{statusMap[t.invoice_num]=t.status;});
+    }catch(e){/* payment status is best-effort */}
+    renderMyInvoices(invData,statusMap);
+  }catch(e){
+    $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">COULD NOT LOAD</span>'+(e.message||'Connection error — please try again.')+'</div>';
+  }
+}
+function renderMyInvoices(invData,statusMap){
+  $('myinv-body').innerHTML='<div class="myinv-list">'+invData.map(inv=>{
+    let approvalState='pending',approvalLabel='PENDING APPROVAL';
+    if(inv.status==='approved'){approvalState='approved';approvalLabel='APPROVED';}
+    else if(inv.status==='denied'){approvalState='denied';approvalLabel='DENIED';}
+    const payStatus=statusMap[inv.invoice_number];
+    const payBadge=payStatus==='paid'?'<span class="myinv-badge paid">PAID</span>':(payStatus==='unpaid'?'<span class="myinv-badge unpaid">UNPAID</span>':'');
+    return '<div class="myinv-card st-'+approvalState+'">'
+      +'<div class="myinv-row-top"><div><div class="myinv-num">#'+(inv.invoice_number||'')+'</div>'
+      +'<div class="myinv-company">'+(inv.trucking_co_name||'Unnamed')+'</div></div>'
+      +'<div class="myinv-amount">$'+Number(inv.total_amount||0).toFixed(2)+'</div></div>'
+      +(inv.load_type?'<div class="myinv-load">'+inv.load_type+'</div>':'')
+      +'<div class="myinv-meta"><span class="myinv-badge '+approvalState+'">'+approvalLabel+'</span>'+payBadge
+      +(inv.job_date?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#888;">'+inv.job_date+'</span>':'')
+      +'</div></div>';
+  }).join('')+'</div>';
+}
 
 function clearAllFields(){
   FF.forEach(n=>sv(n,''));BF.forEach(n=>{const e=$('b-'+n);if(e){e.value='';e.classList.remove('hi','dim');}});
