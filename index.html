@@ -1063,7 +1063,13 @@ function renderMyInvoices(items){
       +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
       +'<button class="myinv-mini-btn del" onclick="deleteManualEntry(\''+it.trackerId+'\')">Delete</button>'
       +'</div>'
-    ):('<div class="myinv-actions"><button class="myinv-mini-btn" onclick="editRealInvoice('+idx+')">Edit Full Invoice</button><button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button></div>');
+    ):('<div class="myinv-actions">'
+      +'<button class="myinv-mini-btn" onclick="editRealInvoice('+idx+')">Edit Full Invoice</button>'
+      +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
+      +'</div>'
+      +'<div class="myinv-actions">'
+      +'<button class="myinv-mini-btn del" onclick="deleteRealInvoice('+idx+')">Delete</button>'
+      +'</div>');
     return '<div class="myinv-card st-'+cardState+'">'
       +'<div class="myinv-row-top"><div><div class="myinv-num">'+(it.invoice_num?'#'+it.invoice_num:'MANUAL ENTRY')+'</div>'
       +'<div class="myinv-company">'+it.company+'</div></div>'
@@ -1171,6 +1177,16 @@ async function deleteManualEntry(id){
   if(!confirm('Delete this manual entry? This cannot be undone.'))return;
   try{
     const{error}=await db.from('payment_tracker').delete().eq('id',id);
+    if(error)throw error;
+    await loadMyInvoices();
+  }catch(e){alert('Could not delete: '+e.message);}
+}
+async function deleteRealInvoice(idx){
+  const it=myinvItems[idx];if(!it||!it.invoice_num)return;
+  if(!confirm('Permanently delete invoice #'+it.invoice_num+'? This removes the invoice AND its tracker entry. This cannot be undone.'))return;
+  try{
+    await db.from('payment_tracker').delete().eq('invoice_num',it.invoice_num);
+    const{error}=await db.from('invoices').delete().eq('invoice_number',it.invoice_num);
     if(error)throw error;
     await loadMyInvoices();
   }catch(e){alert('Could not delete: '+e.message);}
