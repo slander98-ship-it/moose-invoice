@@ -189,6 +189,12 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .myinv-loading{text-align:center;padding:4rem 1.5rem;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;letter-spacing:.05em;}
 .myinv-add{background:var(--y);border:1.5px solid var(--y);color:var(--bk);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .65rem;border-radius:4px;cursor:pointer;flex-shrink:0;margin-right:.4rem;}
 .myinv-badge.manual{background:rgba(255,255,255,.08);color:#aaa;}
+.myinv-stats-row{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-bottom:1px solid var(--border);}
+.myinv-stat{background:var(--bk2);padding:.8rem .6rem;text-align:center;}
+.myinv-stat .num{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;}
+.myinv-stat .num.owed{color:var(--y);}
+.myinv-stat .num.paid{color:var(--green);}
+.myinv-stat .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#888;margin-top:.2rem;}
 .myinv-actions{display:flex;gap:.5rem;margin-top:.7rem;}
 .myinv-mini-btn{flex:1;background:var(--bk3);border:1px solid var(--border);border-radius:5px;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;padding:.45rem .4rem;cursor:pointer;}
 .myinv-mini-btn.del{color:var(--red);border-color:rgba(229,57,53,.3);flex:0 0 auto;padding:.45rem .9rem;}
@@ -550,12 +556,16 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <button class="myinv-add" onclick="openAddManual()">+ ADD</button>
     <button class="myinv-back" onclick="closeMyInvoices()">BACK</button>
   </div>
+  <div class="myinv-stats-row">
+    <div class="myinv-stat"><div class="num owed" id="myinv-stat-owed">$0.00</div><div class="lbl">Outstanding</div></div>
+    <div class="myinv-stat"><div class="num paid" id="myinv-stat-paid">$0.00</div><div class="lbl">Paid</div></div>
+  </div>
   <div id="myinv-body"></div>
 </div>
 
 <div class="myinv-overlay" id="manual-overlay">
   <div class="myinv-modal">
-    <div class="myinv-modal-title">ADD INVOICE MANUALLY</div>
+    <div class="myinv-modal-title" id="manual-modal-title">ADD INVOICE MANUALLY</div>
     <div class="myinv-modal-sub">For jobs from other companies not run through this app.</div>
     <form id="manual-form" onsubmit="return false;">
       <div class="myinv-fg"><label>CLIENT / COMPANY *</label><input id="man-client" type="text" placeholder="e.g. ABC Logistics"/></div>
@@ -958,6 +968,8 @@ function closeMyInvoices(){
     $('app').style.display='block';
   }
 }
+let myinvItems=[];
+let editingManualId=null;
 async function loadMyInvoices(){
   try{
     const{data:invData,error:invErr}=await db.from('invoices')
@@ -1000,6 +1012,8 @@ async function loadMyInvoices(){
     }));
 
     const all=[...fromInvoices,...manualOnly].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    myinvItems=all;
+    renderMyInvoicesStats(all);
 
     if(all.length===0){
       $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">NOTHING HERE YET</span>Invoices you submit, or jobs you add manually, will show up here.</div>';
@@ -1010,15 +1024,27 @@ async function loadMyInvoices(){
     $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">COULD NOT LOAD</span>'+(e.message||'Connection error — please try again.')+'</div>';
   }
 }
+function renderMyInvoicesStats(items){
+  let owed=0,paid=0;
+  items.forEach(it=>{ if(it.payStatus==='paid') paid+=it.amount; else owed+=it.amount; });
+  $('myinv-stat-owed').textContent='$'+owed.toFixed(2);
+  $('myinv-stat-paid').textContent='$'+paid.toFixed(2);
+}
 function renderMyInvoices(items){
-  $('myinv-body').innerHTML='<div class="myinv-list">'+items.map(it=>{
+  $('myinv-body').innerHTML='<div class="myinv-list">'+items.map((it,idx)=>{
     const cardState=it.payStatus==='paid'?'paid':'unpaid';
     const payBadge='<span class="myinv-badge '+cardState+'">'+(cardState==='paid'?'PAID':'UNPAID')+'</span>';
     const manualBadge=it.source==='manual'?'<span class="myinv-badge manual">MANUAL</span>':'';
     const manualActions=it.source==='manual'?(
-      '<button class="myinv-mini-btn" onclick="toggleManualPaid(\''+it.trackerId+'\',\''+cardState+'\')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
+      '<div class="myinv-actions">'
+      +'<button class="myinv-mini-btn" onclick="toggleManualPaid(\''+it.trackerId+'\',\''+cardState+'\')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
+      +'<button class="myinv-mini-btn" onclick="editManualEntry('+idx+')">Edit</button>'
+      +'</div>'
+      +'<div class="myinv-actions">'
+      +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
       +'<button class="myinv-mini-btn del" onclick="deleteManualEntry(\''+it.trackerId+'\')">Delete</button>'
-    ):'';
+      +'</div>'
+    ):('<div class="myinv-actions"><button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button></div>');
     return '<div class="myinv-card st-'+cardState+'">'
       +'<div class="myinv-row-top"><div><div class="myinv-num">'+(it.invoice_num?'#'+it.invoice_num:'MANUAL ENTRY')+'</div>'
       +'<div class="myinv-company">'+it.company+'</div></div>'
@@ -1027,16 +1053,40 @@ function renderMyInvoices(items){
       +'<div class="myinv-meta">'+payBadge+manualBadge
       +(it.date?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#888;">'+it.date+'</span>':'')
       +'</div>'
-      +(manualActions?'<div class="myinv-actions">'+manualActions+'</div>':'')
+      +manualActions
       +'</div>';
   }).join('')+'</div>';
 }
-function openAddManual(){
-  $('manual-form').reset();
+function resendInvoiceEmail(idx){
+  const it=myinvItems[idx];if(!it)return;
+  const sub=encodeURIComponent((it.invoice_num?'Invoice #'+it.invoice_num:'Invoice')+' — '+it.company);
+  const lines=['Company: '+it.company];
+  if(it.description)lines.push('Load: '+it.description);
+  lines.push('Amount: $'+it.amount.toFixed(2));
+  if(it.date)lines.push('Date: '+it.date);
+  lines.push('','Sent from Moose\'s Pilot Car Service invoice tracker.');
+  const bod=encodeURIComponent(lines.join('\n'));
+  window.open('mailto:?subject='+sub+'&body='+bod,'_self');
+}
+function editManualEntry(idx){
+  const it=myinvItems[idx];if(!it||it.source!=='manual')return;
+  openManualModal(it);
+}
+function openManualModal(item){
+  editingManualId=item?item.trackerId:null;
+  $('manual-modal-title').textContent=item?'EDIT INVOICE':'ADD INVOICE MANUALLY';
+  $('man-client').value=item?item.company:'';
+  $('man-desc').value=item?item.description:'';
+  $('man-amount').value=item?item.amount:'';
+  $('man-date').value=item?item.date:'';
   $('manual-overlay').classList.add('show');
+}
+function openAddManual(){
+  openManualModal(null);
 }
 function closeAddManual(){
   $('manual-overlay').classList.remove('show');
+  editingManualId=null;
 }
 async function saveManualEntry(){
   const client=$('man-client').value.trim();
@@ -1045,16 +1095,19 @@ async function saveManualEntry(){
   if(isNaN(amount)){alert('Enter a valid amount.');return;}
   const btn=$('man-save-btn');btn.disabled=true;btn.textContent='SAVING...';
   try{
-    const{error}=await db.from('payment_tracker').insert({
+    const payload={
       client,
       description:$('man-desc').value.trim(),
       amount,
-      date_issued:$('man-date').value||new Date().toISOString().slice(0,10),
-      status:'unpaid',
-      driver_name:driverObj.name,
-      driver_phone:driverObj.phone
-    });
-    if(error)throw error;
+      date_issued:$('man-date').value||new Date().toISOString().slice(0,10)
+    };
+    if(editingManualId){
+      const{error}=await db.from('payment_tracker').update(payload).eq('id',editingManualId);
+      if(error)throw error;
+    }else{
+      const{error}=await db.from('payment_tracker').insert({...payload,status:'unpaid',driver_name:driverObj.name,driver_phone:driverObj.phone});
+      if(error)throw error;
+    }
     closeAddManual();
     await loadMyInvoices();
   }catch(e){alert('Could not save: '+e.message);}
