@@ -928,6 +928,17 @@ async function submitInvoice(){
   if(!fv('driver_name')||!fv('trucking_co_name')){alert('Please fill in Driver Name and Trucking Company.');return;}
   const wasEdit=!!editingInvoiceNumber;
   const btn=$('submit-btn');btn.disabled=true;btn.textContent=wasEdit?'SAVING...':'SUBMITTING...';
+  // Open the PDF window now, synchronously, while we still have the tap's permission to do so —
+  // opening it later (after the database calls below) gets silently blocked by mobile browsers.
+  // We fill it in with the real invoice once saving finishes successfully.
+  let autoPdfWin=null;
+  try{
+    autoPdfWin=window.open('','_blank','width=900,height=1100');
+    if(autoPdfWin){
+      autoPdfWin.document.write('<html><body style="font-family:Arial,sans-serif;padding:60px 20px;text-align:center;color:#666;"><h2 style="color:#333;">Preparing your invoice PDF…</h2><p>This fills in automatically once your invoice finishes submitting.</p></body></html>');
+      autoPdfWin.document.close();
+    }
+  }catch(e){autoPdfWin=null;}
   try{
     const total=calcTotal(),tripMi=calcTripMiles();
     const firstTrip=trips[0]||{};
@@ -994,7 +1005,11 @@ async function submitInvoice(){
     if($('success-title'))$('success-title').textContent=wasEdit?'UPDATED':'SUBMITTED';
     if($('success-msg'))$('success-msg').innerHTML=wasEdit?'Your changes have been saved.':'Approval request sent to<br>Moose\'s Pilot Car Service.';
     $('success-screen').classList.add('show');selectFormat('pilot');
-  }catch(err){alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent=wasEdit?'SAVE CHANGES':'SUBMIT INVOICE';}
+    try{downloadPilotCar('pilot',autoPdfWin);}catch(pdfErr){console.warn('auto-save PDF failed',pdfErr);}
+  }catch(err){
+    if(autoPdfWin&&!autoPdfWin.closed)autoPdfWin.close();
+    alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent=wasEdit?'SAVE CHANGES':'SUBMIT INVOICE';
+  }
 }
 
 // --- My Invoices (driver's own invoices + personal manual tracker — one-stop-shop) ---
@@ -1543,7 +1558,7 @@ async function scanPermit(input){
   input.value='';
 }
 
-function downloadPilotCar(fmt){
+function downloadPilotCar(fmt,existingWin){
   const d=lastInvoice;if(!d){alert('No invoice data.');return;}
   // rig move disabled
   const pos=d.position||[];const chk=(p)=>(Array.isArray(pos)?pos.includes(p):pos===p)?'[X]':'[ ]';
@@ -1705,7 +1720,7 @@ ${[...Array(Math.max(0,5-tdata.length))].map(()=>'<tr><td class="box" style="hei
 <div style="text-align:center;font-style:italic;font-weight:700;font-size:10px;margin-top:6px;">Thank You for Your Business!!!</div>
 <script>window.addEventListener('load',function(){setTimeout(function(){window.print();},500);});<\/script>
 </body></html>` ;
-  const win=window.open('','_blank','width=900,height=1100');
+  const win=(existingWin&&!existingWin.closed)?existingWin:window.open('','_blank','width=900,height=1100');
   if(!win){alert('Allow pop-ups.');return;}
   win.document.write(html);win.document.close();
 }
