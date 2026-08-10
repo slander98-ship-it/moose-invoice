@@ -333,7 +333,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="step-sub">STEP 3 OF 9</div>
     <div class="g2">
       <div class="fg"><label>TRUCK DRIVER'S NAME *</label><input id="f-driver_name" type="text" placeholder="Name of truck driver (not pilot car driver)" oninput="saveDraft()"/></div>
-      <div class="fg"><label>DRIVER PHONE</label><input id="f-driver_phone" type="tel" oninput="saveDraft()"/></div>
+      <div class="fg"><label>TRUCK DRIVER PHONE <span style="opacity:.6;font-weight:400;">(optional, if known)</span></label><input id="f-driver_phone" type="tel" placeholder="Not your own number" oninput="saveDraft()"/></div>
     </div>
     <div class="g2">
       <div class="fg"><label>TRUCK #</label><input id="f-driver_truck_number" type="text" oninput="saveDraft()"/></div>
@@ -654,8 +654,11 @@ document.addEventListener('keydown',e=>{
 
 function enterApp(){
   $('pin-screen').style.display='none';
-  $('tb-sub').textContent=driverObj.name+' — INVOICE';
-  sv('driver_phone',driverObj.phone);// driver_name left blank — truck driver fills it in
+  $('tb-sub').textContent=driverObj.name+' ('+driverObj.phone+') — INVOICE';
+  // driver_name and driver_phone intentionally left blank — these describe the truck driver
+  // being escorted (a different person, rarely known up front), not the pilot car operator.
+  // The operator's own identity is shown above and saved from driverObj.phone directly at
+  // submit time — never from these two fields.
   if(!fv('job_date'))sv('job_date',new Date().toISOString().slice(0,10));
   restoreDraft();buildStepBar();showWelcome();
 }
@@ -945,7 +948,7 @@ async function submitInvoice(){
     const payload={
       pilot_position:(radios.pilot_position||[]).join(' + '),load_job_number:fv('load_job_number'),job_date:fv('job_date')||null,
       trucking_co_name:fv('trucking_co_name'),company_name:fv('trucking_co_name'),trucking_co_phone:fv('trucking_co_phone'),billing_address:fv('billing_address'),contact_name:fv('contact_name'),
-      driver_name:fv('driver_name'),driver_phone:fv('driver_phone'),driver_truck_number:fv('driver_truck_number'),driver_trailer_number:fv('driver_trailer_number'),
+      driver_name:fv('driver_name'),driver_phone:driverObj.phone,driver_truck_number:fv('driver_truck_number'),driver_trailer_number:fv('driver_trailer_number'),
       load_type:fv('load_type'),load_height:fv('load_height'),load_width:fv('load_width'),load_length:fv('load_length'),load_weight:fv('load_weight'),
       pickup_location:fv('pickup_location'),pickup_city:fv('pickup_city'),pickup_state:fv('pickup_state'),pickup_date:fv('pickup_date')||null,
       dropoff_location:fv('dropoff_location'),dropoff_city:fv('dropoff_city'),dropoff_state:fv('dropoff_state'),dropoff_date:fv('dropoff_date')||null,
@@ -976,7 +979,7 @@ async function submitInvoice(){
     try{
       const{data:existingPT}=await db.from('payment_tracker').select('id').eq('invoice_num',invNum).maybeSingle();
       if(existingPT){
-        await db.from('payment_tracker').update({client:fv('trucking_co_name'),description:fv('load_type')||'',amount:total}).eq('id',existingPT.id);
+        await db.from('payment_tracker').update({client:fv('trucking_co_name'),description:fv('load_type')||'',amount:total,driver_phone:driverObj.phone}).eq('id',existingPT.id);
       }else{
         await db.from('payment_tracker').insert({
           invoice_num:invNum,
@@ -987,7 +990,7 @@ async function submitInvoice(){
           notes:fv('driver_name')+' — Truck '+fv('driver_truck_number'),
           status:'unpaid',
           driver_name:fv('driver_name'),
-          driver_phone:fv('driver_phone')
+          driver_phone:driverObj.phone
         });
       }
     }catch(ptErr){/* tracker sync is best-effort — never blocks submission */}
@@ -1392,9 +1395,9 @@ function clearAllFields(){
   trips=[{date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'}];
   $('rate-chip').classList.remove('show');$('miles-calc').textContent='—';$('bill-total').textContent='$0.00';$('rate-compare').classList.remove('show');
   if($('trips-container'))renderTrips();
-  sv('driver_name',driverObj?driverObj.name:'');sv('driver_phone',driverObj?driverObj.phone:'');
+  sv('driver_name','');sv('driver_phone','');
   editingInvoiceNumber=null;
-  if($('tb-sub'))$('tb-sub').textContent=(driverObj?driverObj.name+' — INVOICE':'INVOICE');
+  if($('tb-sub'))$('tb-sub').textContent=(driverObj?driverObj.name+' ('+driverObj.phone+') — INVOICE':'INVOICE');
 }
 async function shareInvoice(){
   const d=lastInvoice;if(!d)return;
