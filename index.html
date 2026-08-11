@@ -216,6 +216,11 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .myinv-payout-banner.overdue .ppb-days{color:var(--red);}
 .myinv-payout-banner.clear{background:rgba(76,175,80,.08);border-color:rgba(76,175,80,.3);}
 .myinv-payout-banner.clear .ppb-days{color:var(--green);}
+.myinv-dueweek-banner{margin:.5rem 1.2rem 0;background:rgba(109,179,255,.08);border:1px solid rgba(109,179,255,.3);border-radius:8px;padding:.6rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;}
+.myinv-dueweek-banner .dwb-label{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:#6db3ff;}
+.myinv-dueweek-banner .dwb-sub{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;color:#999;margin-top:.15rem;}
+.myinv-dueweek-banner .dwb-count{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#6db3ff;white-space:nowrap;}
+.myinv-dueweek-banner.none{opacity:.55;}
 .myinv-actions{display:flex;gap:.5rem;margin-top:.7rem;}
 .myinv-mini-btn{flex:1;background:var(--bk3);border:1px solid var(--border);border-radius:5px;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;padding:.45rem .4rem;cursor:pointer;}
 .myinv-mini-btn.del{color:var(--red);border-color:rgba(229,57,53,.3);flex:0 0 auto;padding:.45rem .9rem;}
@@ -581,14 +586,9 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <input id="myinv-search" type="text" placeholder="Search company, load, or invoice #…" oninput="setMyinvSearch(this.value)"/>
     <button class="myinv-archive-link" id="myinv-archive-link" onclick="toggleArchiveView()">ARCHIVED (0)</button>
   </div>
-  <div class="myinv-tabs" id="myinv-tabs">
-    <button class="myinv-tab active" data-f="all" onclick="setMyinvFilter('all')">ALL</button>
-    <button class="myinv-tab" data-f="last" onclick="setMyinvFilter('last')">LAST MO</button>
-    <button class="myinv-tab" data-f="this" onclick="setMyinvFilter('this')">THIS MO</button>
-    <button class="myinv-tab" data-f="next" onclick="setMyinvFilter('next')">NEXT MO</button>
-  </div>
   <div class="myinv-scope" id="myinv-scope"></div>
   <div class="myinv-payout-banner" id="myinv-payout-banner" style="display:none;"></div>
+  <div class="myinv-dueweek-banner" id="myinv-dueweek-banner" style="display:none;"></div>
   <div class="myinv-stats-row">
     <div class="myinv-stat"><div class="num owed" id="myinv-stat-owed">$0.00</div><div class="lbl">Outstanding</div></div>
     <div class="myinv-stat"><div class="num paid" id="myinv-stat-paid">$0.00</div><div class="lbl">Paid</div></div>
@@ -1113,6 +1113,7 @@ async function loadMyInvoices(){
     myinvArchivedItems=all.filter(it=>it.archived);
     $('myinv-archive-link').textContent='ARCHIVED ('+myinvArchivedItems.length+')';
     renderNextPayoutBanner();
+    renderDueThisWeekBanner();
     applyMyinvFilter();
   }catch(e){
     $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">COULD NOT LOAD</span>'+(e.message||'Connection error — please try again.')+'</div>';
@@ -1160,6 +1161,28 @@ function renderNextPayoutBanner(){
     el.innerHTML='<div><div class="ppb-label">Next Payout Expected</div><div class="ppb-sub">'+label+'</div></div><div class="ppb-days">'+diffDays+(diffDays===1?' day':' days')+'</div>';
   }
 }
+function renderDueThisWeekBanner(){
+  const el=$('myinv-dueweek-banner');
+  if(!el)return;
+  const today=new Date();today.setHours(0,0,0,0);
+  const outstanding=myinvAllItems.filter(it=>it.payStatus!=='paid');
+  let count=0,sum=0;
+  outstanding.forEach(it=>{
+    const due=addDaysStr(it.date,30);
+    if(!due)return;
+    due.setHours(0,0,0,0);
+    const diffDays=Math.round((due-today)/86400000);
+    if(diffDays>=0&&diffDays<=7){count++;sum+=it.amount;}
+  });
+  el.style.display='flex';
+  if(count===0){
+    el.className='myinv-dueweek-banner none';
+    el.innerHTML='<div><div class="dwb-label">Due This Week</div><div class="dwb-sub">Nothing hitting the 30‑day mark in the next 7 days</div></div><div class="dwb-count">—</div>';
+  }else{
+    el.className='myinv-dueweek-banner';
+    el.innerHTML='<div><div class="dwb-label">Due This Week</div><div class="dwb-sub">$'+sum.toFixed(2)+' hitting 30 days within 7 days</div></div><div class="dwb-count">'+count+(count===1?' invoice':' invoices')+'</div>';
+  }
+}
 function setMyinvFilter(f){
   myinvFilter=f;
   document.querySelectorAll('.myinv-tab').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
@@ -1172,7 +1195,6 @@ function setMyinvSearch(v){
 function toggleArchiveView(){
   myinvShowArchived=!myinvShowArchived;
   $('myinv-archive-link').classList.toggle('active',myinvShowArchived);
-  $('myinv-tabs').style.display=myinvShowArchived?'none':'flex';
   applyMyinvFilter();
 }
 function applyMyinvFilter(){
