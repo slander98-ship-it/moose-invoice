@@ -1062,7 +1062,7 @@ let editingInvoiceNumber=null;
 async function loadMyInvoices(){
   try{
     const{data:invData,error:invErr}=await db.from('invoices')
-      .select('invoice_number,trucking_co_name,load_type,job_date,total_amount,mileage')
+      .select('invoice_number,trucking_co_name,load_type,job_date,total_amount,mileage,escort_subcontractor')
       .eq('driver_phone',driverObj.phone)
       .order('invoice_number',{ascending:false});
     if(invErr)throw invErr;
@@ -1080,12 +1080,17 @@ async function loadMyInvoices(){
 
     const fromInvoices=(invData||[]).map(inv=>{
       const tr=trackerByInvNum[inv.invoice_number];
+      const fullAmount=Number(inv.total_amount||0);
+      const isSplit=!!(inv.escort_subcontractor&&inv.escort_subcontractor.trim());
       return{
         source:'moose',
         invoice_num:inv.invoice_number,
         company:inv.trucking_co_name||'Unnamed',
         description:inv.load_type||'',
-        amount:Number(inv.total_amount||0),
+        amount:isSplit?fullAmount/2:fullAmount,
+        fullAmount:fullAmount,
+        split:isSplit,
+        splitWith:isSplit?inv.escort_subcontractor.trim():'',
         date:inv.job_date||'',
         miles:Number(inv.mileage||0),
         payStatus:(tr&&tr.status)||'unpaid',
@@ -1268,6 +1273,7 @@ function renderMyInvoices(items){
     const cardState=it.payStatus==='paid'?'paid':'unpaid';
     const payBadge='<span class="myinv-badge '+cardState+'">'+(cardState==='paid'?'PAID':'UNPAID')+'</span>';
     const manualBadge=it.source==='manual'?'<span class="myinv-badge manual">MANUAL</span>':'';
+    const splitBadge=it.split?'<span class="myinv-badge" style="background:rgba(109,179,255,.15);color:#6db3ff;">SPLIT ½ — full $'+it.fullAmount.toFixed(2)+(it.splitWith?' w/ '+it.splitWith:'')+'</span>':'';
     let actions;
     if(it.archived){
       actions='<div class="myinv-actions"><button class="myinv-mini-btn" onclick="unarchiveItem('+idx+')">Unarchive</button></div>';
@@ -1301,7 +1307,7 @@ function renderMyInvoices(items){
       +'<div class="myinv-company">'+it.company+'</div></div>'
       +'<div class="myinv-amount">$'+it.amount.toFixed(2)+'</div></div>'
       +(it.description?'<div class="myinv-load">'+it.description+'</div>':'')
-      +'<div class="myinv-meta">'+payBadge+manualBadge
+      +'<div class="myinv-meta">'+payBadge+manualBadge+splitBadge
       +(it.miles>0?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#6db3ff;">'+it.miles.toLocaleString(undefined,{maximumFractionDigits:0})+' mi</span>':'')
       +(it.date?'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:.72rem;color:#888;">'+it.date+'</span>':'')
       +'</div>'
