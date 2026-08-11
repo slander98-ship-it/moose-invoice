@@ -208,6 +208,14 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .myinv-stat .num.jobs{color:#e0e0e0;}
 .myinv-stat .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#888;margin-top:.2rem;}
 .myinv-stat .sub{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;color:#666;margin-top:.15rem;}
+.myinv-payout-banner{margin:.7rem 1.2rem 0;background:linear-gradient(135deg,rgba(255,229,0,.12),rgba(255,229,0,.04));border:1px solid rgba(255,229,0,.35);border-radius:8px;padding:.7rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;}
+.myinv-payout-banner .ppb-label{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:#d4b800;}
+.myinv-payout-banner .ppb-sub{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;color:#999;margin-top:.15rem;}
+.myinv-payout-banner .ppb-days{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--y);white-space:nowrap;}
+.myinv-payout-banner.overdue{background:linear-gradient(135deg,rgba(229,57,53,.14),rgba(229,57,53,.05));border-color:rgba(229,57,53,.4);}
+.myinv-payout-banner.overdue .ppb-days{color:var(--red);}
+.myinv-payout-banner.clear{background:rgba(76,175,80,.08);border-color:rgba(76,175,80,.3);}
+.myinv-payout-banner.clear .ppb-days{color:var(--green);}
 .myinv-actions{display:flex;gap:.5rem;margin-top:.7rem;}
 .myinv-mini-btn{flex:1;background:var(--bk3);border:1px solid var(--border);border-radius:5px;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;padding:.45rem .4rem;cursor:pointer;}
 .myinv-mini-btn.del{color:var(--red);border-color:rgba(229,57,53,.3);flex:0 0 auto;padding:.45rem .9rem;}
@@ -580,6 +588,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <button class="myinv-tab" data-f="next" onclick="setMyinvFilter('next')">NEXT MO</button>
   </div>
   <div class="myinv-scope" id="myinv-scope"></div>
+  <div class="myinv-payout-banner" id="myinv-payout-banner" style="display:none;"></div>
   <div class="myinv-stats-row">
     <div class="myinv-stat"><div class="num owed" id="myinv-stat-owed">$0.00</div><div class="lbl">Outstanding</div></div>
     <div class="myinv-stat"><div class="num paid" id="myinv-stat-paid">$0.00</div><div class="lbl">Paid</div></div>
@@ -1103,6 +1112,7 @@ async function loadMyInvoices(){
     myinvAllItems=all.filter(it=>!it.archived);
     myinvArchivedItems=all.filter(it=>it.archived);
     $('myinv-archive-link').textContent='ARCHIVED ('+myinvArchivedItems.length+')';
+    renderNextPayoutBanner();
     applyMyinvFilter();
   }catch(e){
     $('myinv-body').innerHTML='<div class="myinv-empty"><span class="big">COULD NOT LOAD</span>'+(e.message||'Connection error — please try again.')+'</div>';
@@ -1120,6 +1130,35 @@ function monthKey(d){
 }
 function monthLabel(d){
   return d?d.toLocaleDateString(undefined,{month:'long',year:'numeric'}):'';
+}
+function renderNextPayoutBanner(){
+  const el=$('myinv-payout-banner');
+  if(!el)return;
+  const outstanding=myinvAllItems.filter(it=>it.payStatus!=='paid');
+  if(!outstanding.length){
+    el.style.display='flex';
+    el.className='myinv-payout-banner clear';
+    el.innerHTML='<div><div class="ppb-label">Next Payout</div><div class="ppb-sub">All caught up — nothing outstanding</div></div><div class="ppb-days">✓</div>';
+    return;
+  }
+  let soonest=null;
+  outstanding.forEach(it=>{
+    const due=addDaysStr(it.date,30);
+    if(due&&(!soonest||due<soonest.due))soonest={due:due,item:it};
+  });
+  if(!soonest){el.style.display='none';return;}
+  const today=new Date();today.setHours(0,0,0,0);
+  const due=soonest.due;due.setHours(0,0,0,0);
+  const diffDays=Math.round((due-today)/86400000);
+  const label=soonest.item.company+(soonest.item.invoice_num?' — #'+soonest.item.invoice_num:'')+' — $'+soonest.item.amount.toFixed(2);
+  el.style.display='flex';
+  if(diffDays<0){
+    el.className='myinv-payout-banner overdue';
+    el.innerHTML='<div><div class="ppb-label">Overdue</div><div class="ppb-sub">'+label+'</div></div><div class="ppb-days">'+Math.abs(diffDays)+'d late</div>';
+  }else{
+    el.className='myinv-payout-banner';
+    el.innerHTML='<div><div class="ppb-label">Next Payout Expected</div><div class="ppb-sub">'+label+'</div></div><div class="ppb-days">'+diffDays+(diffDays===1?' day':' days')+'</div>';
+  }
 }
 function setMyinvFilter(f){
   myinvFilter=f;
@@ -1140,7 +1179,11 @@ function applyMyinvFilter(){
   const now=new Date();
   const scope=$('myinv-scope');
   let items;
-  if(myinvShowArchived){
+  const searching=!!myinvSearchTerm;
+  if(searching){
+    // Search overrides every scope/tab filter and looks across BOTH active and archived invoices.
+    items=myinvAllItems.concat(myinvArchivedItems);
+  }else if(myinvShowArchived){
     items=myinvArchivedItems;
     scope.textContent='ARCHIVED — '+items.length+' job'+(items.length===1?'':'s')+' (hidden from totals)';
     scope.classList.add('show');
@@ -1165,12 +1208,14 @@ function applyMyinvFilter(){
     items=myinvAllItems;
     scope.classList.remove('show');
   }
-  if(myinvSearchTerm){
+  if(searching){
     items=items.filter(it=>
       (it.company||'').toLowerCase().indexOf(myinvSearchTerm)!==-1 ||
       (it.description||'').toLowerCase().indexOf(myinvSearchTerm)!==-1 ||
       (it.invoice_num||'').toLowerCase().indexOf(myinvSearchTerm)!==-1
     );
+    scope.textContent='Search results (active + archived) — '+items.length+' match'+(items.length===1?'':'es');
+    scope.classList.add('show');
   }
   myinvItems=items;
   renderMyInvoicesStats(items);
@@ -1206,7 +1251,7 @@ function renderMyInvoices(items){
       actions='<div class="myinv-actions"><button class="myinv-mini-btn" onclick="unarchiveItem('+idx+')">Unarchive</button></div>';
     }else if(it.source==='manual'){
       actions='<div class="myinv-actions">'
-        +'<button class="myinv-mini-btn" onclick="toggleManualPaid(\''+it.trackerId+'\',\''+cardState+'\')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
+        +'<button class="myinv-mini-btn" onclick="togglePaidAndArchive('+idx+')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
         +'<button class="myinv-mini-btn" onclick="editManualEntry('+idx+')">Edit</button>'
         +'</div>'
         +'<div class="myinv-actions">'
@@ -1218,11 +1263,14 @@ function renderMyInvoices(items){
         +'</div>';
     }else{
       actions='<div class="myinv-actions">'
+        +'<button class="myinv-mini-btn" onclick="togglePaidAndArchive('+idx+')">'+(cardState==='paid'?'Mark Unpaid':'Mark Paid')+'</button>'
         +'<button class="myinv-mini-btn" onclick="editRealInvoice('+idx+')">Edit Full Invoice</button>'
-        +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
         +'</div>'
         +'<div class="myinv-actions">'
+        +'<button class="myinv-mini-btn" onclick="resendInvoiceEmail('+idx+')">Resend</button>'
         +'<button class="myinv-mini-btn" onclick="archiveItem('+idx+')">Archive</button>'
+        +'</div>'
+        +'<div class="myinv-actions">'
         +'<button class="myinv-mini-btn del" onclick="hideInvoiceItem('+idx+')">Delete</button>'
         +'</div>';
     }
@@ -1330,11 +1378,33 @@ async function saveManualEntry(){
   }
   finally{btn.disabled=false;btn.textContent='SAVE';}
 }
-async function toggleManualPaid(id,currentState){
+async function togglePaidAndArchive(idx){
+  const it=myinvItems[idx];if(!it)return;
+  const newStatus=it.payStatus==='paid'?'unpaid':'paid';
   try{
-    const newStatus=currentState==='paid'?'unpaid':'paid';
-    const{error}=await db.from('payment_tracker').update({status:newStatus,paid_date:newStatus==='paid'?new Date().toISOString().slice(0,10):null}).eq('id',id);
-    if(error)throw error;
+    if(it.trackerId){
+      const{data:cur}=await db.from('payment_tracker').select('notes').eq('id',it.trackerId).single();
+      let notes=(cur&&cur.notes)||'';
+      if(newStatus==='paid'){
+        if(notes.indexOf('[ARCHIVED]')===-1)notes=(notes+' [ARCHIVED]').trim();
+      }else{
+        notes=notes.replace('[ARCHIVED]','').trim();
+      }
+      const{error}=await db.from('payment_tracker').update({status:newStatus,paid_date:newStatus==='paid'?new Date().toISOString().slice(0,10):null,notes:notes}).eq('id',it.trackerId);
+      if(error)throw error;
+    }else{
+      // Real Moose invoice with no tracker row yet — create one to hold paid status + archive flag.
+      const{error}=await db.from('payment_tracker').insert({
+        invoice_num:it.invoice_num||uniqTag('MANUAL'),
+        client:it.company,description:it.description,amount:it.amount,
+        date_issued:it.date||new Date().toISOString().slice(0,10),
+        status:newStatus,
+        paid_date:newStatus==='paid'?new Date().toISOString().slice(0,10):null,
+        notes:newStatus==='paid'?'[ARCHIVED]':'',
+        driver_name:driverObj.name,driver_phone:driverObj.phone
+      });
+      if(error)throw error;
+    }
     await loadMyInvoices();
   }catch(e){alert('Could not update: '+e.message);}
 }
