@@ -390,6 +390,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     <div class="step-title">TRIP TIMES</div>
     <div class="step-sub">STEP 5 OF 9 — TAP + TO ADD MORE DAYS</div>
     <div id="trips-container"></div>
+    <datalist id="city-history-list"></datalist>
   </div>
 
   <div class="panel" id="panel-6">
@@ -671,7 +672,7 @@ function enterApp(){
   // The operator's own identity is shown above and saved from driverObj.phone directly at
   // submit time — never from these two fields.
   if(!fv('job_date'))sv('job_date',new Date().toISOString().slice(0,10));
-  restoreDraft();buildStepBar();showWelcome();
+  restoreDraft();buildStepBar();showWelcome();renderCityDatalist();
 }
 let _wlcTimer=null;
 function showWelcome(){
@@ -814,7 +815,7 @@ function renderTrips(){
     const card=document.createElement('div');card.className='trip-card';card.id='trip-card-'+i;
     card.innerHTML=`<div class="trip-card-head"><div class="trip-day-label">DAY ${i+1}</div>${i>0?`<button class="trip-remove" onclick="removeTrip(${i})">REMOVE DAY</button>`:''}</div>
     <div class="g3"><div class="fg"><label>DATE *</label><input id="t${i}-date" type="date" autocomplete="off" value="${t.date||''}" oninput="updateTrip(${i},'date',this.value)" onchange="updateTrip(${i},'date',this.value)"/></div><div class="fg"><label>START TIME *</label><input id="t${i}-start" type="time" autocomplete="off" value="${t.startTime||''}" oninput="updateTrip(${i},'startTime',this.value)" onchange="updateTrip(${i},'startTime',this.value)"/></div><div class="fg"><label>END TIME *</label><input id="t${i}-end" type="time" autocomplete="off" value="${t.endTime||''}" oninput="updateTrip(${i},'endTime',this.value)" onchange="updateTrip(${i},'endTime',this.value)"/></div></div>
-    <div class="g2"><div class="fg"><label>START CITY, ST</label><input type="text" name="trip-city" autocomplete="on" value="${t.startCity||''}" placeholder="Davidson, OK" oninput="updateTrip(${i},'startCity',this.value)" onchange="updateTrip(${i},'startCity',this.value)"/></div><div class="fg"><label>END CITY, ST</label><input type="text" name="trip-city" autocomplete="on" value="${t.endCity||''}" placeholder="Rush Springs, OK" oninput="updateTrip(${i},'endCity',this.value)" onchange="updateTrip(${i},'endCity',this.value)"/></div></div>
+    <div class="g2"><div class="fg"><label>START CITY, ST</label><input type="text" name="trip-city" list="city-history-list" autocomplete="on" value="${t.startCity||''}" placeholder="Davidson, OK" oninput="updateTrip(${i},'startCity',this.value)" onchange="updateTrip(${i},'startCity',this.value)"/></div><div class="fg"><label>END CITY, ST</label><input type="text" name="trip-city" list="city-history-list" autocomplete="on" value="${t.endCity||''}" placeholder="Rush Springs, OK" oninput="updateTrip(${i},'endCity',this.value)" onchange="updateTrip(${i},'endCity',this.value)"/></div></div>
     ${i>0?`<div class="g2"><div class="fg"><label>START ODOMETER (that day)</label><input type="number" step="0.1" autocomplete="off" value="${t.startOdo||''}" placeholder="e.g. 274830" oninput="updateTrip(${i},'startOdo',this.value)" onchange="updateTrip(${i},'startOdo',this.value)"/></div><div class="fg"><label>END ODOMETER (that day)</label><input type="number" step="0.1" autocomplete="off" value="${t.endOdo||''}" placeholder="e.g. 275036" oninput="updateTrip(${i},'endOdo',this.value)" onchange="updateTrip(${i},'endOdo',this.value)"/></div></div>
     <div class="trip-day-miles" id="tmi-${i}">${(parseFloat(t.endOdo)>parseFloat(t.startOdo))?(parseFloat(t.endOdo)-parseFloat(t.startOdo)).toFixed(1)+' mi that day':'—'}</div>`:''}
     <div class="rg-wrap"><div class="rg-label">MOTEL / OVERNIGHT?</div><div class="radio-group"><label><input type="radio" name="t${i}-motel" value="N" ${t.motel!=='Y'?'checked':''} onchange="updateTrip(${i},'motel','N')"><span>NO</span></label><label><input type="radio" name="t${i}-motel" value="Y" ${t.motel==='Y'?'checked':''} onchange="updateTrip(${i},'motel','Y')"><span>YES — OVERNIGHT</span></label></div></div>`;
@@ -822,10 +823,25 @@ function renderTrips(){
   });
   updateFab();
 }
-function updateTrip(i,field,val){trips[i][field]=val;const map={date:'t'+i+'-date',startTime:'t'+i+'-start',endTime:'t'+i+'-end'};if(map[field]){const e=$(map[field]);if(e)e.classList.remove('err');}if(field==='startOdo'||field==='endOdo'){const so=parseFloat(trips[i].startOdo),eo=parseFloat(trips[i].endOdo);const el=$('tmi-'+i);if(el)el.textContent=(eo>so)?(eo-so).toFixed(1)+' mi that day':'—';}saveDraft();}
+function updateTrip(i,field,val){trips[i][field]=val;const map={date:'t'+i+'-date',startTime:'t'+i+'-start',endTime:'t'+i+'-end'};if(map[field]){const e=$(map[field]);if(e)e.classList.remove('err');}if(field==='startOdo'||field==='endOdo'){const so=parseFloat(trips[i].startOdo),eo=parseFloat(trips[i].endOdo);const el=$('tmi-'+i);if(el)el.textContent=(eo>so)?(eo-so).toFixed(1)+' mi that day':'—';}if((field==='startCity'||field==='endCity')&&val&&val.trim().length>1)rememberCity(val.trim());saveDraft();}
+function rememberCity(city){
+  let list=[];
+  try{list=JSON.parse(localStorage.getItem('moose_city_history_v1')||'[]');}catch(e){list=[];}
+  list=list.filter(c=>c.toLowerCase()!==city.toLowerCase());
+  list.unshift(city);
+  if(list.length>40)list=list.slice(0,40);
+  localStorage.setItem('moose_city_history_v1',JSON.stringify(list));
+  renderCityDatalist();
+}
+function renderCityDatalist(){
+  const dl=$('city-history-list');if(!dl)return;
+  let list=[];
+  try{list=JSON.parse(localStorage.getItem('moose_city_history_v1')||'[]');}catch(e){list=[];}
+  dl.innerHTML=list.map(c=>'<option value="'+c.replace(/"/g,'&quot;')+'"></option>').join('');
+}
 function addTrip(){if(trips.length>=7)return;trips.push({date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N',startOdo:'',endOdo:''});renderTrips();const card=$('trip-card-'+(trips.length-1));if(card)setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),80);if(radios.pilot_position&&radios.pilot_position.length)applyDefaultRates(radios.pilot_position,true);else updateRateWinner();saveDraft();}
 function removeTrip(i){trips.splice(i,1);renderTrips();if(radios.pilot_position&&radios.pilot_position.length)applyDefaultRates(radios.pilot_position,true);saveDraft();}
-function updateFab(){$('trip-fab').classList.toggle('show',step===5&&trips.length<5);}
+function updateFab(){$('trip-fab').classList.toggle('show',step===5&&trips.length<7);}
 
 function updateRateWinner(){
   const pos=radios.pilot_position;const escMiles=bv('escorted_miles');const dayQty=bv('flat_day_qty');const rc=$('rate-compare');
