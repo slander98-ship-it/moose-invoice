@@ -216,6 +216,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
 .myinv-payout-banner.overdue .ppb-days{color:var(--red);}
 .myinv-payout-banner.clear{background:rgba(76,175,80,.08);border-color:rgba(76,175,80,.3);}
 .myinv-payout-banner.clear .ppb-days{color:var(--green);}
+.trip-day-miles{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;color:#999;margin:-.3rem 0 .5rem;padding-left:.1rem;}
 .myinv-dueweek-banner{margin:.5rem 1.2rem 0;background:rgba(109,179,255,.08);border:1px solid rgba(109,179,255,.3);border-radius:8px;padding:.6rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;}
 .myinv-dueweek-banner .dwb-label{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:#6db3ff;}
 .myinv-dueweek-banner .dwb-sub{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;color:#999;margin-top:.15rem;}
@@ -401,9 +402,9 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
         <div class="fg"><label>START TIME</label><input id="f-downtime_start" type="time" oninput="saveDraft()"/></div>
         <div class="fg"><label>END TIME</label><input id="f-downtime_end" type="time" oninput="saveDraft()"/></div>
       </div>
-      <div class="fg"><label>REASON</label><input id="f-downtime_reason" type="text" placeholder="e.g. Trucks running late" oninput="saveDraft()"/></div>
+      <div class="fg" style="margin-bottom:.6rem;"><label>REASON</label><input id="f-downtime_reason" type="text" placeholder="e.g. Trucks running late" oninput="saveDraft()"/></div>
     </div>
-    <div class="fg"><label>NOTES</label><textarea id="f-notes" oninput="saveDraft()" placeholder="Any additional notes..."></textarea></div>
+    <div class="fg" style="margin-top:.8rem;"><label>NOTES</label><textarea id="f-notes" oninput="saveDraft()" placeholder="Any additional notes..."></textarea></div>
   </div>
 
   <div class="panel" id="panel-7">
@@ -449,51 +450,51 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     </div>
     <div class="bill-row" id="row-miles">
       <div class="bill-row-label">ESCORTED MILES</div>
-      <input id="b-escorted_miles" type="number" step="0.1" oninput="onBillInput()"/>
+      <input id="b-escorted_miles" type="number" step="0.1" oninput="onBillInput(this.id)"/>
       <div class="bill-at">@</div>
-      <input id="b-escorted_rate"  type="number" step="0.01" oninput="onBillInput()"/>
+      <input id="b-escorted_rate"  type="number" step="0.01" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-row">
       <div class="bill-row-label">FUEL S/C — MILES</div>
-      <input id="b-fuel_sc_miles"  type="number" step="0.1"  placeholder="0" oninput="onBillInput()"/>
+      <input id="b-fuel_sc_miles"  type="number" step="0.1"  placeholder="0" oninput="onBillInput(this.id)"/>
       <div class="bill-at">@</div>
-      <input id="b-fuel_sc_rate"   type="number" step="0.01" placeholder="0.00" oninput="onBillInput()"/>
+      <input id="b-fuel_sc_rate"   type="number" step="0.01" placeholder="0.00" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-row">
       <div class="bill-row-label">DEADHEAD MILES</div>
-      <input id="b-deadhead_miles" type="number" step="0.1"  placeholder="0" oninput="onBillInput()"/>
+      <input id="b-deadhead_miles" type="number" step="0.1"  placeholder="0" oninput="onBillInput(this.id)"/>
       <div class="bill-at">@</div>
-      <input id="b-deadhead_rate"  type="number" step="0.01" placeholder="0.00" oninput="onBillInput()"/>
+      <input id="b-deadhead_rate"  type="number" step="0.01" placeholder="0.00" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-row" id="row-day">
       <div class="bill-row-label">FLAT DAY RATE</div>
-      <input id="b-flat_day_qty"   type="number" step="0.5" oninput="onBillInput()"/>
+      <input id="b-flat_day_qty"   type="number" step="0.5" oninput="onBillInput(this.id)"/>
       <div class="bill-at">@</div>
-      <input id="b-flat_day_rate"  type="number" step="0.01" oninput="onBillInput()"/>
+      <input id="b-flat_day_rate"  type="number" step="0.01" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-row">
-      <div class="bill-row-label">½ DAY RATE</div>
-      <input id="b-half_day_qty"   type="number" step="0.5"  placeholder="0" oninput="onBillInput()"/>
+      <div class="bill-row-label">HP DAY RATE</div>
+      <input id="b-half_day_qty"   type="number" step="0.5"  placeholder="0" oninput="onBillInput(this.id)"/>
       <div class="bill-at">@</div>
-      <input id="b-half_day_rate"  type="number" step="0.01" placeholder="0.00" oninput="onBillInput()"/>
+      <input id="b-half_day_rate"  type="number" step="0.01" placeholder="0.00" value="600.00" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-row">
       <div class="bill-row-label">MOTELS / OVERNIGHT</div>
-      <input id="b-motel_qty"      type="number" step="1"    placeholder="0" oninput="onBillInput()"/>
+      <input id="b-motel_qty"      type="number" step="1"    placeholder="0" oninput="onBillInput(this.id)"/>
       <div class="bill-at">@</div>
-      <input id="b-motel_rate"     type="number" step="0.01" oninput="onBillInput()"/>
+      <input id="b-motel_rate"     type="number" step="0.01" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-row">
       <div class="bill-row-label">DOWN TIME</div>
-      <input id="b-downtime_hours" type="number" step="0.5"  placeholder="0" oninput="onBillInput()"/>
+      <input id="b-downtime_hours" type="number" step="0.5"  placeholder="0" oninput="onBillInput(this.id)"/>
       <div class="bill-at">@</div>
-      <input id="b-downtime_rate"  type="number" step="0.01" placeholder="0.00" oninput="onBillInput()"/>
+      <input id="b-downtime_rate"  type="number" step="0.01" placeholder="0.00" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-row">
       <div class="bill-row-label">NO-GO'S</div>
-      <input id="b-nogo_qty"       type="number" step="1"    placeholder="0" oninput="onBillInput()"/>
+      <input id="b-nogo_qty"       type="number" step="1"    placeholder="0" oninput="onBillInput(this.id)"/>
       <div class="bill-at">@</div>
-      <input id="b-nogo_rate"      type="number" step="0.01" placeholder="0.00" oninput="onBillInput()"/>
+      <input id="b-nogo_rate"      type="number" step="0.01" placeholder="0.00" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-total-box">
       <div class="bill-total-label">TOTAL CHARGES</div>
@@ -558,6 +559,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     </button>
     <div id="email-panel" style="display:none;margin-top:.5rem;">
       <input id="email-to" type="email" placeholder="Enter email address..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <input id="email-cc" type="email" placeholder="CC (optional)..." style="width:100%;background:#1e1e1e;border:1.5px solid #444;border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
       <button class="success-btn" onclick="sendInvoiceEmail()" style="width:100%;" id="send-email-btn">SEND INVOICE</button>
       <button onclick="document.getElementById('email-panel').style.display='none'" style="background:transparent;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;width:100%;margin-top:.3rem;">CANCEL</button>
     </div>
@@ -631,7 +633,7 @@ const RATES={'Lead':{day:550,mile:1.95,motel:125,dh:1.95},'Chase':{day:550,mile:
 let pin='',pinBusy=false,driverObj=null,step=1;
 let sigMode='draw',sigDrawing=false,sigLast={x:0,y:0},sigData='',sigInited=false;
 const radios={pilot_position:[],motel_yn:'N'};
-let trips=[{date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'}];
+let trips=[{date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N',startOdo:'',endOdo:''}];
 let lastInvoice=null;
 const $=id=>document.getElementById(id);
 const fv=n=>{const e=$('f-'+n);return e?e.value.trim():'';};
@@ -776,18 +778,20 @@ function applyDefaultRates(posArr,force){
   // Deadhead is intentionally NOT auto-filled — real deadhead billing is usually a flat
   // arbitrary number Chamus sets per job, not a calculated per-position rate.
   const mileSum=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].mile:0),0);
-  if(force||!bv('escorted_rate'))sbv('escorted_rate',mileSum.toFixed(2));
+  if(!billTouched.has('b-escorted_rate')&&(force||!bv('escorted_rate')))sbv('escorted_rate',mileSum.toFixed(2));
 
   // Day rate & motels: each position has its own real day/night — so QUANTITY is
   // multiplied by position count, and RATE stays the true single-position rate.
   // e.g. 1 day, 2 positions -> qty 2 @ $550 = $1100. 1 motel night, 2 positions -> qty 2 @ $125 = $250.
+  // Any field the driver has manually typed into is NEVER auto-overwritten again — once touched,
+  // it stays exactly what she set it to, even when trips are added/removed or this runs again.
   const dayRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].day:0),0)/n; // all positions share $550, so this is just $550
   const motelRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].motel:0),0)/n; // all positions share $125
-  if(force||!bv('flat_day_rate'))sbv('flat_day_rate',dayRateSingle);
-  sbv('flat_day_qty',(trips.length||1)*n);
-  if(force||!bv('motel_rate'))sbv('motel_rate',motelRateSingle);
+  if(!billTouched.has('b-flat_day_rate')&&(force||!bv('flat_day_rate')))sbv('flat_day_rate',dayRateSingle);
+  if(!billTouched.has('b-flat_day_qty'))sbv('flat_day_qty',(trips.length||1)*n);
+  if(!billTouched.has('b-motel_rate')&&(force||!bv('motel_rate')))sbv('motel_rate',motelRateSingle);
   const baseMotelQty=trips.filter(t=>t.motel==='Y').length;
-  if(baseMotelQty>0)sbv('motel_qty',baseMotelQty*n);
+  if(!billTouched.has('b-motel_qty')&&baseMotelQty>0)sbv('motel_qty',baseMotelQty*n);
 
   updateRateWinner();
 }
@@ -811,13 +815,15 @@ function renderTrips(){
     card.innerHTML=`<div class="trip-card-head"><div class="trip-day-label">DAY ${i+1}</div>${i>0?`<button class="trip-remove" onclick="removeTrip(${i})">REMOVE DAY</button>`:''}</div>
     <div class="g3"><div class="fg"><label>DATE *</label><input id="t${i}-date" type="date" autocomplete="off" value="${t.date||''}" oninput="updateTrip(${i},'date',this.value)" onchange="updateTrip(${i},'date',this.value)"/></div><div class="fg"><label>START TIME *</label><input id="t${i}-start" type="time" autocomplete="off" value="${t.startTime||''}" oninput="updateTrip(${i},'startTime',this.value)" onchange="updateTrip(${i},'startTime',this.value)"/></div><div class="fg"><label>END TIME *</label><input id="t${i}-end" type="time" autocomplete="off" value="${t.endTime||''}" oninput="updateTrip(${i},'endTime',this.value)" onchange="updateTrip(${i},'endTime',this.value)"/></div></div>
     <div class="g2"><div class="fg"><label>START CITY, ST</label><input type="text" autocomplete="off" value="${t.startCity||''}" placeholder="Davidson, OK" oninput="updateTrip(${i},'startCity',this.value)" onchange="updateTrip(${i},'startCity',this.value)"/></div><div class="fg"><label>END CITY, ST</label><input type="text" autocomplete="off" value="${t.endCity||''}" placeholder="Rush Springs, OK" oninput="updateTrip(${i},'endCity',this.value)" onchange="updateTrip(${i},'endCity',this.value)"/></div></div>
+    <div class="g2"><div class="fg"><label>START ODOMETER (that day)</label><input type="number" step="0.1" autocomplete="off" value="${t.startOdo||''}" placeholder="e.g. 274830" oninput="updateTrip(${i},'startOdo',this.value)" onchange="updateTrip(${i},'startOdo',this.value)"/></div><div class="fg"><label>END ODOMETER (that day)</label><input type="number" step="0.1" autocomplete="off" value="${t.endOdo||''}" placeholder="e.g. 275036" oninput="updateTrip(${i},'endOdo',this.value)" onchange="updateTrip(${i},'endOdo',this.value)"/></div></div>
+    <div class="trip-day-miles" id="tmi-${i}">${(parseFloat(t.endOdo)>parseFloat(t.startOdo))?(parseFloat(t.endOdo)-parseFloat(t.startOdo)).toFixed(1)+' mi that day':'—'}</div>
     <div class="rg-wrap"><div class="rg-label">MOTEL / OVERNIGHT?</div><div class="radio-group"><label><input type="radio" name="t${i}-motel" value="N" ${t.motel!=='Y'?'checked':''} onchange="updateTrip(${i},'motel','N')"><span>NO</span></label><label><input type="radio" name="t${i}-motel" value="Y" ${t.motel==='Y'?'checked':''} onchange="updateTrip(${i},'motel','Y')"><span>YES — OVERNIGHT</span></label></div></div>`;
     c.appendChild(card);
   });
   updateFab();
 }
-function updateTrip(i,field,val){trips[i][field]=val;const map={date:'t'+i+'-date',startTime:'t'+i+'-start',endTime:'t'+i+'-end'};if(map[field]){const e=$(map[field]);if(e)e.classList.remove('err');}saveDraft();}
-function addTrip(){if(trips.length>=5)return;trips.push({date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'});renderTrips();const card=$('trip-card-'+(trips.length-1));if(card)setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),80);if(radios.pilot_position&&radios.pilot_position.length)applyDefaultRates(radios.pilot_position,true);else updateRateWinner();saveDraft();}
+function updateTrip(i,field,val){trips[i][field]=val;const map={date:'t'+i+'-date',startTime:'t'+i+'-start',endTime:'t'+i+'-end'};if(map[field]){const e=$(map[field]);if(e)e.classList.remove('err');}if(field==='startOdo'||field==='endOdo'){const so=parseFloat(trips[i].startOdo),eo=parseFloat(trips[i].endOdo);const el=$('tmi-'+i);if(el)el.textContent=(eo>so)?(eo-so).toFixed(1)+' mi that day':'—';}saveDraft();}
+function addTrip(){if(trips.length>=7)return;trips.push({date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N',startOdo:'',endOdo:''});renderTrips();const card=$('trip-card-'+(trips.length-1));if(card)setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),80);if(radios.pilot_position&&radios.pilot_position.length)applyDefaultRates(radios.pilot_position,true);else updateRateWinner();saveDraft();}
 function removeTrip(i){trips.splice(i,1);renderTrips();if(radios.pilot_position&&radios.pilot_position.length)applyDefaultRates(radios.pilot_position,true);saveDraft();}
 function updateFab(){$('trip-fab').classList.toggle('show',step===5&&trips.length<5);}
 
@@ -878,7 +884,8 @@ function updateRateWinner(){
   calcTotal();
 }
 function highlightRows(m,d){document.querySelectorAll('#row-miles input').forEach(el=>{el.classList.toggle('hi',m);el.classList.toggle('dim',!m);});document.querySelectorAll('#row-day input').forEach(el=>{el.classList.toggle('hi',d);el.classList.toggle('dim',!d);});}
-function onBillInput(){updateRateWinner();saveDraft();}
+const billTouched=new Set();
+function onBillInput(fieldId){if(fieldId)billTouched.add(fieldId);updateRateWinner();saveDraft();}
 function calcTotal(){
   const pairs=[['escorted_miles','escorted_rate'],['fuel_sc_miles','fuel_sc_rate'],['deadhead_miles','deadhead_rate'],['flat_day_qty','flat_day_rate'],['half_day_qty','half_day_rate'],['motel_qty','motel_rate'],['downtime_hours','downtime_rate'],['nogo_qty','nogo_rate']];
   const total=pairs.reduce((s,[q,r])=>{const qe=$('b-'+q),re=$('b-'+r);return s+(parseFloat(qe?.value)||0)*(parseFloat(re?.value)||0);},0);
@@ -940,17 +947,6 @@ async function submitInvoice(){
   if(!fv('driver_name')||!fv('trucking_co_name')){alert('Please fill in Driver Name and Trucking Company.');return;}
   const wasEdit=!!editingInvoiceNumber;
   const btn=$('submit-btn');btn.disabled=true;btn.textContent=wasEdit?'SAVING...':'SUBMITTING...';
-  // Open the PDF window now, synchronously, while we still have the tap's permission to do so —
-  // opening it later (after the database calls below) gets silently blocked by mobile browsers.
-  // We fill it in with the real invoice once saving finishes successfully.
-  let autoPdfWin=null;
-  try{
-    autoPdfWin=window.open('','_blank','width=900,height=1100');
-    if(autoPdfWin){
-      autoPdfWin.document.write('<html><body style="font-family:Arial,sans-serif;padding:60px 20px;text-align:center;color:#666;"><h2 style="color:#333;">Preparing your invoice PDF…</h2><p>This fills in automatically once your invoice finishes submitting.</p></body></html>');
-      autoPdfWin.document.close();
-    }
-  }catch(e){autoPdfWin=null;}
   try{
     const total=calcTotal(),tripMi=calcTripMiles();
     const firstTrip=trips[0]||{};
@@ -1017,9 +1013,7 @@ async function submitInvoice(){
     if($('success-title'))$('success-title').textContent=wasEdit?'UPDATED':'SUBMITTED';
     if($('success-msg'))$('success-msg').innerHTML=wasEdit?'Your changes have been saved.':'Approval request sent to<br>Moose\'s Pilot Car Service.';
     $('success-screen').classList.add('show');selectFormat('pilot');
-    try{downloadPilotCar('pilot',autoPdfWin);}catch(pdfErr){console.warn('auto-save PDF failed',pdfErr);}
   }catch(err){
-    if(autoPdfWin&&!autoPdfWin.closed)autoPdfWin.close();
     alert('Error submitting: '+err.message);btn.disabled=false;btn.textContent=wasEdit?'SAVE CHANGES':'SUBMIT INVOICE';
   }
 }
@@ -1506,7 +1500,7 @@ async function shareInvoice(){
   const fq=(v)=>v>0?v:'';
   const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const ul=(val,minW)=>`<span style="display:inline-block;border-bottom:1px solid #000;min-width:${minW||70}px;padding:0 3px;vertical-align:bottom;">&nbsp;${val||''}&nbsp;</span>`;
-  const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
+  const tdata=[...d.trips];while(tdata.length<7)tdata.push({});
   const C='border:1px solid #000;padding:2px 4px;font-size:9.5px;';
   const CH=C+'background:#f0f0f0;font-weight:700;';
   const tripRows=tdata.map((t,i)=>{
@@ -1556,8 +1550,8 @@ async function shareInvoice(){
 <table style="width:100%;border-collapse:collapse;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">LOAD:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.load_type||''}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;width:1%;padding-right:4px;">H/W/L:</td><td style="border-bottom:1px solid #000;font-size:10px;width:80px;padding:1px 3px;">&nbsp;${loadLen}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:12px;width:1%;padding-right:4px;">WEIGHT:</td><td style="border-bottom:1px solid #000;font-size:10px;width:90px;padding:1px 3px;">&nbsp;${d.load_weight||''}</td></tr></table>
 <table style="width:100%;border-collapse:collapse;margin-bottom:3px;"><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;width:1%;padding-right:4px;">PICK UP:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${puAddr}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;width:1%;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;width:100px;padding:1px 3px;">&nbsp;${d.pickup_date||''}</td></tr><tr><td colspan="4" style="height:3px;"></td></tr><tr><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-right:4px;">DROP OFF:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${doAddr}</td><td style="font-size:10px;font-weight:700;white-space:nowrap;padding-left:10px;padding-right:4px;">DATE:</td><td style="border-bottom:1px solid #000;font-size:10px;padding:1px 3px;">&nbsp;${d.dropoff_date||''}</td></tr></table>
 <table style="width:100%;border-collapse:collapse;margin-top:6px;"><thead><tr><th style="${CH}width:9%;">DATE</th><th style="${CH}width:18%;">START-CITY,ST</th><th style="${CH}width:9%;">START TIME</th><th style="${CH}width:11%;">START ODO</th><th style="${CH}width:18%;">END-CITY,ST</th><th style="${CH}width:9%;">END TIME</th><th style="${CH}width:11%;">END ODO</th><th style="${CH}width:8%;">MILES</th><th style="${CH}width:7%;">MOTEL</th></tr></thead><tbody>${tripRows}</tbody></table>
-<table style="width:100%;border-collapse:collapse;margin-top:8px;"><tr><td style="width:55%;vertical-align:top;padding-right:10px;"><table style="width:100%;border-collapse:collapse;">${[['TOTAL ESCORTED MILES',d.escorted_miles,d.escorted_rate],['FUEL S/C – MILES',d.fuel_sc_miles,d.fuel_sc_rate],['DEADHEAD MILES',d.deadhead_miles,d.deadhead_rate],['FLAT DAY RATE',d.flat_day_qty,d.flat_day_rate],['½ DAY RATE',d.half_day_qty,d.half_day_rate],['MOTELS',d.motel_qty,d.motel_qty>0?d.motel_rate:null],['DOWN TIME',d.downtime_hours,d.downtime_rate],["NO-GO'S",d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;text-align:right;">${fq(q)}</td><td style="font-size:10px;padding:0 5px;">@</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;text-align:right;">${r>0?r.toFixed(2):''}</td></tr>`).join('')}</table></td>
-<td style="vertical-align:top;"><table style="width:100%;border-collapse:collapse;">${[['PER MILE =',d.escorted_miles,d.escorted_rate],['MILES ONLY =',d.fuel_sc_miles,d.fuel_sc_rate],['PER MILE =',d.deadhead_miles,d.deadhead_rate],['PER DAY =',d.flat_day_qty,d.flat_day_rate],['½ DAY =',d.half_day_qty,d.half_day_rate],['PER DAY =',d.motel_qty,d.motel_rate],['PER HOUR =',d.downtime_hours,d.downtime_rate],['PER DAY =',d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;white-space:nowrap;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:95px;text-align:right;">${fa(q,r)}</td></tr>`).join('')}<tr><td colspan="2" style="padding-top:5px;border-top:2.5px solid #000;text-align:right;"><span style="font-size:12px;font-weight:900;">TOTAL CHARGES = $</span><span style="font-size:14px;font-weight:900;border-bottom:2.5px solid #000;padding:0 10px;">${d.total.toFixed(2)}</span></td></tr></table></td></tr></table>
+<table style="width:100%;border-collapse:collapse;margin-top:8px;"><tr><td style="width:55%;vertical-align:top;padding-right:10px;"><table style="width:100%;border-collapse:collapse;">${[['TOTAL ESCORTED MILES',d.escorted_miles,d.escorted_rate],['FUEL S/C – MILES',d.fuel_sc_miles,d.fuel_sc_rate],['DEADHEAD MILES',d.deadhead_miles,d.deadhead_rate],['FLAT DAY RATE',d.flat_day_qty,d.flat_day_rate],['HP DAY RATE',d.half_day_qty,d.half_day_rate],['MOTELS',d.motel_qty,d.motel_qty>0?d.motel_rate:null],['DOWN TIME',d.downtime_hours,d.downtime_rate],["NO-GO'S",d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;text-align:right;">${fq(q)}</td><td style="font-size:10px;padding:0 5px;">@</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:52px;text-align:right;">${r>0?r.toFixed(2):''}</td></tr>`).join('')}</table></td>
+<td style="vertical-align:top;"><table style="width:100%;border-collapse:collapse;">${[['PER MILE =',d.escorted_miles,d.escorted_rate],['MILES ONLY =',d.fuel_sc_miles,d.fuel_sc_rate],['PER MILE =',d.deadhead_miles,d.deadhead_rate],['PER DAY =',d.flat_day_qty,d.flat_day_rate],['HP DAY =',d.half_day_qty,d.half_day_rate],['PER DAY =',d.motel_qty,d.motel_rate],['PER HOUR =',d.downtime_hours,d.downtime_rate],['PER DAY =',d.nogo_qty,d.nogo_rate]].map(([lbl,q,r])=>`<tr style="height:22px;"><td style="font-size:10px;font-weight:700;white-space:nowrap;">${lbl}</td><td style="font-size:10px;border-bottom:1px solid #888;min-width:95px;text-align:right;">${fa(q,r)}</td></tr>`).join('')}<tr><td colspan="2" style="padding-top:5px;border-top:2.5px solid #000;text-align:right;"><span style="font-size:12px;font-weight:900;">TOTAL CHARGES = $</span><span style="font-size:14px;font-weight:900;border-bottom:2.5px solid #000;padding:0 10px;">${d.total.toFixed(2)}</span></td></tr></table></td></tr></table>
 <table style="width:100%;border-collapse:collapse;margin-top:12px;"><tr><td style="width:65%;vertical-align:bottom;font-size:10px;font-weight:700;">DRIVER'S SIGNATURE:<span style="display:inline-block;border-bottom:1.5px solid #000;min-width:230px;padding:0 4px;vertical-align:bottom;">${sigHtml}</span></td><td style="vertical-align:bottom;font-size:10px;font-weight:700;">DATE:${ul(d.date,110)}</td></tr></table>
 <div style="text-align:center;margin-top:9px;"><div style="font-size:10px;font-weight:700;">TERMS: DUE UPON RECEIPT</div><div style="font-size:8.5px;margin-top:2px;">After 45 days at 9% per month interest will be added to your BILL.</div></div>
 <table style="width:100%;border-collapse:collapse;margin-top:7px;"><tr><td style="font-size:10px;width:60%;"><b>Escort Subcontracting for Moose's Pilot Service:</b><span style="display:inline-block;border-bottom:1px solid #000;min-width:155px;padding:0 3px;vertical-align:bottom;">&nbsp;${d.escort_sub||''}&nbsp;</span></td><td style="font-size:10px;"><b>DBA</b> <span style="display:inline-block;border-bottom:1px solid #000;min-width:110px;">&nbsp;</span></td></tr></table>
@@ -1580,6 +1574,7 @@ async function shareInvoice(){
 async function sendInvoiceEmail(){
   const d=lastInvoice;if(!d)return;
   const to=document.getElementById('email-to').value.trim();
+  const cc=(document.getElementById('email-cc').value||'').trim();
   if(!to||!to.includes('@')){alert('Please enter a valid email address.');return;}
   const btn=document.getElementById('send-email-btn');
   btn.disabled=true;btn.textContent='SENDING...';
@@ -1589,10 +1584,11 @@ async function sendInvoiceEmail(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         to,
+        cc:cc||undefined,
         subject:'Invoice #'+invNum+' — Moose\'s Pilot Car Service',
         invoiceData:{
           format:selectedFormat,
-          invNum:d.invNum,position:d.position,date:d.date,
+          invNum:d.invNum,position:d.position,date:d.date,job_number:d.job_number,
           trucking_co:d.trucking_co,trucking_co_phone:d.trucking_co_phone,
           billing_address:d.billing_address,contact_name:d.contact_name,
           driver_name:d.driver_name,driver_phone:d.driver_phone,driver_truck:d.driver_truck,
@@ -1666,7 +1662,7 @@ function downloadPilotCar(fmt,existingWin){
   const pos=d.position||[];const chk=(p)=>(Array.isArray(pos)?pos.includes(p):pos===p)?'[X]':'[ ]';
   const fq=(v)=>v>0?v:'';const fa=(q,r)=>q>0&&r>0?'$'+(q*r).toFixed(2):'';
   const invNum=(d.invNum||'').replace('INV-','');
-  const tdata=[...d.trips];while(tdata.length<5)tdata.push({});
+  const tdata=[...d.trips];while(tdata.length<7)tdata.push({});
   const C='border:1px solid #000;padding:2px 4px;font-size:9.5px;';const CH=C+'background:#f0f0f0;font-weight:700;';
   const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;filter:brightness(0);" alt=""/>`:'';
   const tripRows=tdata.map((t,i)=>{
@@ -1797,7 +1793,7 @@ ${[...Array(Math.max(0,5-tdata.length))].map(()=>'<tr><td class="box" style="hei
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span class="hdr">FUEL S/C — ON MILES ONLY</span><span>${fq(d.fuel_sc_miles)} &nbsp;@&nbsp; ${d.fuel_sc_rate>0?d.fuel_sc_rate.toFixed(2):''}</span></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span class="hdr">DEADHEAD MILES</span><span>${fq(d.deadhead_miles)} &nbsp;@&nbsp; ${d.deadhead_rate>0?d.deadhead_rate.toFixed(2):''}</span></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span class="hdr">FLAT DAY RATE</span><span>${fq(d.flat_day_qty)} &nbsp;@&nbsp; ${d.flat_day_rate>0?d.flat_day_rate.toFixed(2):''}</span></div>
-  <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span class="hdr">½ DAY RATE</span><span>${fq(d.half_day_qty)} &nbsp;@&nbsp; ${d.half_day_rate>0?d.half_day_rate.toFixed(2):''}</span></div>
+  <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span class="hdr">HP DAY RATE</span><span>${fq(d.half_day_qty)} &nbsp;@&nbsp; ${d.half_day_rate>0?d.half_day_rate.toFixed(2):''}</span></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span class="hdr">MOTELS</span><span>${fq(d.motel_qty)} &nbsp;@&nbsp; ${d.motel_qty>0&&d.motel_rate>0?d.motel_rate.toFixed(2):''}</span></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span class="hdr">DOWN TIME</span><span>${fq(d.downtime_hours)} &nbsp;@&nbsp; ${d.downtime_rate>0?d.downtime_rate.toFixed(2):''}</span></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span class="hdr">NO-GO'S</span><span>${fq(d.nogo_qty)} &nbsp;@&nbsp; ${d.nogo_rate>0?d.nogo_rate.toFixed(2):''}</span></div>
@@ -1807,7 +1803,7 @@ ${[...Array(Math.max(0,5-tdata.length))].map(()=>'<tr><td class="box" style="hei
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span>MILES ONLY =</span><b>${fa(d.fuel_sc_miles,d.fuel_sc_rate)}</b></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span>PER MILE =</span><b>${fa(d.deadhead_miles,d.deadhead_rate)}</b></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span>PER DAY =</span><b>${fa(d.flat_day_qty,d.flat_day_rate)}</b></div>
-  <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span>½ DAY =</span><b>${fa(d.half_day_qty,d.half_day_rate)}</b></div>
+  <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span>HP DAY =</span><b>${fa(d.half_day_qty,d.half_day_rate)}</b></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span>PER DAY =</span><b>${fa(d.motel_qty,d.motel_rate)}</b></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span>PER HOUR =</span><b>${fa(d.downtime_hours,d.downtime_rate)}</b></div>
   <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ccc;"><span>PER DAY =</span><b>${fa(d.nogo_qty,d.nogo_rate)}</b></div>

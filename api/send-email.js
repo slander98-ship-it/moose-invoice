@@ -177,7 +177,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { to, subject, invoiceData } = req.body;
+    const { to, cc, subject, invoiceData } = req.body;
     if (!to) return res.status(400).json({ error: 'Missing recipient' });
 
     const d = invoiceData || {};
@@ -233,6 +233,9 @@ export default async function handler(req, res) {
       doc.font('Helvetica-Bold').fontSize(8).text('Pilot Position:', ML, y);
       doc.font('Helvetica').fontSize(8)
         .text(`${chk('Lead')} Lead   ${chk('Chase')} Chase   ${chk('High Pole')} High Pole   ${chk('Steer Man')} Steer Man`, ML + 70, y);
+      y += 12;
+      doc.font('Helvetica-Bold').fontSize(8).text('LOAD/JOB#:', ML, y);
+      doc.font('Helvetica').fontSize(8).text(d.job_number || '', ML + 55, y);
       doc.font('Helvetica-Bold').text('DATE:', ML + PW - 80, y);
       doc.font('Helvetica').text(d.date || '', ML + PW - 50, y);
       y += 14;
@@ -293,7 +296,7 @@ export default async function handler(req, res) {
       // Data rows (5 minimum)
       const trips = d.trips || [];
       const tdata = [...trips];
-      while (tdata.length < 5) tdata.push({});
+      while (tdata.length < 7) tdata.push({});
       doc.font('Helvetica').fontSize(7);
       tdata.forEach((t, i) => {
         const so = (i === 0 && d.start_odometer) ? Number(d.start_odometer).toFixed(1) : '';
@@ -353,7 +356,7 @@ export default async function handler(req, res) {
         ['FUEL S/C — ON MILES ONLY', d.fuel_sc_miles, d.fuel_sc_rate, 'MILES ONLY ='],
         ['DEADHEAD MILES', d.deadhead_miles, d.deadhead_rate, 'PER MILE ='],
         ['FLAT DAY RATE', d.flat_day_qty, d.flat_day_rate, 'PER DAY ='],
-        ['½ DAY RATE', d.half_day_qty, d.half_day_rate, '½ DAY ='],
+        ['HP DAY RATE', d.half_day_qty, d.half_day_rate, 'HP DAY ='],
         ['MOTELS', d.motel_qty, d.motel_qty > 0 ? d.motel_rate : null, 'PER DAY ='],
         ['DOWN TIME', d.downtime_hours, d.downtime_rate, 'PER HOUR ='],
         ["NO-GO'S", d.nogo_qty, d.nogo_rate, 'PER DAY ='],
@@ -439,6 +442,7 @@ export default async function handler(req, res) {
     const emailPayload = {
       from: 'Moose Pilot <invoices@moosepilotokc.com>',
       to: [to],
+      ...(cc ? { cc: [cc] } : {}),
       subject: subject || `Invoice #${invNum} — Moose's Pilot Car Service`,
       html: emailHTML,
       attachments: [{
