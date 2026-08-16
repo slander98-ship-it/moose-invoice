@@ -108,7 +108,7 @@ function drawRigMovePdf(doc, d, PW, ML, LOGO_B64) {
     tx = ML;
     doc.font('Helvetica').fontSize(6.5);
     dtRow2.forEach((val, i) => { doc.text(val, tx + 2, y, { width: dtCW2[i] - 4, height: dtRowH2, ellipsis: true }); tx += dtCW2[i]; });
-    y += dtRowH2 + 6;
+    y += dtRowH2 + 2;
     if (d.notes) {
       doc.font('Helvetica-Oblique').fontSize(6.5).text('Notes: ' + d.notes, ML + 2, y, { width: PW - 4 });
       y += 11;
@@ -342,7 +342,7 @@ export default async function handler(req, res) {
       y += dtRow0H;
       // Blank second DT row
       doc.rect(ML, y - 2, PW, 12).stroke();
-      y += 18;
+      y += 14;
       // Notes (from driver's general Notes field on the Down Time step) — printed directly under the reason row
       if (d.notes) {
         doc.font('Helvetica-Oblique').fontSize(6.5).text('Notes: ' + d.notes, ML + 2, y, { width: PW - 4 });
