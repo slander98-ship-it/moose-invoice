@@ -477,7 +477,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <div class="bill-row-label">HP DAY RATE</div>
       <input id="b-half_day_qty"   type="number" step="0.5"  placeholder="0" oninput="onBillInput(this.id)"/>
       <div class="bill-at">@</div>
-      <input id="b-half_day_rate"  type="number" step="0.01" placeholder="0.00" value="600.00" oninput="onBillInput(this.id)"/>
+      <input id="b-half_day_rate"  type="number" step="0.01" placeholder="0.00" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-row">
       <div class="bill-row-label">MOTELS / OVERNIGHT</div>
@@ -498,8 +498,15 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
       <input id="b-nogo_rate"      type="number" step="0.01" placeholder="0.00" oninput="onBillInput(this.id)"/>
     </div>
     <div class="bill-total-box">
-      <div class="bill-total-label">TOTAL CHARGES</div>
+      <div class="bill-total-label" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>TOTAL CHARGES</span>
+        <label style="display:flex;align-items:center;gap:.3rem;font-family:'Barlow',sans-serif;font-size:.62rem;letter-spacing:.03em;text-transform:none;color:#999;cursor:pointer;">
+          <input type="checkbox" id="total-override-toggle" onchange="toggleTotalOverride()" style="width:15px;height:15px;accent-color:var(--y);"/>
+          OVERRIDE
+        </label>
+      </div>
       <div class="bill-total-amount" id="bill-total">$0.00</div>
+      <input id="bill-total-override-input" type="number" step="0.01" class="bill-total-amount" oninput="onTotalOverrideInput()" style="display:none;width:100%;background:transparent;border:none;border-bottom:2px solid var(--y);outline:none;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:2.4rem;padding:0;"/>
     </div>
   </div>
 
@@ -720,7 +727,8 @@ const FF=['start_odometer','end_odometer','job_date','load_job_number','trucking
 const BF=['escorted_miles','escorted_rate','fuel_sc_miles','fuel_sc_rate','deadhead_miles','deadhead_rate','flat_day_qty','flat_day_rate','half_day_qty','half_day_rate','motel_qty','motel_rate','downtime_hours','downtime_rate','nogo_qty','nogo_rate'];
 function saveDraft(){
   const f={},b={};FF.forEach(n=>{f[n]=fv(n);});BF.forEach(n=>{const e=$('b-'+n);b[n]=e?e.value:'';});
-  localStorage.setItem('moose_draft_v4',JSON.stringify({f,b,r:{...radios},typed:$('sig-typed-name')?.value||'',trips}));
+  const ovr={active:totalOverrideActive,val:$('bill-total-override-input')?.value||''};
+  localStorage.setItem('moose_draft_v4',JSON.stringify({f,b,r:{...radios},typed:$('sig-typed-name')?.value||'',trips,ovr}));
 }
 function restoreDraft(){
   try{
@@ -746,6 +754,14 @@ function restoreDraft(){
       applyDefaultRates(radios.pilot_position,true);
     }
     onOdoInput();onBillInput();renderTrips();
+    if(d.ovr&&d.ovr.active){
+      $('total-override-toggle').checked=true;
+      totalOverrideActive=true;
+      $('bill-total').style.display='none';
+      $('bill-total-override-input').style.display='block';
+      $('bill-total-override-input').value=d.ovr.val;
+      calcTotal();
+    }
     $('draft-banner').classList.add('show');
   }catch{}
 }
@@ -790,9 +806,13 @@ function applyDefaultRates(posArr,force){
   const motelRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].motel:0),0)/n; // all positions share $125
   if(!billTouched.has('b-flat_day_rate')&&(force||!bv('flat_day_rate')))sbv('flat_day_rate',dayRateSingle);
   if(!billTouched.has('b-flat_day_qty'))sbv('flat_day_qty',(trips.length||1)*n);
-  if(!billTouched.has('b-motel_rate')&&(force||!bv('motel_rate')))sbv('motel_rate',motelRateSingle);
   const baseMotelQty=trips.filter(t=>t.motel==='Y').length;
-  if(!billTouched.has('b-motel_qty')&&baseMotelQty>0)sbv('motel_qty',baseMotelQty*n);
+  if(baseMotelQty>0){
+    // Only show a motel rate once there's an actual overnight day — otherwise the field
+    // looks like she's being charged for a motel that was never used.
+    if(!billTouched.has('b-motel_rate')&&(force||!bv('motel_rate')))sbv('motel_rate',motelRateSingle);
+    if(!billTouched.has('b-motel_qty'))sbv('motel_qty',baseMotelQty*n);
+  }
 
   updateRateWinner();
 }
@@ -901,12 +921,40 @@ function updateRateWinner(){
 }
 function highlightRows(m,d){document.querySelectorAll('#row-miles input').forEach(el=>{el.classList.toggle('hi',m);el.classList.toggle('dim',!m);});document.querySelectorAll('#row-day input').forEach(el=>{el.classList.toggle('hi',d);el.classList.toggle('dim',!d);});}
 const billTouched=new Set();
-function onBillInput(fieldId){if(fieldId)billTouched.add(fieldId);updateRateWinner();saveDraft();}
-function calcTotal(){
-  const pairs=[['escorted_miles','escorted_rate'],['fuel_sc_miles','fuel_sc_rate'],['deadhead_miles','deadhead_rate'],['flat_day_qty','flat_day_rate'],['half_day_qty','half_day_rate'],['motel_qty','motel_rate'],['downtime_hours','downtime_rate'],['nogo_qty','nogo_rate']];
-  const total=pairs.reduce((s,[q,r])=>{const qe=$('b-'+q),re=$('b-'+r);return s+(parseFloat(qe?.value)||0)*(parseFloat(re?.value)||0);},0);
-  $('bill-total').textContent='$'+total.toFixed(2);return total;
+function onBillInput(fieldId){
+  if(fieldId){
+    billTouched.add(fieldId);
+    // HP Day Rate: $600 is the right default, but only once she's actually entered a quantity —
+    // otherwise it sits there looking like an active charge for something that never happened.
+    if(fieldId==='b-half_day_qty'){
+      const q=parseFloat($('b-half_day_qty').value)||0;
+      if(q>0&&!bv('half_day_rate'))sbv('half_day_rate',600);
+    }
+  }
+  updateRateWinner();saveDraft();
 }
+let totalOverrideActive=false;
+function computeRawTotal(){
+  const pairs=[['escorted_miles','escorted_rate'],['fuel_sc_miles','fuel_sc_rate'],['deadhead_miles','deadhead_rate'],['flat_day_qty','flat_day_rate'],['half_day_qty','half_day_rate'],['motel_qty','motel_rate'],['downtime_hours','downtime_rate'],['nogo_qty','nogo_rate']];
+  return pairs.reduce((s,[q,r])=>{const qe=$('b-'+q),re=$('b-'+r);return s+(parseFloat(qe?.value)||0)*(parseFloat(re?.value)||0);},0);
+}
+function calcTotal(){
+  const total=totalOverrideActive?(parseFloat($('bill-total-override-input')?.value)||0):computeRawTotal();
+  $('bill-total').textContent='$'+total.toFixed(2);
+  return total;
+}
+function toggleTotalOverride(){
+  totalOverrideActive=$('total-override-toggle').checked;
+  const disp=$('bill-total'),inp=$('bill-total-override-input');
+  if(totalOverrideActive){
+    inp.value=computeRawTotal().toFixed(2);
+    disp.style.display='none';inp.style.display='block';inp.focus();
+  }else{
+    disp.style.display='block';inp.style.display='none';
+  }
+  calcTotal();saveDraft();
+}
+function onTotalOverrideInput(){calcTotal();saveDraft();}
 
 const LABELS=['Start Odo','Company','Driver','Route','Times','Down Time','End Odo','Billing','Sign'];
 function buildStepBar(){
