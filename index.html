@@ -987,14 +987,24 @@ async function submitInvoice(){
       const{error}=await db.from('invoices').update(payload).eq('invoice_number',invNum);
       if(error)throw error;
     }else{
-      invNum='INV-6000';
+      let invBase=6000;
       try{
         const {count}=await db.from('invoices').select('*',{count:'exact',head:true});
-        invNum='INV-'+(6000+(count||0));
-      }catch(e){invNum='INV-6000';}
-      const{data,error}=await db.from('invoices').insert({...payload,invoice_number:invNum}).select('approval_token').single();
-      if(error)throw error;
-      approvalToken=data.approval_token;
+        invBase=6000+(count||0);
+      }catch(e){}
+      // Row COUNT is only a starting guess — it drifts once any invoice has been deleted, since the
+      // count drops but old numbers are still taken. So we try that guess first, and if it collides
+      // with an existing invoice_number, we just bump up and try again until we land on a free one.
+      let inserted=false,attempt=0,lastErr=null,insertData=null;
+      while(!inserted&&attempt<50){
+        invNum='INV-'+(invBase+attempt);
+        const res=await db.from('invoices').insert({...payload,invoice_number:invNum}).select('approval_token').single();
+        if(!res.error){inserted=true;insertData=res.data;}
+        else if(res.error.code==='23505'||/duplicate key/i.test(res.error.message||'')){lastErr=res.error;attempt++;}
+        else{throw res.error;}
+      }
+      if(!inserted)throw lastErr||new Error('Could not find an available invoice number — please try again.');
+      approvalToken=insertData.approval_token;
     }
     // --- Payment tracker sync (best-effort, never blocks submission) ---
     try{
