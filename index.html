@@ -1716,7 +1716,12 @@ async function scanPermit(input){
     if(!resp.ok){throw new Error(data.error||'Scan error');}
     let text=data.text||'{}';
     text=text.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-    const extracted=JSON.parse(text);
+    // The model is asked to return ONLY JSON, but sometimes still wraps it in a stray sentence
+    // ("Here's the extracted info: {...}"). Pull out just the {...} block instead of assuming
+    // the whole string is clean JSON, so a chatty response doesn't break the whole scan.
+    const jsonMatch=text.match(/\{[\s\S]*\}/);
+    if(!jsonMatch)throw new Error('AI response did not contain readable data — try a clearer photo.');
+    const extracted=JSON.parse(jsonMatch[0]);
     const fields={'f-trucking_co_name':extracted.trucking_co,'f-trucking_co_phone':extracted.trucking_co_phone,'f-billing_address':extracted.billing_address,'f-contact_name':extracted.contact_name,'f-load_type':extracted.load_type,'f-load_height':extracted.load_height,'f-load_width':extracted.load_width,'f-load_length':extracted.load_length,'f-load_weight':extracted.load_weight,'f-pickup_location':extracted.pickup_location,'f-pickup_city':extracted.pickup_city,'f-pickup_state':extracted.pickup_state,'f-pickup_date':extracted.pickup_date,'f-dropoff_location':extracted.dropoff_location,'f-dropoff_city':extracted.dropoff_city,'f-dropoff_state':extracted.dropoff_state,'f-load_job_number':extracted.job_number};
     let filled=0;
     for(const[id,val]of Object.entries(fields)){if(val){const el=document.getElementById(id);if(el){el.value=val;filled++;}}}
