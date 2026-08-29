@@ -834,7 +834,11 @@ function computeTotalEscortedMiles(){
   return total>0?total:null;
 }
 function refreshEscortedMilesFromDays(){
-  if(billTouched.has('b-escorted_miles'))return;
+  // Multi-day: the per-day sum is always the source of truth, regardless of any earlier manual
+  // touch on this field — day-by-day odometer entry is more precise than a flat override once
+  // it exists, and a stale value from before more days were added should never win.
+  // Single-day: unchanged — a manual override is respected exactly like every other billing field.
+  if(trips.length<=1&&billTouched.has('b-escorted_miles'))return;
   const m=computeTotalEscortedMiles();
   if(m!==null)sbv('escorted_miles',m.toFixed(1));
   updateRateWinner();
@@ -1599,8 +1603,9 @@ async function hideInvoiceItem(idx){
 
 function clearAllFields(){
   FF.forEach(n=>sv(n,''));BF.forEach(n=>{const e=$('b-'+n);if(e){e.value='';e.classList.remove('hi','dim');}});
+  billTouched.clear(); // each invoice starts fresh — a manual edit on a past job must never lock out this one
   radios.pilot_position=[];document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);document.querySelectorAll('input[name=pilot_position]').forEach(c=>c.checked=false);
-  trips=[{date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N'}];
+  trips=[{date:'',startTime:'',endTime:'',startCity:'',endCity:'',motel:'N',startOdo:'',endOdo:''}];
   $('rate-chip').classList.remove('show');$('miles-calc').textContent='—';$('bill-total').textContent='$0.00';$('rate-compare').classList.remove('show');
   if($('trips-container'))renderTrips();
   sv('driver_name','');sv('driver_phone','');
