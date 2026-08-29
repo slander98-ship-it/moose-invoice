@@ -1069,9 +1069,15 @@ async function submitInvoice(){
         const{data:allNums}=await db.from('invoices').select('invoice_number');
         if(allNums&&allNums.length){
           let maxN=5999;
+          // Only trust numbers in a realistic range. A handful of invoice_number rows in the
+          // table are stray leftovers from an earlier retry-loop bug that briefly spiraled into
+          // six-figure numbers (e.g. INV-995739) — those aren't real invoices, and building the
+          // next number on top of one would just keep the bad range alive forever. 50000 gives
+          // years of realistic room above the legitimate range without ever touching that noise,
+          // and doesn't require deleting anything from the real data to fix it.
           allNums.forEach(r=>{
             const n=parseInt(String(r.invoice_number||'').replace(/[^0-9]/g,''),10);
-            if(!isNaN(n)&&n>maxN)maxN=n;
+            if(!isNaN(n)&&n>=6000&&n<50000&&n>maxN)maxN=n;
           });
           invBase=maxN+1;
         }
