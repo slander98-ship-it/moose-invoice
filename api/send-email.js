@@ -299,9 +299,18 @@ export default async function handler(req, res) {
       while (tdata.length < 7) tdata.push({});
       doc.font('Helvetica').fontSize(7);
       tdata.forEach((t, i) => {
-        const so = (i === 0 && d.start_odometer) ? Number(d.start_odometer).toFixed(1) : '';
-        const eo = (i === trips.length - 1 && d.end_odometer) ? Number(d.end_odometer).toFixed(1) : '';
-        const mi = (i === trips.length - 1 && d.tripMi) ? Number(d.tripMi).toFixed(1) : '';
+        // Each day's own leg: day 1's start is the overall Start Odometer from step 1 (never
+        // asked twice), every other day uses its own Start Odometer field. Each day's End
+        // Odometer is its own field; the last day falls back to the overall End Odometer if she
+        // left its own field blank. Miles is that day's own leg, not one big overall number —
+        // this matches the paper form, where inter-day motel driving is never counted.
+        const isRealRow = i < trips.length;
+        const soNum = isRealRow ? (i === 0 ? parseFloat(d.start_odometer) : parseFloat(t.startOdo)) : NaN;
+        let eoNum = isRealRow ? parseFloat(t.endOdo) : NaN;
+        if (isRealRow && isNaN(eoNum) && i === trips.length - 1) eoNum = parseFloat(d.end_odometer);
+        const so = !isNaN(soNum) ? soNum.toFixed(1) : '';
+        const eo = !isNaN(eoNum) ? eoNum.toFixed(1) : '';
+        const mi = (!isNaN(soNum) && !isNaN(eoNum) && eoNum > soNum) ? (eoNum - soNum).toFixed(1) : '';
         const to12=(t)=>{if(!t)return'';const[h,m]=t.split(':').map(Number);if(isNaN(h)||isNaN(m))return t;const ap=h>=12?'PM':'AM';const hr=h%12||12;return hr+':'+(m<10?'0':'')+m+' '+ap;};
         const cells = [t.date||'', t.startCity||'', to12(t.startTime), so, t.endCity||'', to12(t.endTime), eo, mi, t.motel||''];
         tx = ML;

@@ -1619,9 +1619,13 @@ async function shareInvoice(){
   const C='border:1px solid #000;padding:2px 4px;font-size:9.5px;';
   const CH=C+'background:#f0f0f0;font-weight:700;';
   const tripRows=tdata.map((t,i)=>{
-    const so=(i===0&&d.start_odometer)?d.start_odometer.toFixed(1):'';
-    const eo=(i===d.trips.length-1&&d.end_odometer)?d.end_odometer.toFixed(1):'';
-    const mi=(i===d.trips.length-1&&d.tripMi)?d.tripMi.toFixed(1):'';
+    const isRealRow=i<d.trips.length;
+    const soNum=isRealRow?(i===0?parseFloat(d.start_odometer):parseFloat(t.startOdo)):NaN;
+    let eoNum=isRealRow?parseFloat(t.endOdo):NaN;
+    if(isRealRow&&isNaN(eoNum)&&i===d.trips.length-1)eoNum=parseFloat(d.end_odometer);
+    const so=!isNaN(soNum)?soNum.toFixed(1):'';
+    const eo=!isNaN(eoNum)?eoNum.toFixed(1):'';
+    const mi=(!isNaN(soNum)&&!isNaN(eoNum)&&eoNum>soNum)?(eoNum-soNum).toFixed(1):'';
     return`<tr style="height:21px;"><td style="${C}">${t.date||''}</td><td style="${C}">${t.startCity||''}</td><td style="${C}text-align:center;">${to12(t.startTime)}</td><td style="${C}text-align:center;">${so}</td><td style="${C}">${t.endCity||''}</td><td style="${C}text-align:center;">${to12(t.endTime)}</td><td style="${C}text-align:center;">${eo}</td><td style="${C}text-align:center;">${mi}</td><td style="${C}text-align:center;">${t.motel||''}</td></tr>`;
   }).join('');
   const sigHtml=d.sigData?`<img src="${d.sigData}" style="height:28px;max-width:200px;display:inline-block;vertical-align:bottom;filter:brightness(0);" alt=""/>`:'';
@@ -1786,9 +1790,13 @@ function downloadPilotCar(fmt,existingWin){
   const C='border:1px solid #000;padding:2px 4px;font-size:9.5px;';const CH=C+'background:#f0f0f0;font-weight:700;';
   const sigHtml=d.sigData?`<img src="${d.sigData}" style="max-height:46px;max-width:220px;filter:brightness(0);" alt=""/>`:'';
   const tripRows=tdata.map((t,i)=>{
-    const so=(i===0&&d.start_odometer)?d.start_odometer.toFixed(1):'';
-    const eo=(i===d.trips.length-1&&d.end_odometer)?d.end_odometer.toFixed(1):'';
-    const mi=(i===d.trips.length-1&&d.tripMi)?d.tripMi.toFixed(1):'';
+    const isRealRow=i<d.trips.length;
+    const soNum=isRealRow?(i===0?parseFloat(d.start_odometer):parseFloat(t.startOdo)):NaN;
+    let eoNum=isRealRow?parseFloat(t.endOdo):NaN;
+    if(isRealRow&&isNaN(eoNum)&&i===d.trips.length-1)eoNum=parseFloat(d.end_odometer);
+    const so=!isNaN(soNum)?soNum.toFixed(1):'';
+    const eo=!isNaN(eoNum)?eoNum.toFixed(1):'';
+    const mi=(!isNaN(soNum)&&!isNaN(eoNum)&&eoNum>soNum)?(eoNum-soNum).toFixed(1):'';
     return`<tr><td style="${C}">${t.date||''}</td><td style="${C}">${t.startCity||''}</td><td style="${C}text-align:center;">${to12(t.startTime)}</td><td style="${C}text-align:center;">${so}</td><td style="${C}">${t.endCity||''}</td><td style="${C}text-align:center;">${to12(t.endTime)}</td><td style="${C}text-align:center;">${eo}</td><td style="${C}text-align:center;">${mi}</td><td style="${C}text-align:center;">${t.motel||''}</td></tr>`;
   }).join('');
   const puAddr=[d.pickup_location,d.pickup_city,d.pickup_state].filter(Boolean).join(', ');
@@ -1884,9 +1892,13 @@ td,th{font-size:9px;}
   <th class="bh" style="width:8%;">MOTEL Y/N</th>
 </tr>
 ${tdata.map((t,i)=>{
-  const so=(i===0&&d.start_odometer)?d.start_odometer.toFixed(1):'';
-  const eo=(i===d.trips.length-1&&d.end_odometer)?d.end_odometer.toFixed(1):'';
-  const mi=(i===d.trips.length-1&&d.tripMi)?d.tripMi.toFixed(1):'';
+  const isRealRow=i<d.trips.length;
+  const soNum=isRealRow?(i===0?parseFloat(d.start_odometer):parseFloat(t.startOdo)):NaN;
+  let eoNum=isRealRow?parseFloat(t.endOdo):NaN;
+  if(isRealRow&&isNaN(eoNum)&&i===d.trips.length-1)eoNum=parseFloat(d.end_odometer);
+  const so=!isNaN(soNum)?soNum.toFixed(1):'';
+  const eo=!isNaN(eoNum)?eoNum.toFixed(1):'';
+  const mi=(!isNaN(soNum)&&!isNaN(eoNum)&&eoNum>soNum)?(eoNum-soNum).toFixed(1):'';
   return`<tr><td class="box">${t.date||''}</td><td class="box">${t.startCity||''}</td><td class="box" style="text-align:center;">${to12(t.startTime)}</td><td class="box" style="text-align:center;">${so}</td><td class="box">${t.endCity||''}</td><td class="box" style="text-align:center;">${to12(t.endTime)}</td><td class="box" style="text-align:center;">${eo}</td><td class="box" style="text-align:center;">${mi}</td><td class="box" style="text-align:center;">${t.motel||''}</td></tr>`;
 }).join('')}
 ${[...Array(Math.max(0,5-tdata.length))].map(()=>'<tr><td class="box" style="height:14px;"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>').join('')}
