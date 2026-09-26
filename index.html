@@ -906,8 +906,8 @@ function updateRateWinner(){
     $('rc-day-amt').textContent='$'+dayPay.toFixed(2);$('rc-day-detail').textContent=dayQty+' day × $'+dayRate.toFixed(2);
     const mWins=milesPay>=dayPay;
     $('rc-miles').className='rc-option '+(mWins?'winner':'loser');$('rc-day').className='rc-option '+(mWins?'loser':'winner');
-    if(mWins){$('rc-verdict').textContent='MILES RATE WINS — CHARGING $'+milesPay.toFixed(2);if(dayPay<milesPay){sbv('flat_day_rate',0);}highlightRows(true,false);}
-    else{$('rc-verdict').textContent='DAY RATE WINS — CHARGING $'+dayPay.toFixed(2);if(milesPay<dayPay)sbv('escorted_rate',0);highlightRows(false,true);}
+    if(mWins){$('rc-verdict').textContent='MILES RATE WINS — CHARGING $'+milesPay.toFixed(2);if(dayPay<milesPay&&!billTouched.has('b-flat_day_rate')){sbv('flat_day_rate',0);}highlightRows(true,false);}
+    else{$('rc-verdict').textContent='DAY RATE WINS — CHARGING $'+dayPay.toFixed(2);if(milesPay<dayPay&&!billTouched.has('b-escorted_rate'))sbv('escorted_rate',0);highlightRows(false,true);}
     calcTotal();
     return;
   }
@@ -932,18 +932,20 @@ function updateRateWinner(){
 
   if(allMiles){
     // Every position clears on mileage — quantity is real miles, rate is the true summed mile rate.
-    sbv('flat_day_rate',0);
+    // Never stomp a rate Chamus manually typed in himself — billTouched wins.
+    if(!billTouched.has('b-flat_day_rate'))sbv('flat_day_rate',0);
     highlightRows(true,false);$('rc-miles').className='rc-option winner';$('rc-day').className='rc-option loser';
   }else if(allDay){
     // Every position clears on day rate — quantity is real (days × positions), rate is the true single-position $550.
-    sbv('escorted_rate',0);
+    if(!billTouched.has('b-escorted_rate'))sbv('escorted_rate',0);
     highlightRows(false,true);$('rc-miles').className='rc-option loser';$('rc-day').className='rc-option winner';
   }else{
     // Mixed: some positions clear on miles, others on day rate. No single qty/rate pair can
     // express this honestly as two clean numbers, so we fall back to a blended effective rate
-    // on whichever side has the larger contribution, and zero only the OTHER side's rate (not qty).
-    if(escMiles>0){sbv('escorted_rate',(combinedTotal/escMiles).toFixed(4));sbv('flat_day_rate',0);highlightRows(true,false);}
-    else{sbv('flat_day_rate',(combinedTotal/(dayQty||1)).toFixed(2));sbv('escorted_rate',0);highlightRows(false,true);}
+    // on whichever side has the larger contribution, and zero only the OTHER side's rate (not qty) —
+    // and never a rate Chamus manually typed in himself.
+    if(escMiles>0){if(!billTouched.has('b-escorted_rate'))sbv('escorted_rate',(combinedTotal/escMiles).toFixed(4));if(!billTouched.has('b-flat_day_rate'))sbv('flat_day_rate',0);highlightRows(true,false);}
+    else{if(!billTouched.has('b-flat_day_rate'))sbv('flat_day_rate',(combinedTotal/(dayQty||1)).toFixed(2));if(!billTouched.has('b-escorted_rate'))sbv('escorted_rate',0);highlightRows(false,true);}
   }
   calcTotal();
 }
@@ -954,9 +956,16 @@ function onBillInput(fieldId){
     billTouched.add(fieldId);
     // HP Day Rate: $600 is the right default, but only once she's actually entered a quantity —
     // otherwise it sits there looking like an active charge for something that never happened.
+    // This has to work in BOTH directions: a driver who types the rate first (600) without ever
+    // touching quantity would otherwise leave qty at 0, silently zeroing this line out of the
+    // real total and the printed invoice, even though the rate box looks filled in.
     if(fieldId==='b-half_day_qty'){
       const q=parseFloat($('b-half_day_qty').value)||0;
       if(q>0&&!bv('half_day_rate'))sbv('half_day_rate',600);
+    }
+    if(fieldId==='b-half_day_rate'){
+      const r=parseFloat($('b-half_day_rate').value)||0;
+      if(r>0&&!bv('half_day_qty'))sbv('half_day_qty',1);
     }
   }
   updateRateWinner();saveDraft();
@@ -2065,13 +2074,13 @@ ${driverRow}${blankRows}
   <td style="width:50%;vertical-align:top;padding-right:10px;">
     <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><b>Total Escorts &amp; Miles</b><span>${fq(d.escorted_miles)} ${d.escorted_rate>0?'@ $'+d.escorted_rate.toFixed(2):''}</span></div>
     <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><b>Pilot Only Rate</b><span>${fq(d.flat_day_qty)} ${d.flat_day_rate>0?'@ $'+d.flat_day_rate.toFixed(2):''}</span></div>
-    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><b>High Pole Day Rate</b><span>${isHP?fq(d.flat_day_qty):''} ${isHP&&d.flat_day_rate>0?'@ $'+d.flat_day_rate.toFixed(2):''}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><b>High Pole Day Rate</b><span>${fq(d.half_day_qty)} ${d.half_day_rate>0?'@ $'+d.half_day_rate.toFixed(2):''}</span></div>
     <div style="display:flex;justify-content:space-between;padding:3px 0;"><b>Houses</b><span>${fq(d.motel_qty)} ${d.motel_qty>0&&d.motel_rate>0?'@ $'+d.motel_rate.toFixed(2):''}</span></div>
   </td>
   <td style="vertical-align:top;">
     <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><span>Fuel Mile's</span><b>${fa(d.escorted_miles,d.escorted_rate)}</b></div>
     <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><span>Per Day's</span><b>${fa(d.flat_day_qty,d.flat_day_rate)}</b></div>
-    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><span>Per Day Air</span><b>${isHP?fa(d.flat_day_qty,d.flat_day_rate):''}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #ccc;"><span>Per Day Air</span><b>${fa(d.half_day_qty,d.half_day_rate)}</b></div>
     <div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Per Trip's</span><b>${fa(d.motel_qty,d.motel_rate)}</b></div>
     <div style="border-top:2px solid #000;margin-top:6px;padding-top:5px;text-align:right;"><b style="font-size:12px;">Total Charges $${d.total.toFixed(2)}</b></div>
   </td>
