@@ -120,7 +120,7 @@ function drawRigMovePdf(doc, d, PW, ML, LOGO_B64) {
   const charges = [
     ['Total Escorted Miles', d.escorted_miles, d.escorted_rate, 'Per Mile ='],
     ['Flat Day Rate', d.flat_day_qty, d.flat_day_rate, 'Per Day ='],
-    ['High Pole Day Rate', d.motel_qty ? null : null, null, 'Per Day ='], // no dedicated HP field yet; left blank intentionally
+    ['High Pole Day Rate', d.half_day_qty, d.half_day_rate, 'Per Day ='],
     ['Hotels', d.motel_qty, d.motel_qty > 0 ? d.motel_rate : null, 'Per Day ='],
   ];
   const LW = PW / 2 - 10;
