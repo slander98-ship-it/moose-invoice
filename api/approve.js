@@ -69,6 +69,8 @@ export default async function handler(req, res) {
           deadhead_rate: d.deadhead_rate,
           flat_day_qty: d.flat_day_qty,
           flat_day_rate: d.flat_day_rate,
+          half_day_qty: d.half_day_qty,
+          half_day_rate: d.half_day_rate,
           motel_qty: d.motel_qty,
           motel_rate: d.motel_rate,
           downtime_hours: d.downtime_hours,
