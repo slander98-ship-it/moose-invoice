@@ -567,7 +567,7 @@ html,body{background:var(--bk);color:var(--wh);font-family:'Barlow',sans-serif;m
     </button>
     <div id="email-panel" style="display:none;margin-top:.5rem;">
       <input id="email-to" type="email" autocomplete="email" placeholder="Enter email address..." style="width:100%;background:#1e1e1e;border:1.5px solid var(--y);border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
-      <input id="email-cc" type="email" autocomplete="off" placeholder="CC (optional)..." style="width:100%;background:#1e1e1e;border:1.5px solid #444;border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
+      <input id="email-cc" type="text" inputmode="email" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="CC (optional)... type manually" style="width:100%;background:#1e1e1e;border:1.5px solid #444;border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:.9rem;padding:.65rem .75rem;outline:none;box-sizing:border-box;margin-bottom:.5rem;"/>
       <button class="success-btn" onclick="sendInvoiceEmail()" style="width:100%;" id="send-email-btn">SEND INVOICE</button>
       <button onclick="document.getElementById('email-panel').style.display='none'" style="background:transparent;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;width:100%;margin-top:.3rem;">CANCEL</button>
     </div>
