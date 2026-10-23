@@ -29,7 +29,9 @@ export default async function handler(req, res) {
     // slammed we fail over to an older Flash instead of hammering the same
     // overloaded one. Same free key, no extra signup. 15s per model — the
     // client gives up at 45s, so worst case here stays under that.
-    const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+    // Lead with the lighter, less-hammered flash-lite: plenty smart enough to
+    // read a permit into JSON, and the heavy 3.8 stays as fallback.
+    const models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash'];
     let resp, data, lastErr = null;
     for (const model of models) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_KEY}`;
