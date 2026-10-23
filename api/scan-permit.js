@@ -26,24 +26,40 @@ export default async function handler(req, res) {
     });
 
     // Gemini's free tier occasionally returns 503 "model overloaded / high demand"
-    // for a moment, especially right after a model version changes. Retry a few
-    // times with a short backoff before giving up, so a transient blip doesn't
-    // surface as a hard failure to the driver.
+    // for a moment, especially right after a model version changes. Retry once
+    // with a short backoff before giving up, so a transient blip doesn't
+    // surface as a hard failure to the driver. Every attempt gets a 20s
+    // timeout — without it a slow response hangs the driver's UI forever.
     let resp, data;
-    const maxAttempts = 3;
+    const maxAttempts = 2;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      resp = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: geminiBody
-      });
-      data = await resp.json();
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 20000);
+      try {
+        resp = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: geminiBody,
+          signal: ctrl.signal
+        });
+        data = await resp.json();
+      } catch (e) {
+        clearTimeout(timer);
+        if (attempt === maxAttempts) {
+          return res.status(504).json({ error: e.name === 'AbortError'
+            ? 'AI took too long to read the permit — try again.'
+            : 'Could not reach the AI — check connection and try again.' });
+        }
+        await new Promise(r => setTimeout(r, 1500));
+        continue;
+      }
+      clearTimeout(timer);
       if (resp.ok) break;
       const isOverloaded = resp.status === 503 || /overloaded|high demand/i.test(data.error?.message || '');
       if (!isOverloaded || attempt === maxAttempts) {
         return res.status(resp.status).json({ error: data.error?.message || 'Gemini error' });
       }
-      await new Promise(r => setTimeout(r, attempt * 1000)); // 1s, then 2s
+      await new Promise(r => setTimeout(r, attempt * 1000)); // 1s backoff
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
