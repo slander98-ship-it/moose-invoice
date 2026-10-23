@@ -1797,7 +1797,15 @@ async function scanPermit(input){
   });
   try{
     status.textContent='🤖 Extracting info with AI...';
-    const resp=await fetch('/api/scan-permit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageData:b64,mimeType:file.type})});
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),45000);
+    let resp;
+    try{
+      resp=await fetch('/api/scan-permit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageData:b64,mimeType:file.type}),signal:ctrl.signal});
+    }catch(e){
+      if(e.name==='AbortError')throw new Error('Scan timed out after 45s — try again with a clearer photo.');
+      throw e;
+    }finally{clearTimeout(timer);}
     const data=await resp.json();
     if(!resp.ok){throw new Error(data.error||'Scan error');}
     let text=data.text||'{}';
