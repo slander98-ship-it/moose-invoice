@@ -637,7 +637,7 @@ let cachedPdfB64=null;
 let selectedFormat='pilot';
 function to12(t){if(!t)return'';const[h,m]=t.split(':').map(Number);if(isNaN(h)||isNaN(m))return t;const ampm=h>=12?'PM':'AM';const hr=h%12||12;return hr+':'+(m<10?'0':'')+m+' '+ampm;}
 const db=createClient(SB_URL,SB_ANON);
-const RATES={'Lead':{day:550,mile:1.95,motel:125,dh:1.95},'Chase':{day:550,mile:1.95,motel:125,dh:1.95},'High Pole':{day:550,mile:2.15,motel:125,dh:2.15},'Steer Man':{day:550,mile:2.15,motel:125,dh:2.15}};
+const RATES={'Lead':{day:550,mile:1.95,motel:125,dh:1.95},'Chase':{day:550,mile:1.95,motel:125,dh:1.95},'High Pole':{day:600,mile:2.15,motel:125,dh:2.15},'Steer Man':{day:550,mile:2.15,motel:125,dh:2.15}};
 let pin='',pinBusy=false,driverObj=null,step=1;
 let sigMode='draw',sigDrawing=false,sigLast={x:0,y:0},sigData='',sigInited=false;
 const radios={pilot_position:[],motel_yn:'N'};
@@ -799,10 +799,10 @@ function applyDefaultRates(posArr,force){
 
   // Day rate & motels: each position has its own real day/night — so QUANTITY is
   // multiplied by position count, and RATE stays the true single-position rate.
-  // e.g. 1 day, 2 positions -> qty 2 @ $550 = $1100. 1 motel night, 2 positions -> qty 2 @ $125 = $250.
+  // e.g. 1 day, 2 positions -> qty 2 @ $550 = $1100 (High Pole days rate $600). 1 motel night, 2 positions -> qty 2 @ $125 = $250.
   // Any field the driver has manually typed into is NEVER auto-overwritten again — once touched,
   // it stays exactly what she set it to, even when trips are added/removed or this runs again.
-  const dayRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].day:0),0)/n; // all positions share $550, so this is just $550
+  const dayRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].day:0),0)/n; // average of the selected positions' day rates ($550, or $600 for High Pole)
   const motelRateSingle=posArr.reduce((s,p)=>s+(RATES[p]?RATES[p].motel:0),0)/n; // all positions share $125
   if(!billTouched.has('b-flat_day_rate')&&(force||!bv('flat_day_rate')))sbv('flat_day_rate',dayRateSingle);
   if(!billTouched.has('b-flat_day_qty'))sbv('flat_day_qty',(trips.length||1)*n);
@@ -897,8 +897,13 @@ function updateRateWinner(){
   if(!pos||!pos.length){if(rc)rc.classList.remove('show');calcTotal();return;}
 
   if(pos.length===1){
-    // Single position — original behavior, unchanged.
-    const escRate=bv('escorted_rate'),dayRate=bv('flat_day_rate');
+    // Single position — High Pole's $600 day rate itemizes on the HP DAY RATE line;
+    // every other position uses the FLAT DAY RATE line as before.
+    const isHP=pos[0]==='High Pole';
+    const escRate=bv('escorted_rate');
+    // HP day rate is authoritative $600 here — never trust a stale flat_day_rate field
+    // left over from a different position. A rate Chamus typed herself always wins.
+    const dayRate=isHP?(billTouched.has('b-half_day_rate')?bv('half_day_rate'):600):bv('flat_day_rate');
     const milesPay=escMiles*escRate,dayPay=dayQty*dayRate;
     if(!milesPay&&!dayPay){rc.classList.remove('show');calcTotal();return;}
     rc.classList.add('show');
@@ -906,8 +911,26 @@ function updateRateWinner(){
     $('rc-day-amt').textContent='$'+dayPay.toFixed(2);$('rc-day-detail').textContent=dayQty+' day × $'+dayRate.toFixed(2);
     const mWins=milesPay>=dayPay;
     $('rc-miles').className='rc-option '+(mWins?'winner':'loser');$('rc-day').className='rc-option '+(mWins?'loser':'winner');
-    if(mWins){$('rc-verdict').textContent='MILES RATE WINS — CHARGING $'+milesPay.toFixed(2);if(dayPay<milesPay&&!billTouched.has('b-flat_day_rate')){sbv('flat_day_rate',0);}highlightRows(true,false);}
-    else{$('rc-verdict').textContent='DAY RATE WINS — CHARGING $'+dayPay.toFixed(2);if(milesPay<dayPay&&!billTouched.has('b-escorted_rate'))sbv('escorted_rate',0);highlightRows(false,true);}
+    if(mWins){
+      $('rc-verdict').textContent='MILES RATE WINS — CHARGING $'+milesPay.toFixed(2);
+      if(dayPay<milesPay&&!billTouched.has('b-flat_day_rate')){sbv('flat_day_rate',0);}
+      if(isHP&&!billTouched.has('b-half_day_rate'))sbv('half_day_rate',0);
+      highlightRows(true,false);
+    }
+    else{
+      $('rc-verdict').textContent='DAY RATE WINS — CHARGING $'+dayPay.toFixed(2);
+      if(milesPay<dayPay&&!billTouched.has('b-escorted_rate'))sbv('escorted_rate',0);
+      if(isHP){
+        if(!billTouched.has('b-half_day_qty'))sbv('half_day_qty',dayQty);
+        if(!billTouched.has('b-half_day_rate'))sbv('half_day_rate',600);
+        if(!billTouched.has('b-flat_day_rate'))sbv('flat_day_rate',0);
+      }else{
+        // Leaving High Pole behind: clear any auto-set HP line so it can't pollute the new position's total.
+        if(!billTouched.has('b-half_day_qty'))sbv('half_day_qty',0);
+        if(!billTouched.has('b-half_day_rate'))sbv('half_day_rate',0);
+      }
+      highlightRows(false,true);
+    }
     calcTotal();
     return;
   }
@@ -936,7 +959,7 @@ function updateRateWinner(){
     if(!billTouched.has('b-flat_day_rate'))sbv('flat_day_rate',0);
     highlightRows(true,false);$('rc-miles').className='rc-option winner';$('rc-day').className='rc-option loser';
   }else if(allDay){
-    // Every position clears on day rate — quantity is real (days × positions), rate is the true single-position $550.
+    // Every position clears on day rate — quantity is real (days × positions), rate is the true single-position rate ($550, $600 for High Pole).
     if(!billTouched.has('b-escorted_rate'))sbv('escorted_rate',0);
     highlightRows(false,true);$('rc-miles').className='rc-option loser';$('rc-day').className='rc-option winner';
   }else{
@@ -1733,7 +1756,6 @@ async function sendInvoiceEmail(){
           fuel_sc_miles:d.fuel_sc_miles,fuel_sc_rate:d.fuel_sc_rate,
           deadhead_miles:d.deadhead_miles,deadhead_rate:d.deadhead_rate,
           flat_day_qty:d.flat_day_qty,flat_day_rate:d.flat_day_rate,
-          half_day_qty:d.half_day_qty,half_day_rate:d.half_day_rate,
           motel_qty:d.motel_qty,motel_rate:d.motel_rate,
           downtime_hours:d.downtime_hours,downtime_rate:d.downtime_rate,
           downtime_date:d.downtime_date,downtime_start:d.downtime_start,downtime_end:d.downtime_end,downtime_reason:d.downtime_reason,notes:d.notes,
