@@ -914,7 +914,9 @@ function updateRateWinner(){
     if(mWins){
       $('rc-verdict').textContent='MILES RATE WINS — CHARGING $'+milesPay.toFixed(2);
       if(dayPay<milesPay&&!billTouched.has('b-flat_day_rate')){sbv('flat_day_rate',0);}
+      if(dayPay<milesPay&&!billTouched.has('b-flat_day_qty')){sbv('flat_day_qty',0);}
       if(isHP&&!billTouched.has('b-half_day_rate'))sbv('half_day_rate',0);
+      if(isHP&&!billTouched.has('b-half_day_qty'))sbv('half_day_qty',0);
       highlightRows(true,false);
     }
     else{
@@ -923,6 +925,7 @@ function updateRateWinner(){
       if(isHP){
         if(!billTouched.has('b-half_day_qty'))sbv('half_day_qty',dayQty);
         if(!billTouched.has('b-half_day_rate'))sbv('half_day_rate',600);
+        if(!billTouched.has('b-flat_day_qty'))sbv('flat_day_qty',0);
         if(!billTouched.has('b-flat_day_rate'))sbv('flat_day_rate',0);
       }else{
         // Leaving High Pole behind: clear any auto-set HP line so it can't pollute the new position's total.
